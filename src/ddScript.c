@@ -41,6 +41,29 @@ struct compileNode* make_compileNode(struct compileNode* parent, int type)
 	return output;
 }
 
+void compile_line_print_asm(const char op, const char* lhs, const char* rhs)
+{
+	switch (op)
+	{
+		case '+':
+			ddPrintf("add r9, %s;\n", value);
+			break;
+		case '-':
+			ddPrintf("sub r9, %s;\n", value);
+			break;
+		case '*':
+			ddPrintf("mov rax, r9;\n");
+			ddPrintf("mov r9, %s;\n", value);
+			ddPrintf("mul r9, %s;\n", value);
+			break;
+		case '/':
+			ddPrintf("mov rax, r9;\n");
+			ddPrintf("mov r9, %s;\n", value);
+			ddPrintf("div r9, %s;\n", value);
+			break;
+	}
+}
+
 void compile_line_gets(ddString seg, struct compileNode* cnptr)
 {
 	int ij = 0;
