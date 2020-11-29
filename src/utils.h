@@ -20,6 +20,16 @@ struct compileNode;
 void compile_message(const char* message);
 void compile_warning(const char* warning);
 void compile_error(const char* error);
+sizet parse_get_line_count(ddString file);
+ddString left_split(ddString str, int ptr);
+ddString right_split(ddString str, int ptr);
+struct compileNode* make_compileNode(struct compileNode* parent, int type);
+
+const char CNT_OPERATORS[8] = {
+	'=', '@', '+', '-',
+	'*', '/', '(', '/'
+};
+
 
 struct compileNode
 {
@@ -50,6 +60,39 @@ void compile_error(const char* error)
 	ddPrint_cstring("[\x1b[38;2;255;0;0mERROR\x1b[38;2;255;255;255m] ");
 	ddPrint_cstring_nl(error);
 	exit(0);
+}
+
+sizet parse_get_line_count(ddString file)
+{
+	sizet output = 0;
+	for (int i = 0; i < file.length; i++)
+		if (file.cstr[i] == '\n') output++;
+	return output;
+}
+
+ddString left_split(ddString str, int ptr)
+{
+	ptr--;
+	ddString output = make_ddString("");
+	for (int i = ptr; i >= 0; i--)
+		ddString_push_char_back(&output, str.cstr[i]);
+	return output;
+}
+ddString right_split(ddString str, int ptr)
+{
+	ptr++;
+	ddString output = make_ddString("");
+	for (int i = ptr; i < str.length; i++)
+		ddString_push_char_back(&output, str.cstr[i]);
+	return output;
+}
+
+struct compileNode* make_compileNode(struct compileNode* parent, int type)
+{
+	struct compileNode* output = make(struct compileNode, 1);
+	output->parent = parent;
+	output->type = type;
+	return output;
 }
 
 #endif

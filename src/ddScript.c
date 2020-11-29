@@ -1,150 +1,137 @@
 #include <ddcDef.h>
 #include <ddcString.h>
 
+#include <stdio.h>
+
 #include "./utils.h"
 
-sizet parse_get_line_count(ddString file)
-{
-	sizet output = 0;
-	for (int i = 0; i < file.length; i++)
-		if (file.cstr[i] == '\n') output++;
-	return output;
-}
+#define TKN_LITERAL 0x00
+#define TKN_KEYWORD 0x01
+#define TKN_OPERATOR 0x02
+#define TKN_SYNTAX 0x03
 
-const char CNT_OPERATORS[8] = {
-	'=', '@', '+', '-',
-	'*', '/', '(', '/'
+const char* const TKN_STRS[] = {
+	"LITERAL",
+	"KEYWORD",
+	"OPERATOR",
+	"SYNTAX"
 };
 
-ddString left_split(ddString str, int ptr)
+struct token
 {
-	ptr--;
-	ddString output = make_ddString("");
-	for (int i = ptr; i >= 0; i--)
-		ddString_push_char_back(&output, str.cstr[i]);
-	return output;
-}
-ddString right_split(ddString str, int ptr)
-{
-	ptr++;
-	ddString output = make_ddString("");
-	for (int i = ptr; i < str.length; i++)
-		ddString_push_char_back(&output, str.cstr[i]);
-	return output;
-}
+	int type;
+	ddString value;
+};
 
-struct compileNode* make_compileNode(struct compileNode* parent, int type)
+struct token* tokenize_file(ddString file, sizet* tokenCount)
 {
-	struct compileNode* output = make(struct compileNode, 1);
-	output->parent = parent;
-	output->type = type;
-	return output;
-}
-
-void compile_line_print_asm(const char op, const char* lhs, const char* rhs)
-{
-	switch (op)
-	{
-		case '+':
-			ddPrintf("add r9, %s;\n", value);
-			break;
-		case '-':
-			ddPrintf("sub r9, %s;\n", value);
-			break;
-		case '*':
-			ddPrintf("mov rax, r9;\n");
-			ddPrintf("mov r9, %s;\n", value);
-			ddPrintf("mul r9, %s;\n", value);
-			break;
-		case '/':
-			ddPrintf("mov rax, r9;\n");
-			ddPrintf("mov r9, %s;\n", value);
-			ddPrintf("div r9, %s;\n", value);
-			break;
-	}
-}
-
-void compile_line_gets(ddString seg, struct compileNode* cnptr)
-{
-	int ij = 0;
-	while (ij<8)
-	{
-		bool found = false;
-		for (int i = 0; i < seg.length; i++)
-		{
-			if (seg.cstr[i] == CNT_OPERATORS[ij])
-			{
-				found = true;
-				//ddPrint_char_nl(CNT_OPERATORS[ij]);
-				if (i != 0 && i != seg.length-1)
-				{
-					cnptr->type = CNT_OPERATORS[ij];
-					ddString left = left_split(seg, i);
-					struct compileNode* leftNode = make_compileNode(cnptr, 0x69);
-					compile_line_gets(left, leftNode);
-					cnptr->left = leftNode;
-					raze_ddString(&left);
-
-					ddString right = right_split(seg, i);
-					struct compileNode* rightNode = make_compileNode(cnptr, 0x69);
-					compile_line_gets(right, rightNode);
-					cnptr->right = rightNode;
-					raze_ddString(&right);
-					return;
-				}
-				else return;// reutnr the value
-			}
-		}
-		ij++;
-	}
-}
-
-void compile_line(ddString line)
-{
-	//struct compileNode* head = make(struct compileNode, 1);
-	//struct compileNode* ptr = head;
-	struct compileNode* cn = make_compileNode(nullptr, 0x00);
-	compile_line_gets(line, cn);
-	ddPrint_char_nl(cn->type);
-	ddPrint_char_nl(cn->right->type);
-	ddPrint_int_nl(cn->right->right->right->right->type);
-}
-
-sizet parse_lines(ddString file)
-{
-	sizet lineCount = parse_get_line_count(file);
-	bool inComment = false;
-	ddString line = make_ddString("");
+	struct token* tokens = make(struct token, 100);
+	(*tokenCount) = -1;
+	bool inLiteral = false;
+	bool inLiteralString = false;
 	for (int i = 0; i < file.length; i++)
 	{
+		if (inLiteralString)
+		{
+			if (file.cstr[i] == '\'' || file.cstr[i] == '\"')
+			{
+				inLiteralString = false;
+			}
+			ddString_push_char_back(&(tokens[*tokenCount].value), file.cstr[i]);
+			continue;
+		}
 		switch (file.cstr[i])
 		{
-			case ';':
-				inComment = true;
-				compile_line(line);
+			case ';': case '{': case '}': case '[': case ']': case '(': case ')':
+			{
+				(*tokenCount)++;
+				tokens[*tokenCount].type = TKN_SYNTAX;
+				tokens[*tokenCount].value = make_multi_ddString_cstring(" ", 1);
+				tokens[*tokenCount].value.cstr[0] = file.cstr[i];
+				inLiteral = false;
 				break;
-			case '\n':
-				inComment = false; 
-				remake_ddString(&line, "");
+			}
+			case '+': case '-': case '*': case '/': case '<': case '>':
+			{
+				(*tokenCount)++;
+				tokens[*tokenCount].type = TKN_OPERATOR;
+				tokens[*tokenCount].value = make_multi_ddString_cstring(" ", 1);
+				tokens[*tokenCount].value.cstr[0] = file.cstr[i];
+				inLiteral = false;
 				break;
+			}
+			case '@':
+			{
+				(*tokenCount)++;
+				tokens[*tokenCount].type = TKN_OPERATOR;
+				tokens[*tokenCount].value = make_ddString("@");
+				ddString_push_char_back(&(tokens[*tokenCount].value), file.cstr[i+1]);
+				i++;
+				inLiteral = false;
+				break;
+			}
+			case '=':
+			{
+				(*tokenCount)++;
+				tokens[*tokenCount].type = TKN_OPERATOR;
+				if (file.cstr[i+1] == '=')
+				{
+					tokens[*tokenCount].value = make_ddString("==");
+					i++;
+				}
+				else
+					tokens[*tokenCount].value = make_ddString("=");
+				inLiteral = false;
+				break;
+			}
+			case '!':
+			{
+				(*tokenCount)++;
+				tokens[i].type = TKN_OPERATOR;
+				if (file.cstr[i+1] == '=')
+				{
+					tokens[*tokenCount].value = make_ddString("!=");
+					i++;
+				}
+				else
+					tokens[*tokenCount].value = make_ddString("!");
+				inLiteral = false;
+				break;
+			}
+
+
 			default:
-				if (!inComment) ddString_push_char_back(&line, file.cstr[i]);
+			{
+				if (!inLiteral)
+				{
+					(*tokenCount)++;
+					inLiteral = true;
+					tokens[*tokenCount].type = TKN_LITERAL;
+					tokens[*tokenCount].value = make_ddString("");
+				}
+				if (file.cstr[i] == '\'' || file.cstr[i] == '\"')
+				{
+					inLiteralString = true;
+				}
+				ddString_push_char_back(&(tokens[*tokenCount].value), file.cstr[i]);
 				break;
+			}
 		}
 	}
-}
-
-void macro_pass(ddString* file)
-{
-	
+	(*tokenCount)++;
+	return tokens;
 }
 
 int main(int agsc, char** ags)
 {
 	ddPrint_cstring("\x1b[38;2;255;255;255m");
 	if (agsc < 2) compile_error("NO INPUT FILES");
-	compile_warning("STACK OVERFLOW");
-	ddString file = make_ddString(ags[1]);
-	sizet lineCount = parse_lines(file);
-	//macro_pass(&file);
+
+	sizet tokenCount = 0;
+	struct token* tokens = tokenize_file(make_constant_ddString(ags[1]), &tokenCount);
+	for (sizet i = 0; i < tokenCount; i++)
+	{
+		printf("%s: %s\n", TKN_STRS[tokens[i].type], tokens[i].value.cstr);
+	}
+	return 0;
 }
