@@ -122,6 +122,29 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 	return tokens;
 }
 
+struct tokenNode
+{
+	struct tokenTree* parent;
+	struct tokenTree* left;
+	struct tokenTree* right;
+	struct token* value;
+};
+
+struct tokenNode make_tokenNode(struct tokenTree* parent, struct tokenTree* left, struct tokenTree* right, struct token* value)
+{
+	struct tokenNode output;
+	output.parent = parent;
+	output.left = left;
+	output.right = right;
+	output.value = value;
+	return output;
+}
+
+void parser(struct token* tokens, sizet min, sizet max, int direction, sizet len)
+{
+	for (int k = 0; k < 
+}
+
 int main(int agsc, char** ags)
 {
 	ddPrint_cstring("\x1b[38;2;255;255;255m");
@@ -129,6 +152,7 @@ int main(int agsc, char** ags)
 
 	sizet tokenCount = 0;
 	struct token* tokens = tokenize_file(make_constant_ddString(ags[1]), &tokenCount);
+	parser(tokens, tokenCount);
 	for (sizet i = 0; i < tokenCount; i++)
 	{
 		printf("%s: %s\n", TKN_STRS[tokens[i].type], tokens[i].value.cstr);
