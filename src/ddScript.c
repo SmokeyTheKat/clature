@@ -65,8 +65,8 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 				(*tokenCount)++;
 				tokens[*tokenCount].type = TKN_OPERATOR;
 				tokens[*tokenCount].value = make_ddString("@");
-				ddString_push_char_back(&(tokens[*tokenCount].value), file.cstr[i+1]);
-				i++;
+				//ddString_push_char_back(&(tokens[*tokenCount].value), file.cstr[i+1]);
+				//i++;
 				inLiteral = false;
 				break;
 			}
@@ -99,6 +99,12 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 				break;
 			}
 
+			case ' ':
+			{
+				inLiteral = false;
+				break;
+			}
+
 
 			default:
 			{
@@ -124,13 +130,13 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 
 struct tokenNode
 {
-	struct tokenTree* parent;
-	struct tokenTree* left;
-	struct tokenTree* right;
+	struct tokenNode* parent;
+	struct tokenNode* left;
+	struct tokenNode* right;
 	struct token* value;
 };
 
-struct tokenNode make_tokenNode(struct tokenTree* parent, struct tokenTree* left, struct tokenTree* right, struct token* value)
+struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left, struct tokenNode* right, struct token* value)
 {
 	struct tokenNode output;
 	output.parent = parent;
@@ -140,9 +146,63 @@ struct tokenNode make_tokenNode(struct tokenTree* parent, struct tokenTree* left
 	return output;
 }
 
-void parser(struct token* tokens, sizet min, sizet max, int direction, sizet len)
+const char charKeys[] = {
+	'=', '@', '+', '-', '*', '/'
+};
+
+void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, sizet len)
 {
-	for (int k = 0; k < 
+	//if (min == max) return;
+	for (int k = 0; k < 6; k++)
+	{
+		bool keyFound = false;
+		for (int i = min; i < max; i++)
+		{
+			if (tokens[i].value.cstr[0] == charKeys[k])
+			{
+				ddPrintf("min:%d   max:%d    i:%d    tkv:%s\n", min, max, i, tokens[i].value.cstr);
+				if (i != min)
+				{
+					struct tokenNode* left = make(struct tokenNode, 1); 
+					(*left) = make_tokenNode(node, nullptr, nullptr, nullptr);
+					parser(tokens, left, min, i, len);
+					node->left = left;
+				}
+
+				if (i != max)
+				{
+					struct tokenNode* right = make(struct tokenNode, 1); 
+					(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+					parser(tokens, right, i+1, max, len);
+					node->right = right;
+				}
+
+				node->value = &(tokens[i]);
+				return;
+			}
+		}
+	}
+	int i = min;
+	if (i == max) return;
+	ddPrintf("min:%d   max:%d    i:%d    tkv:%s\n", min, max, i, tokens[i].value.cstr);
+	if (i != min)
+	{
+		struct tokenNode* left = make(struct tokenNode, 1); 
+		(*left) = make_tokenNode(node, nullptr, nullptr, nullptr);
+		parser(tokens, left, min, i, len);
+		node->left = left;
+	}
+
+	if (i != max)
+	{
+		struct tokenNode* right = make(struct tokenNode, 1); 
+		(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+		parser(tokens, right, i+1, max, len);
+		node->right = right;
+	}
+
+	node->value = &(tokens[i]);
+	return;
 }
 
 int main(int agsc, char** ags)
@@ -152,7 +212,13 @@ int main(int agsc, char** ags)
 
 	sizet tokenCount = 0;
 	struct token* tokens = tokenize_file(make_constant_ddString(ags[1]), &tokenCount);
-	parser(tokens, tokenCount);
+	struct tokenNode* head = make(struct tokenNode, 1);
+	(*head) = make_tokenNode(nullptr, nullptr, nullptr, nullptr);
+	parser(tokens, head, 0, tokenCount, tokenCount);
+	printf("        %s\n", head->value->value.cstr);
+	printf("   %s         %s\n", head->left->value->value.cstr, head->right->value->value.cstr);
+	printf("   %s     %s     %s\n", head->left->right->value->value.cstr, head->right->left->value->value.cstr, head->right->right->value->value.cstr);
+	printf("   %s     %s %s\n", head->left->right->right->value->value.cstr, head->right->left->left->value->value.cstr, head->right->left->right->value->value.cstr);
 	for (sizet i = 0; i < tokenCount; i++)
 	{
 		printf("%s: %s\n", TKN_STRS[tokens[i].type], tokens[i].value.cstr);
