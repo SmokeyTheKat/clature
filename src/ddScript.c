@@ -10,6 +10,7 @@
 #define TKN_OPERATOR 0x02
 #define TKN_SYNTAX 0x03
 
+
 const char* const TKN_STRS[] = {
 	"LITERAL",
 	"KEYWORD",
@@ -205,23 +206,100 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 	return;
 }
 
+void generate_asm(struct tokenNode* node);
+
+void generate_asm_2reg(struct tokenNode* node, const char* opc)
+{
+	ddPrintf("	push r15;\n");
+	ddPrintf("	%s r15, r14;\n", opc);
+	ddPrintf("	pop r15;\n");
+	ddPrintf("	pop r14;\n");
+	generate_asm(node->right);
+	generate_asm(node->left);
+	return;
+}
+void generate_asm_1reg(struct tokenNode* node, const char* opc)
+{
+	ddPrintf("	push r15;\n");
+	ddPrintf("	%s r15;\n", opc);
+	ddPrintf("	pop r15;\n");
+	ddPrintf("	pop rax;\n");
+	generate_asm(node->right);
+	generate_asm(node->left);
+	return;
+}
+
+
+void generate_asm(struct tokenNode* node)
+{
+	if (node == nullptr) return;
+	switch (node->value->value.cstr[0])
+	{
+		case '=':
+		{
+			if (node->left->value->value.cstr[0] == '@')
+			{
+				ddPrintf("	pop %s;\n", node->left->right->right->value->value.cstr);
+				generate_asm(node->right);
+				return;
+			}
+			break;
+		}
+		case '*':
+			generate_asm_1reg(node, "mul");
+			return;
+		case '/':
+			generate_asm_1reg(node, "div");
+			return;
+		case '+':
+			generate_asm_2reg(node, "add");
+			return;
+		case '-':
+			generate_asm_2reg(node, "sub");
+			return;
+		default:
+			ddPrintf("	push %s;\n", node->value->value.cstr);
+			break;
+	}
+}
+
+#include <stdio.h>
+#include <stdlib.h>
+
+ddString read_file(const char* path)
+{
+	FILE* fp = fopen(path, "r");
+	if (fp == null) return make_constant_ddString("ERROR");
+	fseek(fp, 0L, SEEK_END);
+	long nb = ftell(fp) - 1;
+	fseek(fp, 0L, SEEK_SET);
+	char* buffer = (char*)calloc(nb, sizeof(char));
+	fread(buffer, sizeof(char), nb, fp);
+	fclose(fp);
+	return make_ddString(buffer);
+}
+
 int main(int agsc, char** ags)
 {
 	ddPrint_cstring("\x1b[38;2;255;255;255m");
 	if (agsc < 2) compile_error("NO INPUT FILES");
 
 	sizet tokenCount = 0;
-	struct token* tokens = tokenize_file(make_constant_ddString(ags[1]), &tokenCount);
+	ddString file = read_file(ags[1]);
+	ddPrint_ddString_nl(file);
+	ddPrint_int_nl(file.length);
+	struct token* tokens = tokenize_file(file, &tokenCount);
+	for (sizet i = 0; i < tokenCount; i++)
+	{
+		printf("%s: %s - %d\n", TKN_STRS[tokens[i].type], tokens[i].value.cstr, tokens[i].value.length);
+	}
 	struct tokenNode* head = make(struct tokenNode, 1);
 	(*head) = make_tokenNode(nullptr, nullptr, nullptr, nullptr);
 	parser(tokens, head, 0, tokenCount, tokenCount);
-	printf("        %s\n", head->value->value.cstr);
-	printf("   %s         %s\n", head->left->value->value.cstr, head->right->value->value.cstr);
-	printf("   %s     %s     %s\n", head->left->right->value->value.cstr, head->right->left->value->value.cstr, head->right->right->value->value.cstr);
-	printf("   %s     %s %s\n", head->left->right->right->value->value.cstr, head->right->left->left->value->value.cstr, head->right->left->right->value->value.cstr);
-	for (sizet i = 0; i < tokenCount; i++)
-	{
-		printf("%s: %s\n", TKN_STRS[tokens[i].type], tokens[i].value.cstr);
-	}
+	ddPrint_nl();
+	ddPrint_nl();
+	ddPrintf("global _start\n_start:\n");
+	generate_asm(head);
+	ddPrint_nl();
 	return 0;
 }
