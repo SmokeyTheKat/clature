@@ -148,19 +148,48 @@ struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left
 }
 
 const char charKeys[] = {
-	'=', '@', '+', '-', '*', '/'
+	'=', '@', '+', '-', '*', '/', '('
 };
+
+int parser_find_closer(struct token* tokens, sizet len, int start, char obracket, char cbracket)
+{
+	int i = start+1;
+	int layer = 1;
+	for (; layer != 0; i++)
+	{
+		if (tokens[i].value.cstr[0] == obracket)
+		{
+			layer++;
+		}
+		if (tokens[i].value.cstr[0] == cbracket)
+		{
+			layer--;
+		}
+	}
+	return i-1;
+}
 
 void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, sizet len)
 {
-	//if (min == max) return;
-	for (int k = 0; k < 6; k++)
+	for (int k = 0; k < 7; k++)
 	{
 		bool keyFound = false;
 		for (int i = min; i < max; i++)
 		{
 			if (tokens[i].value.cstr[0] == charKeys[k])
 			{
+				if (tokens[i].type == TKN_SYNTAX)
+				{
+					if (tokens[i].value.cstr[0] == '(')
+					{
+						ddPrintf("min:%d   max:%d    i:%d    tkv:%s\n", min, max, i, tokens[i].value.cstr);
+
+						int ndb = parser_find_closer(tokens, len, i, '(', ')');
+
+						parser(tokens, node, i+1, ndb, len);
+						return;
+					}
+				}
 				ddPrintf("min:%d   max:%d    i:%d    tkv:%s\n", min, max, i, tokens[i].value.cstr);
 				if (i != min)
 				{
@@ -180,6 +209,15 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 
 				node->value = &(tokens[i]);
 				return;
+			}
+			if (tokens[i].type == TKN_SYNTAX)
+			{
+				if (tokens[i].value.cstr[0] == '(')
+				{
+					int ndb = parser_find_closer(tokens, max, i, '(', ')');
+					i = ndb;
+					continue;
+				}
 			}
 		}
 	}
@@ -243,6 +281,11 @@ void generate_asm(struct tokenNode* node)
 				generate_asm(node->right);
 				return;
 			}
+			else
+			{
+				ddPrintf("	pop %s;\n", node->left->value->value.cstr);
+				generate_asm(node->right);
+			}
 			break;
 		}
 		case '*':
@@ -258,8 +301,10 @@ void generate_asm(struct tokenNode* node)
 			generate_asm_2reg(node, "sub");
 			return;
 		default:
+		{
 			ddPrintf("	push %s;\n", node->value->value.cstr);
 			break;
+		}
 	}
 }
 
@@ -285,13 +330,13 @@ int main(int agsc, char** ags)
 	if (agsc < 2) compile_error("NO INPUT FILES");
 
 	sizet tokenCount = 0;
-	ddString file = read_file(ags[1]);
-	ddPrint_ddString_nl(file);
-	ddPrint_int_nl(file.length);
+	ddString file = make_constant_ddString(ags[1]);
+	//ddPrint_ddString_nl(file);
+	//ddPrint_int_nl(file.length);
 	struct token* tokens = tokenize_file(file, &tokenCount);
 	for (sizet i = 0; i < tokenCount; i++)
 	{
-		printf("%s: %s - %d\n", TKN_STRS[tokens[i].type], tokens[i].value.cstr, tokens[i].value.length);
+		printf("%s: %s\n", TKN_STRS[tokens[i].type], tokens[i].value.cstr);
 	}
 	struct tokenNode* head = make(struct tokenNode, 1);
 	(*head) = make_tokenNode(nullptr, nullptr, nullptr, nullptr);
