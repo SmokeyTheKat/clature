@@ -26,7 +26,7 @@ struct token
 
 struct token* tokenize_file(ddString file, sizet* tokenCount)
 {
-	struct token* tokens = make(struct token, 100);
+	struct token* tokens = make(struct token, 1000000);
 	(*tokenCount) = -1;
 	bool inLiteral = false;
 	bool inLiteralString = false;
@@ -43,6 +43,7 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 		}
 		switch (file.cstr[i])
 		{
+			case '\n': break;
 			case ';': case '{': case '}': case '[': case ']': case '(': case ')':
 			{
 				(*tokenCount)++;
@@ -148,7 +149,7 @@ struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left
 }
 
 const char charKeys[] = {
-	'=', '@', '+', '-', '*', '/', '('
+	'{', '=', '@', '+', '-', '*', '/', '('
 };
 
 int parser_find_closer(struct token* tokens, sizet len, int start, char obracket, char cbracket)
@@ -169,9 +170,14 @@ int parser_find_closer(struct token* tokens, sizet len, int start, char obracket
 	return i-1;
 }
 
+struct tokenTree
+{
+	struct tokenNode* head;
+};
+
 void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, sizet len)
 {
-	for (int k = 0; k < 7; k++)
+	for (int k = 0; k < 8; k++)
 	{
 		bool keyFound = false;
 		for (int i = min; i < max; i++)
@@ -182,15 +188,12 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 				{
 					if (tokens[i].value.cstr[0] == '(')
 					{
-						ddPrintf("min:%d   max:%d    i:%d    tkv:%s\n", min, max, i, tokens[i].value.cstr);
-
 						int ndb = parser_find_closer(tokens, len, i, '(', ')');
-
 						parser(tokens, node, i+1, ndb, len);
 						return;
 					}
 				}
-				ddPrintf("min:%d   max:%d    i:%d    tkv:%s\n", min, max, i, tokens[i].value.cstr);
+				//ddPrintf("min:%d   max:%d    i:%d    tkv:%s\n", min, max, i, tokens[i].value.cstr);
 				if (i != min)
 				{
 					struct tokenNode* left = make(struct tokenNode, 1); 
@@ -223,7 +226,7 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 	}
 	int i = min;
 	if (i == max) return;
-	ddPrintf("min:%d   max:%d    i:%d    tkv:%s\n", min, max, i, tokens[i].value.cstr);
+	//ddPrintf("min:%d   max:%d    i:%d    tkv:%s\n", min, max, i, tokens[i].value.cstr);
 	if (i != min)
 	{
 		struct tokenNode* left = make(struct tokenNode, 1); 
@@ -267,12 +270,26 @@ void generate_asm_1reg(struct tokenNode* node, const char* opc)
 	return;
 }
 
+struct bitCode
+{
+	int* v;
+};
 
 void generate_asm(struct tokenNode* node)
 {
 	if (node == nullptr) return;
 	switch (node->value->value.cstr[0])
 	{
+		case ';': return;
+		case '{':
+		{
+			generate_asm(node->right);
+			break;
+		}
+		case '}':
+		{
+			break;
+		}
 		case '=':
 		{
 			if (node->left->value->value.cstr[0] == '@')
@@ -318,10 +335,25 @@ ddString read_file(const char* path)
 	fseek(fp, 0L, SEEK_END);
 	long nb = ftell(fp) - 1;
 	fseek(fp, 0L, SEEK_SET);
-	char* buffer = (char*)calloc(nb, sizeof(char));
+	char* buffer = (char*)calloc(nb+1, sizeof(char));
 	fread(buffer, sizeof(char), nb, fp);
 	fclose(fp);
+	buffer[nb] = '\0';
 	return make_ddString(buffer);
+}
+
+sizet tokens_get_command_count(struct token* tokens, sizet tokenCount)
+{
+	sizet semiColons = 0;
+	for (sizet i = 0; i < tokenCount; i++)
+		if (tokens[i].value.cstr[0] == ';') semiColons++;
+	return semiColons;
+}
+int tokens_get_next_command(struct token* tokens, int start, sizet tokenCount)
+{
+	for (sizet i = start; i >= 0; i--)
+		if (tokens[i].value.cstr[0] == ';') return i;
+	return 0;
 }
 
 int main(int agsc, char** ags)
@@ -330,21 +362,35 @@ int main(int agsc, char** ags)
 	if (agsc < 2) compile_error("NO INPUT FILES");
 
 	sizet tokenCount = 0;
-	ddString file = make_constant_ddString(ags[1]);
-	//ddPrint_ddString_nl(file);
-	//ddPrint_int_nl(file.length);
+	ddString file = read_file(ags[1]);
 	struct token* tokens = tokenize_file(file, &tokenCount);
+	ddPrint_int_nl(tokenCount);
+	raze_ddString(&file);
 	for (sizet i = 0; i < tokenCount; i++)
 	{
-		printf("%s: %s\n", TKN_STRS[tokens[i].type], tokens[i].value.cstr);
+		tokens[i].value.cstr[tokens[i].value.length] = '\0';
+		ddPrintf("%d: %s: %s\n", i, TKN_STRS[tokens[i].type], tokens[i].value.cstr);
 	}
-	struct tokenNode* head = make(struct tokenNode, 1);
-	(*head) = make_tokenNode(nullptr, nullptr, nullptr, nullptr);
-	parser(tokens, head, 0, tokenCount, tokenCount);
 	ddPrint_nl();
 	ddPrint_nl();
-	ddPrintf("global _start\n_start:\n");
-	generate_asm(head);
 	ddPrint_nl();
+	ddPrint_nl();
+	ddPrintf("global _start\n_start:\n	push rbp;\n	mov rbp, rsp;\n");
+	sizet commandPos = tokenCount-1;
+	sizet nextCommandPos = tokens_get_next_command(tokens, commandPos-1, tokenCount)+1;
+	while (commandPos > 0)
+	{
+		struct tokenNode* commandHead = make(struct tokenNode, 1);
+		(*commandHead) = make_tokenNode(nullptr, nullptr, nullptr, nullptr);
+		parser(tokens, commandHead, nextCommandPos, commandPos, tokenCount);
+		generate_asm(commandHead);
+		commandPos = nextCommandPos-1;
+		nextCommandPos = tokens_get_next_command(tokens, commandPos-1, tokenCount)+1;
+		if (nextCommandPos == 1) nextCommandPos = 0;
+	}
+	ddPrintf("	mov eax, 0;\n	pop rbp;\n	ret;");
+	ddPrint_nl();
+	ddPrint_nl();
+	raze(tokens);
 	return 0;
 }

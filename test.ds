@@ -1,1 +1,4 @@
-@4 tempVar = 5 * 2 + 3;
+@4 tempVar = 1 + 2 * 3;
+@4 var2 = 2 * tempVar;
+@4 lol = tempVar + var2;
+@4 lal = 69;
