@@ -7,12 +7,14 @@
 #define TKN_KEYWORD 0x01
 #define TKN_OPERATOR 0x02
 #define TKN_SYNTAX 0x03
+#define TKN_ASSEMBLY 0x04
 
 const char* const TKN_STRS[] = {
 	"LITERAL",
 	"KEYWORD",
 	"OPERATOR",
-	"SYNTAX"
+	"SYNTAX",
+	"ASSEMBLY"
 };
 
 struct token
@@ -21,13 +23,40 @@ struct token
 	ddString value;
 };
 
+ddString keywords[6];
+
+void tokenize_get_keyword(struct token* tokens, sizet tc)
+{
+	if (tc < 0) return;
+	tokens[tc].value.cstr[tokens[tc].value.length] = '\0';
+	for (int i = 0; i < 6; i++)
+		if (ddString_compare(tokens[tc].value, keywords[i]))
+			tokens[tc].type = TKN_KEYWORD;
+}
+ddString tokenize_until_semicolon(ddString file, sizet start)
+{
+	ddString output = make_ddString("");
+	for (sizet i = start; file.cstr[i] != ';'; i++)
+	{
+		ddString_push_char_back(&output, file.cstr[i]);
+	}
+	return output;
+}
+
 struct token* tokenize_file(ddString file, sizet* tokenCount)
 {
-	struct token* tokens = make(struct token, 1000000);
+	keywords[0] = make_constant_ddString("if");
+	keywords[1] = make_constant_ddString("while");
+	keywords[2] = make_constant_ddString("for");
+	keywords[3] = make_constant_ddString("sub");
+	keywords[4] = make_constant_ddString("fun");
+	keywords[5] = make_constant_ddString("struct");
+
+	struct token* tokens = make(struct token, 100000000);
 	(*tokenCount) = -1;
 	bool inLiteral = false;
 	bool inLiteralString = false;
-	for (int i = 0; i < file.length; i++)
+	for (sizet i = 0; i < file.length; i++)
 	{
 		if (inLiteralString)
 		{
@@ -40,8 +69,19 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 		}
 		switch (file.cstr[i])
 		{
-			case '\n': break;
-			case ';': case '{': case '}': case '[': case ']': case '(': case ')':
+			case '.':
+				if (tokens[(*tokenCount)].value.cstr[0] == ';')
+				{
+					(*tokenCount)++;
+					tokens[*tokenCount].type = TKN_ASSEMBLY;
+					tokens[*tokenCount].value = tokenize_until_semicolon(file, i);
+					(*tokenCount)++;
+					tokens[*tokenCount].type = TKN_SYNTAX;
+					tokens[*tokenCount].value = make_ddString(";");
+					(*tokenCount)++;
+					return tokens;
+				}
+			case ';': case '{': case '}': case '[': case ']': case '(': case ')': case ',':
 			{
 				(*tokenCount)++;
 				tokens[*tokenCount].type = TKN_SYNTAX;
@@ -98,7 +138,9 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 				break;
 			}
 
+			case '\n':
 			case ' ':
+			case '	':
 			{
 				inLiteral = false;
 				break;
@@ -124,6 +166,11 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 		}
 	}
 	(*tokenCount)++;
+	for (sizet i = 0; i < *tokenCount; i++)
+	{
+		if (tokens[i].type == TKN_LITERAL)
+			tokenize_get_keyword(tokens, i);
+	}
 	return tokens;
 }
 
