@@ -1,4 +1,4 @@
-@4 tempVar = 1 + 2 * 3;
-@4 var2 = 2 * tempVar;
-@4 lol = tempVar + var2;
-@4 lal = 69;
+@4 omg = 9+60;
+@4 yo = omg * 2;
+.mov eax, 10;
+@4 so = (yo + omg - 10) * yo;
