@@ -43,6 +43,12 @@ ddString tokenize_until_semicolon(ddString file, sizet start)
 	return output;
 }
 
+sizet tokenize_goto_semicolon(ddString file, sizet start)
+{
+	for (sizet i = start; i < file.length; i++)
+		if (file.cstr[i] == ';') return i-1;
+}
+
 struct token* tokenize_file(ddString file, sizet* tokenCount)
 {
 	keywords[0] = make_constant_ddString("if");
@@ -75,11 +81,11 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 					(*tokenCount)++;
 					tokens[*tokenCount].type = TKN_ASSEMBLY;
 					tokens[*tokenCount].value = tokenize_until_semicolon(file, i);
-					(*tokenCount)++;
-					tokens[*tokenCount].type = TKN_SYNTAX;
-					tokens[*tokenCount].value = make_ddString(";");
-					(*tokenCount)++;
-					return tokens;
+					i = tokenize_goto_semicolon(file, i);
+					//(*tokenCount)++;
+					//tokens[*tokenCount].type = TKN_SYNTAX;
+					//tokens[*tokenCount].value = make_ddString(";");
+					break;
 				}
 			case ';': case '{': case '}': case '[': case ']': case '(': case ')': case ',':
 			{

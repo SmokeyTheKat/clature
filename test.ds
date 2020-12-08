@@ -1,4 +1,11 @@
 @4 omg = 9+60;
-@4 yo = omg * 2;
-.mov eax, 10;
-@4 so = (yo + omg - 10) * yo;
+.mov byte[rbp-12], 52;
+.mov byte[rbp-11], 53;
+.mov byte[rbp-10], 54;
+.mov rax, 1;
+.mov rdi, 1;
+.sub rbp, 12;
+.mov rsi, rbp;
+.add rbp, 12;
+.mov rdx, 4;
+.syscall;
