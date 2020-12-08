@@ -76,7 +76,7 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 		switch (file.cstr[i])
 		{
 			case '.':
-				if (tokens[(*tokenCount)].value.cstr[0] == ';')
+				if (tokens[(*tokenCount)].value.cstr[0] == ';' || tokens[(*tokenCount)].value.cstr[0] == '{')
 				{
 					(*tokenCount)++;
 					tokens[*tokenCount].type = TKN_ASSEMBLY;
@@ -96,12 +96,40 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 				inLiteral = false;
 				break;
 			}
-			case '+': case '-': case '*': case '/': case '<': case '>':
+			case '+': case '-': case '*': case '/':
 			{
 				(*tokenCount)++;
 				tokens[*tokenCount].type = TKN_OPERATOR;
 				tokens[*tokenCount].value = make_multi_ddString_cstring(" ", 1);
 				tokens[*tokenCount].value.cstr[0] = file.cstr[i];
+				inLiteral = false;
+				break;
+			}
+			case '<':
+			{
+				(*tokenCount)++;
+				tokens[*tokenCount].type = TKN_OPERATOR;
+				if (file.cstr[i+1] == '=')
+				{
+					tokens[*tokenCount].value = make_ddString("<=");
+					i++;
+				}
+				else
+					tokens[*tokenCount].value = make_ddString("<");
+				inLiteral = false;
+				break;
+			}
+			case '>':
+			{
+				(*tokenCount)++;
+				tokens[*tokenCount].type = TKN_OPERATOR;
+				if (file.cstr[i+1] == '=')
+				{
+					tokens[*tokenCount].value = make_ddString(">=");
+					i++;
+				}
+				else
+					tokens[*tokenCount].value = make_ddString(">");
 				inLiteral = false;
 				break;
 			}

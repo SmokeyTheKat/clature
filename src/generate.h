@@ -5,7 +5,7 @@ void generate_asm(struct tokenNode* node, ddString* asmBuffer, sizet* lineCount)
 
 void generate_asm_2reg(struct tokenNode* node, const char* opc, ddString* asmBuffer, sizet* lineCount)
 {
-	ddString_format(&(asmBuffer[*lineCount]), "	push rax;\n");
+	ddString_format(&(asmBuffer[*lineCount]), "	push r15;\n");
 	(*lineCount)++;
 	ddString_format(&(asmBuffer[*lineCount]), "	%s r15, r14;\n", opc);
 	(*lineCount)++;
@@ -90,6 +90,8 @@ void generate_print_var(ddString name, ddString* asmBuffer, sizet* lineCount)
 	ddString_push_back(&(asmBuffer[*lineCount]), name);
 }
 
+sizet scope = 0;
+
 void generate_asm(struct tokenNode* node, ddString* asmBuffer, sizet* lineCount)
 {
 	if (node == nullptr) return;
@@ -103,7 +105,17 @@ void generate_asm(struct tokenNode* node, ddString* asmBuffer, sizet* lineCount)
 	}
 	if (node->value->type == TKN_KEYWORD)
 	{
-		ddPrintf("FOSDF");
+		ddPrint_ddString_nl(node->value->value);
+		if (ddString_compare_cstring(node->value->value, "if"))
+		{
+			ddString_format(&(asmBuffer[*lineCount]), "	je SC%d;\n", scope+1);
+			(*lineCount)++;
+			ddString_format(&(asmBuffer[*lineCount]), "	cmp r15, 0;\n");
+			(*lineCount)++;
+			ddString_format(&(asmBuffer[*lineCount]), "	pop r15;\n");
+			(*lineCount)++;
+			generate_asm(node->right, asmBuffer, lineCount);
+		}
 		return;
 	}
 	switch (node->value->value.cstr[0])
@@ -112,14 +124,134 @@ void generate_asm(struct tokenNode* node, ddString* asmBuffer, sizet* lineCount)
 		case '{':
 		{
 			generate_asm(node->right, asmBuffer, lineCount);
+			scope++;
 			break;
 		}
 		case '}':
 		{
+			ddString_format(&(asmBuffer[*lineCount]), "SC%d:\n", scope);
+			(*lineCount)++;
 			break;
+		}
+		case '>':
+		{
+			if (node->value->value.cstr[1] == '=')
+			{
+				ddString_format(&(asmBuffer[*lineCount]), "	push r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	movzx r15, al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	setg al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	cmp r14, r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r14;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r15;\n");
+				(*lineCount)++;
+				generate_asm(node->left, asmBuffer, lineCount);
+				generate_asm(node->right, asmBuffer, lineCount);
+				return;
+			}
+			else
+			{
+				ddString_format(&(asmBuffer[*lineCount]), "	push r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	movzx r15, al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	setge al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	cmp r14, r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r14;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r15;\n");
+				(*lineCount)++;
+				generate_asm(node->left, asmBuffer, lineCount);
+				generate_asm(node->right, asmBuffer, lineCount);
+				return;
+			}
+		}
+		case '<':
+		{
+			if (node->value->value.cstr[1] == '=')
+			{
+				ddString_format(&(asmBuffer[*lineCount]), "	push r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	movzx r15, al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	setl al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	cmp r14, r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r14;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r15;\n");
+				(*lineCount)++;
+				generate_asm(node->left, asmBuffer, lineCount);
+				generate_asm(node->right, asmBuffer, lineCount);
+				return;
+			}
+			else
+			{
+				ddString_format(&(asmBuffer[*lineCount]), "	push r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	movzx r15, al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	setle al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	cmp r14, r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r14;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r15;\n");
+				(*lineCount)++;
+				generate_asm(node->left, asmBuffer, lineCount);
+				generate_asm(node->right, asmBuffer, lineCount);
+				return;
+			}
+		}
+		case '!':
+		{
+			if (node->value->value.cstr[1] == '=')
+			{
+				ddString_format(&(asmBuffer[*lineCount]), "	push r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	movzx r15, al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	setne al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	cmp r14, r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r14;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r15;\n");
+				(*lineCount)++;
+				generate_asm(node->left, asmBuffer, lineCount);
+				generate_asm(node->right, asmBuffer, lineCount);
+				return;
+			}
 		}
 		case '=':
 		{
+			if (node->value->value.cstr[1] == '=')
+			{
+				ddString_format(&(asmBuffer[*lineCount]), "	push r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	movzx r15, al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	sete al;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	cmp r14, r15;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r14;\n");
+				(*lineCount)++;
+				ddString_format(&(asmBuffer[*lineCount]), "	pop r15;\n");
+				(*lineCount)++;
+				generate_asm(node->left, asmBuffer, lineCount);
+				generate_asm(node->right, asmBuffer, lineCount);
+				return;
+			}
 			if (node->left->value->value.cstr[0] == '@')
 			{
 				generate_add_var(node->left->right->right->value->value, ddString_to_int(node->left->right->value->value));

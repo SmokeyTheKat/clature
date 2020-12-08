@@ -53,6 +53,15 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 		bool keyFound = false;
 		for (int i = min; i < max; i++)
 		{
+			if (tokens[i].type == TKN_KEYWORD)
+			{
+				node->value = &(tokens[i]);
+				struct tokenNode* right = make(struct tokenNode, 1); 
+				(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+				parser(tokens, right, i+1, max, len);
+				node->right = right;
+				return;
+			}
 			if (tokens[i].value.cstr[0] == charKeys[k])
 			{
 				if (tokens[i].type == TKN_SYNTAX)
