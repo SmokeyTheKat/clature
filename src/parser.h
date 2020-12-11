@@ -55,6 +55,18 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 		{
 			if (tokens[i].type == TKN_KEYWORD)
 			{
+				if (ddString_compare_cstring(tokens[i].value, "sub"))
+				{
+					for (sizet i = min; i < max; i++)
+					{
+						node->value = &(tokens[i]);
+						struct tokenNode* right = make(struct tokenNode, 1); 
+						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+						node->right = right;
+						node = node->right;
+					}
+					return;
+				}
 				node->value = &(tokens[i]);
 				struct tokenNode* right = make(struct tokenNode, 1); 
 				(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
