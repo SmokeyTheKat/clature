@@ -1,6 +1,5 @@
 sub @8 printTrue(@8 var);
 {
-	@8 over = 9 * 2;
 	.mov	byte[rbp-54], 't';
 	.mov	byte[rbp-53], 'r';
 	.mov	byte[rbp-52], 'u';
@@ -14,34 +13,22 @@ sub @8 printTrue(@8 var);
 	.mov	rdx, 4;
 	.syscall;
 };
-sub @8 pv(@8 print);
+sub @8 printNum(@8 num);
 {
-	print = print + 48;
+	num = num + 48;
 	.mov	rax, 1;
 	.mov	rdi, 1;
 	.add	rbp, 16;
 	.mov	rsi, rbp;
 	.sub	rbp, 16;
-	.mov	rdx, 1;
+	.mov	rdx, 4;
 	.syscall;
 };
-sub @8 pr8(@8 key);
+
+@8 i = 0;
+
+while (i < 10);
 {
-	.mov	r10, r8;
-	.add	r10, 48;
-	.mov	qword[rbp-8], r10;
-	.mov	rax, 1;
-	.mov	rdi, 1;
-	.sub	rbp, 8;
-	.mov	rsi, rbp;
-	.add	rbp, 8;
-	.mov	rdx, 1;
-	.syscall;
+	iso printNum(i);
+	i = i + 1;
 };
-sub @8 timestwo(@8 x);
-{
-	x = x * 2;
-	return x;
-};
-@8 num = 1 + timestwo(2) * 2;
-iso pv(num);

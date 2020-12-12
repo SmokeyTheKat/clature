@@ -99,7 +99,8 @@ void write_bitcode(struct bitcode* code, ddString* outp)
 		make_constant_ddString("ret"),
 		make_constant_ddString("cdqe"),
 		make_constant_ddString("movsx"),
-		make_constant_ddString("call")
+		make_constant_ddString("call"),
+		make_constant_ddString("jmp")
 	};
 	ddString tb = make_constant_ddString("	");
 	ddString cn = make_constant_ddString(":");
