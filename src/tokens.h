@@ -174,7 +174,7 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 			case '!':
 			{
 				(*tokenCount)++;
-				tokens[i].type = TKN_OPERATOR;
+				tokens[*tokenCount].type = TKN_OPERATOR;
 				if (file.cstr[i+1] == '=')
 				{
 					tokens[*tokenCount].value = make_ddString("!=");

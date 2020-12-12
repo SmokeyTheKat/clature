@@ -20,7 +20,7 @@ struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left
 }
 
 const char charKeys[] = {
-	'{', '=', '@', '+', '-', '*', '/', '('
+	'{', '=', '@', '+', '-', '*', '/', '<', '>', '!', '('
 };
 
 int parser_find_closer(struct token* tokens, sizet len, int start, char obracket, char cbracket)
@@ -48,7 +48,7 @@ struct tokenTree
 
 void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, sizet len)
 {
-	for (int k = 0; k < 8; k++)
+	for (int k = 0; k < 11; k++)
 	{
 		bool keyFound = false;
 		for (int i = min; i < max; i++)
@@ -74,7 +74,7 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 				node->right = right;
 				return;
 			}
-			if (tokens[i].value.cstr[0] == charKeys[k])
+			if (tokens[i].value.cstr[0] == charKeys[k] || tokens[i].value.cstr[1] == charKeys[k])
 			{
 				if (tokens[i].type == TKN_SYNTAX)
 				{

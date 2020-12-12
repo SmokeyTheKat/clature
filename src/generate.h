@@ -44,8 +44,10 @@ void init_generation(void);
 void generate_add_var(ddString name, int size);
 void generate_add_function(ddString name, sizet retSize);
 void generate_print_var(ddString name, struct bitcode* code);
+void generate_switch_stacks(void);
 
 struct stackTracker stackt;
+struct stackTracker fstackt;
 struct functionTracker functiont;
 struct functionTracker functiont;
 sizet scope = 0;
@@ -144,6 +146,8 @@ void init_generation(void)
 	init_regs();
 	stackt.top = 0;
 	stackt.size = 0;
+	fstackt.top = 0;
+	fstackt.size = 0;
 	functiont.size = 0;
 }
 
@@ -161,6 +165,13 @@ void generate_add_function(ddString name, sizet retSize)
 	functiont.funs[functiont.size].name = name;
 	functiont.funs[functiont.size].retSize = retSize;
 	functiont.size++;
+}
+
+void generate_switch_stacks(void)
+{
+	struct stackTracker temp = stackt;
+	stackt = fstackt;
+	fstackt = temp;
 }
 
 void generate_print_var(ddString name, struct bitcode* code)
@@ -202,6 +213,9 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 			if (!inFunction)
 			{
 				inFunction = true;
+				fstackt.size = 0;
+				fstackt.top = 0;
+				generate_switch_stacks();
 				generate_asm(node, &functionCode);
 				return;
 			}
@@ -231,6 +245,7 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 			if (inFunction && lscope == 0)
 			{
 				inFunction = false;
+				generate_switch_stacks();
 				generate_write_btc(code, BTC_POP, REG_RBP, REG_NONE);
 				generate_write_btc(code, BTC_RET, REG_NONE, REG_NONE);
 			}
@@ -240,26 +255,26 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 		{
 			if (node->value->value.cstr[1] == '=')
 			{
-				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
-				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
-				generate_write_btc(code, BTC_SETG, REG_AL, REG_NONE);
-				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_asm(node->right, code);
+				generate_asm(node->left, code);
 				generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
 				generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
-				generate_asm(node->left, code);
-				generate_asm(node->right, code);
+				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_write_btc(code, BTC_SETGE, REG_AL, REG_NONE);
+				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
+				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
 				return;
 			}
 			else
 			{
-				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
-				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
-				generate_write_btc(code, BTC_SETGE, REG_AL, REG_NONE);
-				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_asm(node->right, code);
+				generate_asm(node->left, code);
 				generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
 				generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
-				generate_asm(node->left, code);
-				generate_asm(node->right, code);
+				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_write_btc(code, BTC_SETG, REG_AL, REG_NONE);
+				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
+				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
 				return;
 			}
 		}
@@ -267,26 +282,26 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 		{
 			if (node->value->value.cstr[1] == '=')
 			{
-				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
-				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
-				generate_write_btc(code, BTC_SETL, REG_AL, REG_NONE);
-				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_asm(node->right, code);
+				generate_asm(node->left, code);
 				generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
 				generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
-				generate_asm(node->left, code);
-				generate_asm(node->right, code);
+				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_write_btc(code, BTC_SETLE, REG_AL, REG_NONE);
+				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
+				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
 				return;
 			}
 			else
 			{
-				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
-				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
-				generate_write_btc(code, BTC_SETLE, REG_AL, REG_NONE);
-				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_asm(node->right, code);
+				generate_asm(node->left, code);
 				generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
 				generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
-				generate_asm(node->left, code);
-				generate_asm(node->right, code);
+				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_write_btc(code, BTC_SETL, REG_AL, REG_NONE);
+				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
+				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
 				return;
 			}
 		}
@@ -294,14 +309,14 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 		{
 			if (node->value->value.cstr[1] == '=')
 			{
-				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
-				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
-				generate_write_btc(code, BTC_SETNE, REG_AL, REG_NONE);
-				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_asm(node->right, code);
+				generate_asm(node->left, code);
 				generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
 				generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
-				generate_asm(node->left, code);
-				generate_asm(node->right, code);
+				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_write_btc(code, BTC_SETNE, REG_AL, REG_NONE);
+				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
+				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
 				return;
 			}
 		}

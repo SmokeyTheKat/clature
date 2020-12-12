@@ -1,4 +1,21 @@
 @8 value = 69;
+sub @8 printTrue(@8 var);
+{
+	@8 funvar = 19-9;
+	@4 fun2var = 5*2;
+	.mov	byte[rbp-4], 't';
+	.mov	byte[rbp-3], 'r';
+	.mov	byte[rbp-2], 'u';
+	.mov	byte[rbp-1], 'e';
+	.mov	byte[rbp-0], 0;
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.sub	rbp, 4;
+	.mov	rsi, rbp;
+	.add	rbp, 4;
+	.mov	rdx, 4;
+	.syscall;
+};
 sub @8 caller(@8 var);
 {
 	.mov	byte[rbp-5], 'h';
@@ -59,7 +76,36 @@ sub @8 printR11(@8 var);
 	.mov	rdx, 1;
 	.syscall;
 };
+sub @8 printSpace(@8 var);
+{
+	.mov	byte[rbp-1], ' ';
+	.mov	byte[rbp-0], 0;
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.sub	rbp, 1;
+	.mov	rsi, rbp;
+	.add 	rbp, 1;
+	.mov	rdx, 1;
+	.syscall;
+};
 .call	printHead;
 .mov	r11, 6;
 .call	R11Add2;
 .call	printR11;
+.call	printSpace;
+.call	printSpace;
+.call	printSpace;
+.call	printSpace;
+@8 var2 = 2 * 4;
+if (var2 == 8);
+{
+	.call	printTrue;
+	.call	printSpace;
+	.call	printSpace;
+};
+if (8 >= var2);
+{
+	.call	printTrue;
+	.call	printSpace;
+	.call	printSpace;
+};
