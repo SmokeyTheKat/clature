@@ -1,6 +1,8 @@
 #ifndef __ddScript_compile_h__
 #define __ddScript_compile_h__
 
+#include <ddcTime.h>
+
 #include "./generate.h"
 #include "./tokens.h"
 #include "regs.h"
@@ -105,6 +107,8 @@ void write_bitcode(struct bitcode* code, ddString* outp)
 	ddString ed = make_constant_ddString(";\n");
 	ddString nl = make_constant_ddString("\n");
 	ddString gb = make_constant_ddString("global ");
+	outp->cstr = make(char, 1000000000);
+	outp->capacity = 1000000000;
 	while (code->next!= nullptr)
 	{
 		switch (code->opc)
