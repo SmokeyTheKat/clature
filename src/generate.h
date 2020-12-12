@@ -1,6 +1,8 @@
 #ifndef __ddScript_generate_h__
 #define __ddScript_generate_h__
 
+#include "./regs.h"
+
 #define BTC_PUSH	0x00
 #define BTC_POP		0x01
 #define BTC_MOV		0x02
@@ -22,44 +24,42 @@
 #define BTC_JGE		0x12
 #define BTC_JL		0x13
 #define BTC_JLE		0x14
+#define BTC_LABEL	0x15
+#define BTC_GLOBAL	0x16
+#define BTC_SYSCALL	0x17
+#define BTC_ILA		0x18
+#define BTC_RET		0x19
 
-struct bitcode
-{
-	int instruction;
-	ddString a;
-	ddString b;
+struct variable;
+struct stackTracker;
+struct function;
+struct functionTracker;
+struct bitcode;
+
+void generate_asm(struct tokenNode* node, struct bitcode** code);
+void generate_write_btc(struct bitcode** codePtr, int opc, ddString lhs, ddString rhs);
+void generate_asm_2reg(struct tokenNode* node, int opc, struct bitcode** code);
+void generate_asm_1reg(struct tokenNode* node, int opc, struct bitcode** code);
+void init_generation(void);
+void generate_add_var(ddString name, int size);
+void generate_add_function(ddString name, sizet retSize);
+void generate_print_var(ddString name, struct bitcode* code);
+
+struct stackTracker stackt;
+struct functionTracker functiont;
+struct functionTracker functiont;
+sizet scope = 0;
+sizet lscope = 0;
+extern bool inFunction;
+extern struct bitcode* functionCode;
+
+const char* ASM_SIZES[5] = {
+	"",
+	"byte",
+	"word",
+	"",
+	"dword"
 };
-
-void generate_asm(struct tokenNode* node, ddString* asmBuffer, sizet* lineCount);
-
-void generate_asm_2reg(struct tokenNode* node, const char* opc, ddString* asmBuffer, sizet* lineCount)
-{
-	ddString_format(&(asmBuffer[*lineCount]), "	push	r15;\n");
-	(*lineCount)++;
-	ddString_format(&(asmBuffer[*lineCount]), "	%s	r15, r14;\n", opc);
-	(*lineCount)++;
-	ddString_format(&(asmBuffer[*lineCount]), "	pop	r15;\n");
-	(*lineCount)++;
-	ddString_format(&(asmBuffer[*lineCount]), "	pop	r14;\n");
-	(*lineCount)++;
-	generate_asm(node->right, asmBuffer, lineCount);
-	generate_asm(node->left, asmBuffer, lineCount);
-	return;
-}
-void generate_asm_1reg(struct tokenNode* node, const char* opc, ddString* asmBuffer, sizet* lineCount)
-{
-	ddString_format(&(asmBuffer[*lineCount]), "	push	rax;\n");
-	(*lineCount)++;
-	ddString_format(&(asmBuffer[*lineCount]), "	%s	r15;\n", opc);
-	(*lineCount)++;
-	ddString_format(&(asmBuffer[*lineCount]), "	pop	r15;\n");
-	(*lineCount)++;
-	ddString_format(&(asmBuffer[*lineCount]), "	pop	rax;\n");
-	(*lineCount)++;
-	generate_asm(node->right, asmBuffer, lineCount);
-	generate_asm(node->left, asmBuffer, lineCount);
-	return;
-}
 
 struct variable
 {
@@ -88,12 +88,60 @@ struct functionTracker
 	struct function funs[500];
 };
 
-struct functionTracker functiont;
+struct bitcode
+{
+	int opc;
+	ddString lhs;
+	ddString rhs;
+	struct bitcode* next;
+	struct bitcode* prev;
+};
 
-static struct stackTracker stackt;
+
+void generate_write_btc(struct bitcode** codePtr, int opc, ddString lhs, ddString rhs)
+{
+/*
+	if (rhs.length == 0 && lhs.length != 0)
+		ddPrintf("opc: %d    lhs: %s\n", opc, lhs.cstr, rhs.cstr);
+	else if (rhs.length == 0 && lhs.length == 0)
+		ddPrintf("opc: %d\n", opc, lhs.cstr, rhs.cstr);
+	else
+		ddPrintf("opc: %d    lhs: %s    rhs: %s\n", opc, lhs.cstr, rhs.cstr);
+*/
+	(*codePtr)->opc = opc;
+	(*codePtr)->lhs = lhs;
+	(*codePtr)->rhs = rhs;
+	struct bitcode* nbtc = make(struct bitcode, 1);
+	(*codePtr)->next = nbtc;
+	(*codePtr)->next->prev = (*codePtr);
+	(*codePtr) = (*codePtr)->next;
+}
+
+void generate_asm_2reg(struct tokenNode* node, int opc, struct bitcode** code)
+{
+	generate_asm(node->left, code);
+	generate_asm(node->right, code);
+	generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
+	generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
+	generate_write_btc(code, opc, REG_R15, REG_R14);
+	generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
+	return;
+}
+
+void generate_asm_1reg(struct tokenNode* node, int opc, struct bitcode** code)
+{
+	generate_asm(node->left, code);
+	generate_asm(node->right, code);
+	generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
+	generate_write_btc(code, BTC_POP, REG_RAX, REG_NONE);
+	generate_write_btc(code, opc, REG_R15, REG_NONE);
+	generate_write_btc(code, BTC_PUSH, REG_RAX, REG_NONE);
+	return;
+}
 
 void init_generation(void)
 {
+	init_regs();
 	stackt.top = 0;
 	stackt.size = 0;
 	functiont.size = 0;
@@ -115,15 +163,7 @@ void generate_add_function(ddString name, sizet retSize)
 	functiont.size++;
 }
 
-const char* ASM_SIZES[5] = {
-	"",
-	"byte",
-	"word",
-	"",
-	"dword"
-};
-
-void generate_print_var(ddString name, ddString* asmBuffer, sizet* lineCount)
+void generate_print_var(ddString name, struct bitcode* code)
 {
 	for (sizet i = 0; i < stackt.top; i++)
 	{
@@ -131,54 +171,45 @@ void generate_print_var(ddString name, ddString* asmBuffer, sizet* lineCount)
 		stackt.vars[i].name.cstr[stackt.vars[i].name.length] = '\0';
 		if (ddString_compare(name, stackt.vars[i].name))
 		{
-			ddString fmt = make_ddString("");
-			ddString_format(&fmt, "qword [rbp-%d]", stackt.vars[i].spos);
-			ddString_push_back(&(asmBuffer[*lineCount]), fmt);
-			raze_ddString(&fmt);
+			code->lhs = make_format_ddString("qword [rbp-%d]", stackt.vars[i].spos);
 			return;
 		}
 	}
-	ddString_push_back(&(asmBuffer[*lineCount]), name);
+	code->lhs = name;
 }
 
-sizet scope = 0;
-
-void generate_asm(struct tokenNode* node, ddString* asmBuffer, sizet* lineCount)
+void generate_asm(struct tokenNode* node, struct bitcode** code)
 {
 	if (node == nullptr) return;
 	if (node->value->type == TKN_ASSEMBLY)
 	{
 		node->value->value.cstr[0] = '	';
-		remake_ddString(&(asmBuffer[*lineCount]), node->value->value.cstr);
-		ddString_push_cstring_back(&(asmBuffer[*lineCount]), ";\n");
-		(*lineCount)++;
+		generate_write_btc(code, BTC_ILA, node->value->value, REG_NONE);
 		return;
 	}
 	if (node->value->type == TKN_KEYWORD)
 	{
 		if (ddString_compare_cstring(node->value->value, "if"))
 		{
-			ddString_format(&(asmBuffer[*lineCount]), "	je	SC%d;\n", scope+1);
-			(*lineCount)++;
-			ddString_format(&(asmBuffer[*lineCount]), "	cmp	r15, 0;\n");
-			(*lineCount)++;
-			ddString_format(&(asmBuffer[*lineCount]), "	pop	r15;\n");
-			(*lineCount)++;
-			generate_asm(node->right, asmBuffer, lineCount);
+			generate_asm(node->right, code);
+			generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
+			generate_write_btc(code, BTC_CMP, REG_R15, make_constant_ddString("0"));
+			generate_write_btc(code, BTC_JE, make_format_ddString("SC%d", scope+1), REG_NONE);
 			return;
 		}
 		if (ddString_compare_cstring(node->value->value, "sub"))
 		{
+			if (!inFunction)
+			{
+				inFunction = true;
+				generate_asm(node, &functionCode);
+				return;
+			}
 			generate_add_function(node->right->right->right->value->value, ddString_to_int(node->right->right->value->value));
-			ddString_format(&(asmBuffer[*lineCount]), "%s:\n", functiont.funs[functiont.size-1].name.cstr);
-			(*lineCount)++;
-			ddString_format(&(asmBuffer[*lineCount]), "	push rbp;\n");
-			(*lineCount)++;
-			ddString_format(&(asmBuffer[*lineCount]), "	mov rbp, rsp;\n");
-			(*lineCount)++;
-			ddString_format(&(asmBuffer[*lineCount]), "	pop rbp;\n");
-			(*lineCount)++;
-			generate_asm(node->right, asmBuffer, lineCount);
+			generate_asm(node->right, code);
+			generate_write_btc(code, BTC_LABEL, make_format_ddString("%s", functiont.funs[functiont.size-1].name.cstr), REG_NONE);
+			generate_write_btc(code, BTC_PUSH, REG_RBP, REG_NONE);
+			generate_write_btc(code, BTC_MOV, REG_RBP, REG_RSP);
 		}
 		return;
 	}
@@ -187,52 +218,48 @@ void generate_asm(struct tokenNode* node, ddString* asmBuffer, sizet* lineCount)
 		case ';': return;
 		case '{':
 		{
-			generate_asm(node->right, asmBuffer, lineCount);
+			generate_asm(node->right, code);
 			scope++;
+			lscope++;
 			break;
 		}
 		case '}':
 		{
-			ddString_format(&(asmBuffer[*lineCount]), "SC%d:\n", scope);
-			(*lineCount)++;
+			generate_write_btc(code, BTC_LABEL, make_format_ddString("SC%d", scope), REG_NONE);
+			//scope--;
+			lscope--;
+			if (inFunction && lscope == 0)
+			{
+				inFunction = false;
+				generate_write_btc(code, BTC_POP, REG_RBP, REG_NONE);
+				generate_write_btc(code, BTC_RET, REG_NONE, REG_NONE);
+			}
 			break;
 		}
 		case '>':
 		{
 			if (node->value->value.cstr[1] == '=')
 			{
-				ddString_format(&(asmBuffer[*lineCount]), "	push	r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	movzx	r15, al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	setg	al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	cmp	r14, r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r14;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r15;\n");
-				(*lineCount)++;
-				generate_asm(node->left, asmBuffer, lineCount);
-				generate_asm(node->right, asmBuffer, lineCount);
+				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
+				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
+				generate_write_btc(code, BTC_SETG, REG_AL, REG_NONE);
+				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
+				generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
+				generate_asm(node->left, code);
+				generate_asm(node->right, code);
 				return;
 			}
 			else
 			{
-				ddString_format(&(asmBuffer[*lineCount]), "	push	r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	movzx	r15, al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	setge	al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	cmp	r14, r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r14;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r15;\n");
-				(*lineCount)++;
-				generate_asm(node->left, asmBuffer, lineCount);
-				generate_asm(node->right, asmBuffer, lineCount);
+				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
+				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
+				generate_write_btc(code, BTC_SETGE, REG_AL, REG_NONE);
+				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
+				generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
+				generate_asm(node->left, code);
+				generate_asm(node->right, code);
 				return;
 			}
 		}
@@ -240,38 +267,26 @@ void generate_asm(struct tokenNode* node, ddString* asmBuffer, sizet* lineCount)
 		{
 			if (node->value->value.cstr[1] == '=')
 			{
-				ddString_format(&(asmBuffer[*lineCount]), "	push	r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	movzx	r15, al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	setl	al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	cmp	r14, r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r14;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r15;\n");
-				(*lineCount)++;
-				generate_asm(node->left, asmBuffer, lineCount);
-				generate_asm(node->right, asmBuffer, lineCount);
+				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
+				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
+				generate_write_btc(code, BTC_SETL, REG_AL, REG_NONE);
+				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
+				generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
+				generate_asm(node->left, code);
+				generate_asm(node->right, code);
 				return;
 			}
 			else
 			{
-				ddString_format(&(asmBuffer[*lineCount]), "	push	r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	movzx	r15, al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	setle	al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	cmp	r14, r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r14;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r15;\n");
-				(*lineCount)++;
-				generate_asm(node->left, asmBuffer, lineCount);
-				generate_asm(node->right, asmBuffer, lineCount);
+				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
+				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
+				generate_write_btc(code, BTC_SETLE, REG_AL, REG_NONE);
+				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
+				generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
+				generate_asm(node->left, code);
+				generate_asm(node->right, code);
 				return;
 			}
 		}
@@ -279,20 +294,14 @@ void generate_asm(struct tokenNode* node, ddString* asmBuffer, sizet* lineCount)
 		{
 			if (node->value->value.cstr[1] == '=')
 			{
-				ddString_format(&(asmBuffer[*lineCount]), "	push	r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	movzx	r15, al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	setne	al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	cmp	r14, r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r14;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r15;\n");
-				(*lineCount)++;
-				generate_asm(node->left, asmBuffer, lineCount);
-				generate_asm(node->right, asmBuffer, lineCount);
+				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
+				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
+				generate_write_btc(code, BTC_SETNE, REG_AL, REG_NONE);
+				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
+				generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
+				generate_asm(node->left, code);
+				generate_asm(node->right, code);
 				return;
 			}
 		}
@@ -300,35 +309,27 @@ void generate_asm(struct tokenNode* node, ddString* asmBuffer, sizet* lineCount)
 		{
 			if (node->value->value.cstr[1] == '=')
 			{
-				ddString_format(&(asmBuffer[*lineCount]), "	push	r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	movzx	r15, al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	sete	al;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	cmp	r14, r15;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r14;\n");
-				(*lineCount)++;
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	r15;\n");
-				(*lineCount)++;
-				generate_asm(node->left, asmBuffer, lineCount);
-				generate_asm(node->right, asmBuffer, lineCount);
+				generate_asm(node->left, code);
+				generate_asm(node->right, code);
+				generate_write_btc(code, BTC_POP, REG_R15, REG_NONE);
+				generate_write_btc(code, BTC_POP, REG_R14, REG_NONE);
+				generate_write_btc(code, BTC_CMP, REG_R14, REG_R15);
+				generate_write_btc(code, BTC_SETE, REG_AL, REG_NONE);
+				generate_write_btc(code, BTC_MOVZX, REG_R15, REG_AL);
+				generate_write_btc(code, BTC_PUSH, REG_R15, REG_NONE);
 				return;
 			}
 			if (node->left->value->value.cstr[0] == '@')
 			{
 				generate_add_var(node->left->right->right->value->value, ddString_to_int(node->left->right->value->value));
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	qword[rbp-%d];\n", stackt.vars[stackt.top-1].spos);
-				(*lineCount)++;
-				generate_asm(node->right, asmBuffer, lineCount);
+				generate_asm(node->right, code);
+				generate_write_btc(code, BTC_POP, make_format_ddString("qword[rbp-%d]", stackt.vars[stackt.top-1].spos), REG_NONE);
 				return;
 			}
 			else
 			{
-				ddString_format(&(asmBuffer[*lineCount]), "	pop	qword[rbp-%d];\n", stackt.vars[stackt.top-1].spos, node->left->value->value.cstr);
-				(*lineCount)++;
-				generate_asm(node->right, asmBuffer, lineCount);
+				generate_asm(node->right, code);
+				generate_write_btc(code, BTC_POP, make_format_ddString("qword[rbp-%d]", stackt.vars[stackt.top-1].spos, node->left->value->value.cstr), REG_NONE);
 			}
 			break;
 		}
@@ -338,24 +339,25 @@ void generate_asm(struct tokenNode* node, ddString* asmBuffer, sizet* lineCount)
 			break;
 		}
 		case '*':
-			generate_asm_1reg(node, "mul", asmBuffer, lineCount);
+			generate_asm_1reg(node, BTC_MUL, code);
 			return;
 		case '/':
-			generate_asm_1reg(node, "div", asmBuffer, lineCount);
+			generate_asm_1reg(node, BTC_DIV, code);
 			return;
 		case '+':
-			generate_asm_2reg(node, "add", asmBuffer, lineCount);
+			generate_asm_2reg(node, BTC_ADD, code);
 			return;
 		case '-':
-			generate_asm_2reg(node, "sub", asmBuffer, lineCount);
+			generate_asm_2reg(node, BTC_SUB, code);
 			return;
 		default:
 		{
-			asmBuffer[*lineCount].length = 0;
-			ddString_push_cstring_back(&(asmBuffer[*lineCount]), "	push	");
-			generate_print_var(node->value->value, asmBuffer, lineCount);
-			ddString_push_cstring_back(&(asmBuffer[*lineCount]), ";\n");
-			(*lineCount)++;
+			(*code)->opc = BTC_PUSH;
+			generate_print_var(node->value->value, (*code));
+			(*code)->rhs = REG_NONE;
+			(*code)->next = make(struct bitcode, 1);
+			(*code)->next->prev = (*code);
+			(*code )= (*code)->next;
 			break;
 		}
 	}

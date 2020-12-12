@@ -25,6 +25,20 @@ struct token
 
 ddString keywords[6];
 
+sizet tokens_get_command_count(struct token* tokens, sizet tokenCount)
+{
+	sizet semiColons = 0;
+	for (sizet i = 0; i < tokenCount; i++)
+		if (tokens[i].value.cstr[0] == ';') semiColons++;
+	return semiColons;
+}
+int tokens_get_next_command(struct token* tokens, int start, sizet tokenCount)
+{
+	for (sizet i = start; i < tokenCount; i++)
+		if (tokens[i].value.cstr[0] == ';') return i;
+	return 0;
+}
+
 void tokenize_get_keyword(struct token* tokens, sizet tc)
 {
 	if (tc < 0) return;
