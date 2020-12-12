@@ -25,7 +25,7 @@ struct token
 	ddString value;
 };
 
-ddString keywords[7];
+ddString keywords[8];
 
 sizet tokens_get_command_count(struct token* tokens, sizet tokenCount)
 {
@@ -45,7 +45,7 @@ void tokenize_get_keyword(struct token* tokens, sizet tc)
 {
 	if (tc < 0) return;
 	tokens[tc].value.cstr[tokens[tc].value.length] = '\0';
-	for (int i = 0; i < 7; i++)
+	for (int i = 0; i < 8; i++)
 		if (ddString_compare(tokens[tc].value, keywords[i]))
 			tokens[tc].type = TKN_KEYWORD;
 }
@@ -74,6 +74,7 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 	keywords[4] = make_constant_ddString("fun");
 	keywords[5] = make_constant_ddString("struct");
 	keywords[6] = make_constant_ddString("return");
+	keywords[7] = make_constant_ddString("iso");
 
 	struct token* tokens = make(struct token, 100000000);
 	(*tokenCount) = -1;

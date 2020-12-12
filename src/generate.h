@@ -237,8 +237,14 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 		generate_write_btc(code, BTC_ILA, node->value->value, REG_NONE);
 		return;
 	}
-	else if (node->value->type == TKN_FUNCTION)
+	else if (node->value->type == TKN_FUNCTION || node->value->type == TKN_KEYWORD && ddString_compare_cstring(node->value->value, "iso"))
 	{
+		struct tokenNode* snode = node;
+		if(node->value->type == TKN_KEYWORD && ddString_compare_cstring(node->value->value, "iso"))
+		{
+			snode = node;
+			node = node->right;
+		}
 		struct tokenNode* fnode = node;
 		if (node->right != nullptr) node = node->right;
 		if (node->right != nullptr) node = node->right;
@@ -249,8 +255,9 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 			else break;
 		}
 		generate_write_btc(code, BTC_CALL, fnode->value->value, REG_NONE);
-		generate_write_btc(code, BTC_ADD, REG_RSP, make_ddString_from_int(generate_get_param_count(fnode) * 8));
-		//generate_write_btc(code, BTC_, fnode->value->value, REG_NONE);
+		generate_write_btc(code, BTC_ADD, REG_RSP, make_ddString_from_int((generate_get_param_count(fnode)+1) * 8));
+		if (snode->value->type != TKN_KEYWORD)
+			generate_write_btc(code, BTC_PUSH, REG_R8, REG_NONE);
 		return;
 	}
 	else if (node->value->type == TKN_KEYWORD)
