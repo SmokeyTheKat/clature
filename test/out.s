@@ -17,24 +17,56 @@ caller:
 SC1:
 	pop	rbp;
 	ret;
-caller2:
+printHead:
 	push	rbp;
 	mov	rbp, rsp;
-	mov	byte[rbp-6], 'y';
-	mov	byte[rbp-5], 'o';
-	mov	byte[rbp-4], ' ';
-	mov	byte[rbp-3], 'b';
-	mov	byte[rbp-2], 'r';
-	mov	byte[rbp-1], 'o';
+	mov	byte[rbp-15], 'T';
+	mov	byte[rbp-14], 'h';
+	mov	byte[rbp-13], 'n';
+	mov	byte[rbp-12], ' ';
+	mov	byte[rbp-11], 'n';
+	mov	byte[rbp-10], 'u';
+	mov	byte[rbp-9], 'm';
+	mov	byte[rbp-8], 'b';
+	mov	byte[rbp-7], 'e';
+	mov	byte[rbp-6], 'r';
+	mov	byte[rbp-5], ' ';
+	mov	byte[rbp-4], 'i';
+	mov	byte[rbp-3], 's';
+	mov	byte[rbp-2], ':';
+	mov	byte[rbp-1], ' ';
 	mov	byte[rbp-0], 0;
 	mov	rax, 1;
 	mov	rdi, 1;
-	sub	rbp, 6;
+	sub	rbp, 15;
 	mov	rsi, rbp;
-	add 	bp, 6;
-	mov	rdx, 6;
+	add 	rbp, 15;
+	mov	rdx, 15;
 	syscall;
 SC2:
+	pop	rbp;
+	ret;
+R11Add2:
+	push	rbp;
+	mov	rbp, rsp;
+	add	r11, 2;
+SC3:
+	pop	rbp;
+	ret;
+printR11:
+	push	rbp;
+	mov	rbp, rsp;
+	mov	r12, r11;
+	add	r12, 48;
+	mov	qword[rbp-8], r12;
+	mov	rax, 1;
+	mov	rdi, 1;
+	sub	rbp, 8;
+	mov	rsi, rbp;
+	add 	rbp, 8;
+	mov	rdx, 1;
+	syscall;
+SC4:
 	pop	rbp;
 	ret;
 global _start
@@ -50,8 +82,10 @@ _start:
 	mul	r15;
 	push	rax;
 	pop	qword[rbp-16];
-	call caller;
-	call caller2;
+	call	printHead;
+	mov	r11, 6;
+	call	R11Add2;
+	call	printR11;
 	mov	eax, 0;
 	pop	rbp;
 	mov	rax, 60;
