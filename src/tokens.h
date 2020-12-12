@@ -8,13 +8,15 @@
 #define TKN_OPERATOR 0x02
 #define TKN_SYNTAX 0x03
 #define TKN_ASSEMBLY 0x04
+#define TKN_FUNCTION 0x05
 
 const char* const TKN_STRS[] = {
 	"LITERAL",
 	"KEYWORD",
 	"OPERATOR",
 	"SYNTAX",
-	"ASSEMBLY"
+	"ASSEMBLY",
+	"FUNCTION"
 };
 
 struct token
@@ -23,7 +25,7 @@ struct token
 	ddString value;
 };
 
-ddString keywords[6];
+ddString keywords[7];
 
 sizet tokens_get_command_count(struct token* tokens, sizet tokenCount)
 {
@@ -43,7 +45,7 @@ void tokenize_get_keyword(struct token* tokens, sizet tc)
 {
 	if (tc < 0) return;
 	tokens[tc].value.cstr[tokens[tc].value.length] = '\0';
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 7; i++)
 		if (ddString_compare(tokens[tc].value, keywords[i]))
 			tokens[tc].type = TKN_KEYWORD;
 }
@@ -71,6 +73,7 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 	keywords[3] = make_constant_ddString("sub");
 	keywords[4] = make_constant_ddString("fun");
 	keywords[5] = make_constant_ddString("struct");
+	keywords[6] = make_constant_ddString("return");
 
 	struct token* tokens = make(struct token, 100000000);
 	(*tokenCount) = -1;
@@ -152,8 +155,6 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 				(*tokenCount)++;
 				tokens[*tokenCount].type = TKN_OPERATOR;
 				tokens[*tokenCount].value = make_ddString("@");
-				//ddString_push_char_back(&(tokens[*tokenCount].value), file.cstr[i+1]);
-				//i++;
 				inLiteral = false;
 				break;
 			}

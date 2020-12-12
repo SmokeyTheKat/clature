@@ -103,7 +103,7 @@ if (var2 == 8);
 	.call	printSpace;
 	.call	printSpace;
 };
-if (8 >= var2);
+if (4*2+2 >= var2+2);
 {
 	.call	printTrue;
 	.call	printSpace;

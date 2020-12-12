@@ -1,179 +1,89 @@
 printTrue:
 	push	rbp;
 	mov	rbp, rsp;
-	push	19;
 	push	9;
-	pop	r14;
-	pop	r15;
-	sub	r15, r14;
-	push	r15;
-	pop	qword[rbp-8];
-	push	5;
 	push	2;
-	pop	r15;
+	pop	r8;
 	pop	rax;
-	mul	r15;
+	mul	r8;
 	push	rax;
-	pop	qword[rbp-12];
-	mov	byte[rbp-4], 't';
-	mov	byte[rbp-3], 'r';
-	mov	byte[rbp-2], 'u';
-	mov	byte[rbp-1], 'e';
-	mov	byte[rbp-0], 0;
+	pop	qword[rbp-8];
+	mov	byte[rbp-54], 't';
+	mov	byte[rbp-53], 'r';
+	mov	byte[rbp-52], 'u';
+	mov	byte[rbp-51], 'e';
+	mov	byte[rbp-50], 0;
 	mov	rax, 1;
 	mov	rdi, 1;
-	sub	rbp, 4;
+	sub	rbp, 54;
 	mov	rsi, rbp;
-	add	rbp, 4;
+	add	rbp, 54;
 	mov	rdx, 4;
 	syscall;
 SC1:
 	pop	rbp;
 	ret;
-caller:
+pv:
 	push	rbp;
 	mov	rbp, rsp;
-	mov	byte[rbp-5], 'h';
-	mov	byte[rbp-4], 'e';
-	mov	byte[rbp-3], 'l';
-	mov	byte[rbp-2], 'l';
-	mov	byte[rbp-1], 'o';
-	mov	byte[rbp-0], 0;
+	push	qword[rbp--16];
+	push	48;
+	pop	r9;
+	pop	r8;
+	add	r8, r9;
+	push	r8;
+	pop	qword[rbp--16];
 	mov	rax, 1;
 	mov	rdi, 1;
-	sub	rbp, 5;
+	add	rbp, 16;
 	mov	rsi, rbp;
-	add	rbp, 5;
-	mov	rdx, 5;
+	sub	rbp, 16;
+	mov	rdx, 1;
 	syscall;
 SC2:
 	pop	rbp;
 	ret;
-printHead:
+pr8:
 	push	rbp;
 	mov	rbp, rsp;
-	mov	byte[rbp-15], 'T';
-	mov	byte[rbp-14], 'h';
-	mov	byte[rbp-13], 'n';
-	mov	byte[rbp-12], ' ';
-	mov	byte[rbp-11], 'n';
-	mov	byte[rbp-10], 'u';
-	mov	byte[rbp-9], 'm';
-	mov	byte[rbp-8], 'b';
-	mov	byte[rbp-7], 'e';
-	mov	byte[rbp-6], 'r';
-	mov	byte[rbp-5], ' ';
-	mov	byte[rbp-4], 'i';
-	mov	byte[rbp-3], 's';
-	mov	byte[rbp-2], ':';
-	mov	byte[rbp-1], ' ';
-	mov	byte[rbp-0], 0;
-	mov	rax, 1;
-	mov	rdi, 1;
-	sub	rbp, 15;
-	mov	rsi, rbp;
-	add 	rbp, 15;
-	mov	rdx, 15;
-	syscall;
-SC3:
-	pop	rbp;
-	ret;
-R11Add2:
-	push	rbp;
-	mov	rbp, rsp;
-	add	r11, 2;
-SC4:
-	pop	rbp;
-	ret;
-printR11:
-	push	rbp;
-	mov	rbp, rsp;
-	mov	r12, r11;
-	add	r12, 48;
-	mov	qword[rbp-8], r12;
+	mov	r10, r8;
+	add	r10, 48;
+	mov	qword[rbp-8], r10;
 	mov	rax, 1;
 	mov	rdi, 1;
 	sub	rbp, 8;
 	mov	rsi, rbp;
-	add 	rbp, 8;
+	add	rbp, 8;
 	mov	rdx, 1;
 	syscall;
-SC5:
+SC3:
 	pop	rbp;
 	ret;
-printSpace:
+timestwo:
 	push	rbp;
 	mov	rbp, rsp;
-	mov	byte[rbp-1], ' ';
-	mov	byte[rbp-0], 0;
-	mov	rax, 1;
-	mov	rdi, 1;
-	sub	rbp, 1;
-	mov	rsi, rbp;
-	add 	rbp, 1;
-	mov	rdx, 1;
-	syscall;
-SC6:
+	push	qword[rbp--16];
+	push	2;
+	pop	r8;
+	pop	rax;
+	mul	r8;
+	push	rax;
+	pop	qword[rbp--16];
+	push	qword[rbp--16];
+	pop	r8;
+SC4:
 	pop	rbp;
 	ret;
 global _start
 _start:
 	push	rbp;
 	mov	rbp, rsp;
-	push	69;
-	pop	qword[rbp-8];
-	push	2;
-	push	5;
-	pop	r15;
-	pop	rax;
-	mul	r15;
-	push	rax;
-	pop	qword[rbp-16];
-	call	printHead;
-	mov	r11, 6;
-	call	R11Add2;
-	call	printR11;
-	call	printSpace;
-	call	printSpace;
-	call	printSpace;
-	call	printSpace;
-	push	2;
+	sub	rsp, 0;
 	push	4;
-	pop	r15;
-	pop	rax;
-	mul	r15;
-	push	rax;
-	pop	qword[rbp-24];
-	push	qword [rbp-24];
-	push	8;
-	pop	r15;
-	pop	r14;
-	cmp	r14, r15;
-	sete	al;
-	movzx	r15, al;
-	push	r15;
-	pop	r15;
-	cmp	r15, 0;
-	je	SC7;
-	call	printTrue;
-	call	printSpace;
-	call	printSpace;
-SC7:
-	push	qword [rbp-24];
-	push	8;
-	pop	r14;
-	pop	r15;
-	cmp	r14, r15;
-	setge	al;
-	movzx	r15, al;
-	push	r15;
-	pop	r15;
-	cmp	r15, 0;
-	je	SC8;
-	call	printTrue;
-	call	printSpace;
-	call	printSpace;
-SC8:
+	call	timestwo;
+	add	rsp, 0;
+	call	pr8;
+	add	rsp, 0;
 	mov	eax, 0;
 	pop	rbp;
 	mov	rax, 60;

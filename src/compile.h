@@ -8,6 +8,18 @@
 bool inFunction;
 struct bitcode* functionCode;
 extern bool debug;
+extern struct stackTracker stackt;
+
+sizet bitcode_get_length(struct bitcode* code)
+{
+	sizet output = 0;
+	while (code->next != nullptr)
+	{
+		code = code->next;
+		output++;
+	}
+	return output;
+}
 
 struct bitcode* generate_bitcode(struct bitcode* code, struct token* tokens, sizet tokenCount)
 {
@@ -20,6 +32,8 @@ struct bitcode* generate_bitcode(struct bitcode* code, struct token* tokens, siz
 	generate_write_btc(&code, BTC_LABEL, make_constant_ddString("_start"), REG_NONE);
 	generate_write_btc(&code, BTC_PUSH, REG_RBP, REG_NONE);
 	generate_write_btc(&code, BTC_MOV, REG_RBP, REG_RSP);
+	struct bitcode* stackSizeNode = code;
+	generate_write_btc(&code, BTC_SUB, REG_RSP, REG_NONE);
 	init_generation();
 	sizet commandPos = 0;
 	sizet nextCommandPos = tokens_get_next_command(tokens, commandPos, tokenCount);
@@ -42,8 +56,13 @@ struct bitcode* generate_bitcode(struct bitcode* code, struct token* tokens, siz
 	generate_write_btc(&code, BTC_MOV, REG_RAX, make_constant_ddString("60"));
 	generate_write_btc(&code, BTC_MOV, REG_RDI, make_constant_ddString("0"));
 	generate_write_btc(&code, BTC_SYSCALL, REG_NONE, REG_NONE);
-	codeHead->prev = functionCode->prev;
-	functionCode->prev->next = codeHead;
+	if (functionCode->prev != nullptr)
+	{
+		codeHead->prev = functionCode->prev;
+		functionCode->prev->next = codeHead;
+	}
+	else functionCodeHead = codeHead;
+	stackSizeNode->rhs = make_ddString_from_int(stackt.size);
 	return functionCodeHead;
 }
 
@@ -75,7 +94,10 @@ void write_bitcode(struct bitcode* code, ddString* outp)
 		make_constant_ddString("global"),
 		make_constant_ddString("syscall"),
 		make_constant_ddString(""),
-		make_constant_ddString("ret")
+		make_constant_ddString("ret"),
+		make_constant_ddString("cdqe"),
+		make_constant_ddString("movsx"),
+		make_constant_ddString("call")
 	};
 	ddString tb = make_constant_ddString("	");
 	ddString cn = make_constant_ddString(":");

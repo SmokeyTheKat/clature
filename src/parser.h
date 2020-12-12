@@ -74,6 +74,28 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 				node->right = right;
 				return;
 			}
+			else if (k == 10 && tokens[i].type == TKN_LITERAL && tokens[i+1].value.cstr[0] == '(')
+			{
+				tokens[i].type = TKN_FUNCTION;
+				while (tokens[i].value.cstr[0] != ';')
+				{
+					struct tokenNode* right = make(struct tokenNode, 1); 
+					(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+					node->right =right ;
+					node->value = &(tokens[i]);
+					node = right;
+					i++;
+				}
+				struct tokenNode* right = make(struct tokenNode, 1); 
+				(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+				node->right =right ;
+				node->value = &(tokens[i]);
+				node = right;
+				i++;
+
+
+				return;
+			}
 			if (tokens[i].value.cstr[0] == charKeys[k] || tokens[i].value.cstr[1] == charKeys[k])
 			{
 				if (tokens[i].type == TKN_SYNTAX)
