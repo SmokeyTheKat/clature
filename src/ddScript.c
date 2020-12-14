@@ -76,5 +76,23 @@ int main(int agsc, char** ags)
 	printf("BITCODE WRITING TIME: %f\n", btcwt);
 	printf("FILEOUT TIME: %f\n", fot);
 	printf("TOTAL RUNTIME: %f\n", runtime);
+
+	ddString nasmout = make_ddString(ags[2]);
+	ddString nasmcommand = make_ddString("nasm -f elf64 ");
+	ddString_push_back(&nasmcommand, nasmout);
+	ddString_push_cstring_back(&nasmcommand, " -o ");
+	nasmout.cstr[nasmout.length-1] = 'o';
+	ddString_push_back(&nasmcommand, nasmout);
+	ddPrint_ddString_nl(nasmcommand);
+	system(nasmcommand.cstr);
+
+	ddString ldcommand = make_ddString("ld ");
+	ddString_push_back(&ldcommand, nasmout);
+	ddString_push_cstring_back(&ldcommand, " -o ");
+	nasmout.cstr[nasmout.length-2] = '\0';
+	nasmout.length -= 2;
+	ddString_push_back(&ldcommand, nasmout);
+	ddPrint_ddString_nl(ldcommand);
+	system(ldcommand.cstr);
 	return 0;
 }

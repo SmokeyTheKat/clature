@@ -1,4 +1,4 @@
-sub @8 printTrue(@8 var);
+sub @8 printTrue(@8 var)
 {
 	.mov	byte[rbp-54], 't';
 	.mov	byte[rbp-53], 'r';
@@ -12,8 +12,8 @@ sub @8 printTrue(@8 var);
 	.add	rbp, 54;
 	.mov	rdx, 4;
 	.syscall;
-};
-sub @8 printNum(@8 num);
+}
+sub @8 printNum(@8 num)
 {
 	num = num + 48;
 	.mov	rax, 1;
@@ -23,12 +23,13 @@ sub @8 printNum(@8 num);
 	.sub	rbp, 16;
 	.mov	rdx, 4;
 	.syscall;
-};
+}
 
 @8 i = 0;
 
-while (i < 10);
+while (i < 10)
 {
 	iso printNum(i);
 	i = i + 1;
-};
+}
+

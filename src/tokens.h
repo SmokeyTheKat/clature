@@ -79,6 +79,7 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 
 	struct token* tokens = make(struct token, 100000000);
 	(*tokenCount) = -1;
+	bool inComment = false;
 	bool inLiteral = false;
 	bool inLiteralString = false;
 	for (sizet i = 0; i < file.length; i++)
@@ -94,6 +95,21 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 		}
 		switch (file.cstr[i])
 		{
+			case ';':
+			{
+				inComment = true;
+				break;
+			}
+			case '\n':
+			{
+				if (tokens[*tokenCount].value.cstr[0] == ';') break;
+				(*tokenCount)++;
+				tokens[*tokenCount].type = TKN_SYNTAX;
+				tokens[*tokenCount].value = make_ddString(";");
+				inLiteral = false;
+				inComment = false;
+				break;
+			}
 			case '.':
 				if (tokens[(*tokenCount)].value.cstr[0] == ';' || tokens[(*tokenCount)].value.cstr[0] == '{')
 				{
@@ -101,12 +117,29 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 					tokens[*tokenCount].type = TKN_ASSEMBLY;
 					tokens[*tokenCount].value = tokenize_until_semicolon(file, i);
 					i = tokenize_goto_semicolon(file, i);
-					//(*tokenCount)++;
-					//tokens[*tokenCount].type = TKN_SYNTAX;
-					//tokens[*tokenCount].value = make_ddString(";");
 					break;
 				}
-			case ';': case '{': case '}': case '[': case ']': case '(': case ')': case ',':
+			case '{': case '}':
+			{
+				if (tokens[*tokenCount].value.cstr[0] != ';')
+				{
+					(*tokenCount)++;
+					tokens[*tokenCount].type = TKN_SYNTAX;
+					tokens[*tokenCount].value = make_ddString(";");
+				}
+				(*tokenCount)++;
+				tokens[*tokenCount].type = TKN_SYNTAX;
+				tokens[*tokenCount].value = make_multi_ddString_cstring(" ", 1);
+				tokens[*tokenCount].value.cstr[0] = file.cstr[i];
+
+				(*tokenCount)++;
+				tokens[*tokenCount].type = TKN_SYNTAX;
+				tokens[*tokenCount].value = make_ddString(";");
+
+				inLiteral = false;
+				break;
+			}
+			case '[': case ']': case '(': case ')': case ',':
 			{
 				(*tokenCount)++;
 				tokens[*tokenCount].type = TKN_SYNTAX;
@@ -189,7 +222,6 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 				break;
 			}
 
-			case '\n':
 			case ' ':
 			case '	':
 			{

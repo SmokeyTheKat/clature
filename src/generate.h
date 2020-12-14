@@ -61,6 +61,8 @@ extern bool inFunction;
 extern struct bitcode* functionCode;
 bool whileLoop = false;
 
+sizet scopeCounts[40];
+
 const char* ASM_SIZES[5] = {
 	"",
 	"byte",
@@ -149,6 +151,10 @@ void generate_asm_1reg(struct tokenNode* node, int opc, struct bitcode** code)
 
 void init_generation(void)
 {
+	for (sizet i = 0; i < 40; i++)
+	{
+		scopeCounts[i] = 0;
+	}
 	NO_VAR.size = -69;
 	init_regs();
 	stackt.top = 0;
@@ -228,7 +234,7 @@ sizet generate_get_param_count(struct tokenNode* node)
 		if (node->value->value.cstr[0] == ',') output++;
 		node = node->right;
 	}
-	return 1;
+	return output+1;
 }
 
 void generate_asm(struct tokenNode* node, struct bitcode** code)
@@ -270,7 +276,7 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 			generate_asm(node->right, code);
 			generate_write_btc(code, BTC_POP, REG_R8, REG_NONE);
 			generate_write_btc(code, BTC_CMP, REG_R8, make_constant_ddString("0"));
-			generate_write_btc(code, BTC_JE, make_format_ddString("SC%d", scope+1), REG_NONE);
+			generate_write_btc(code, BTC_JE, make_format_ddString("SC%d%d", scope, scopeCounts[scope]), REG_NONE);
 			return;
 		}
 		if (ddString_compare_cstring(node->value->value, "while"))
@@ -278,11 +284,11 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 			//struct bitcode* attach = make(bitcode, 1);
 			//generate_write_btc(&attach, BTC_JMP, make_format_ddString("WL%d", scope+1), REG_NONE);
 			whileLoop = true;
-			generate_write_btc(code, BTC_LABEL, make_format_ddString("WL%d", scope+1), REG_NONE);
+			generate_write_btc(code, BTC_LABEL, make_format_ddString("WL%d%d", scope, scopeCounts[scope]), REG_NONE);
 			generate_asm(node->right, code);
 			generate_write_btc(code, BTC_POP, REG_R8, REG_NONE);
 			generate_write_btc(code, BTC_CMP, REG_R8, make_constant_ddString("0"));
-			generate_write_btc(code, BTC_JE, make_format_ddString("SC%d", scope+1), REG_NONE);
+			generate_write_btc(code, BTC_JE, make_format_ddString("SC%d%d", scope, scopeCounts[scope]), REG_NONE);
 			return;
 		}
 		if (ddString_compare_cstring(node->value->value, "return"))
@@ -308,6 +314,7 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 			generate_write_btc(code, BTC_MOV, REG_RBP, REG_RSP);
 			sizet paramCount = generate_get_param_count(node->right->right->right->right);
 			struct tokenNode* pnode = node->right->right->right->right->right;
+			//@8 val, @8 valu2
 			for (sizet i = paramCount-1; i >= 0; i--)
 			{
 				generate_add_param_var(pnode->right->right->value->value, i);
@@ -322,22 +329,21 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 		case ',': case ';': return;
 		case '{':
 		{
-			generate_asm(node->right, code);
+			//generate_asm(node->right, code);
 			scope++;
-			lscope++;
 			break;
 		}
 		case '}':
 		{
+			scope--;
 			if (whileLoop == true)
 			{
-				generate_write_btc(code, BTC_JMP, make_format_ddString("WL%d", scope), REG_NONE);
+				generate_write_btc(code, BTC_JMP, make_format_ddString("WL%d%d", scope, scopeCounts[scope]), REG_NONE);
 				whileLoop = false;
 			}
-			generate_write_btc(code, BTC_LABEL, make_format_ddString("SC%d", scope), REG_NONE);
-			//scope--;
-			lscope--;
-			if (inFunction && lscope == 0)
+			generate_write_btc(code, BTC_LABEL, make_format_ddString("SC%d%d", scope, scopeCounts[scope]), REG_NONE);
+			scopeCounts[scope]++;
+			if (inFunction && scope == 0)
 			{
 				inFunction = false;
 				generate_switch_stacks();

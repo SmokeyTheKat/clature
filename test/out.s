@@ -13,7 +13,7 @@ printTrue:
 	add	rbp, 54;
 	mov	rdx, 4;
 	syscall;
-SC1:
+SC00:
 	pop	rbp;
 	ret;
 printNum:
@@ -33,7 +33,7 @@ printNum:
 	sub	rbp, 16;
 	mov	rdx, 4;
 	syscall;
-SC2:
+SC01:
 	pop	rbp;
 	ret;
 global _start
@@ -43,7 +43,7 @@ _start:
 	sub	rsp, 8;
 	push	0;
 	pop	qword[rbp-8];
-WL3:
+WL02:
 	push	10;
 	push	qword[rbp-8];
 	pop	r9;
@@ -54,7 +54,7 @@ WL3:
 	push	r8;
 	pop	r8;
 	cmp	r8, 0;
-	je	SC3;
+	je	SC02;
 	push	qword[rbp-8];
 	call	printNum;
 	add	rsp, 8;
@@ -65,8 +65,8 @@ WL3:
 	add	r8, r9;
 	push	r8;
 	pop	qword[rbp-8];
-	jmp	WL3;
-SC3:
+	jmp	WL02;
+SC02:
 	mov	eax, 0;
 	pop	rbp;
 	mov	rax, 60;
