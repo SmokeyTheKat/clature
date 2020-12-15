@@ -248,6 +248,14 @@ struct token* tokenize_file(ddString file, sizet* tokenCount)
 			}
 		}
 	}
+	if (tokens[*tokenCount].value.cstr[0] != ';')
+	{
+		(*tokenCount)++;
+		tokens[*tokenCount].type = TKN_SYNTAX;
+		tokens[*tokenCount].value = make_ddString(";");
+		inLiteral = false;
+		inComment = false;
+	}
 	(*tokenCount)++;
 	for (sizet i = 0; i < *tokenCount; i++)
 	{

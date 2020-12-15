@@ -41,6 +41,15 @@ _start:
 	push	rbp;
 	mov	rbp, rsp;
 	sub	rsp, 8;
+	push	2;
+	push	3;
+	pop	r8;
+	pop	rax;
+	mul	r8;
+	push	rax;
+	push	3;
+	call	printNum;
+	add	rsp, 8;
 	push	0;
 	pop	qword[rbp-8];
 WL02:

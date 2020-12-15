@@ -25,6 +25,8 @@ sub @8 printNum(@8 num)
 	.syscall;
 }
 
+iso printNum(2*3);
+
 @8 i = 0;
 
 while (i < 10)
