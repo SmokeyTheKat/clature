@@ -7,10 +7,63 @@
 #include "./tokens.h"
 #include "regs.h"
 
+struct bitcode* generate_bitcode(struct bitcode* code, struct token* tokens, sizet tokenCount);
+void write_bitcode(struct bitcode* code, ddString* outp);
+
 bool inFunction;
 struct bitcode* functionCode;
 extern bool debug;
 extern struct stackTracker stackt;
+
+void compile_main(int agsc, char** ags)
+{
+	compile_reset_color();
+
+	if (agsc < 2) compile_error("NO INPUT FILES");
+
+	ddTimer_start();
+
+	debug = false;
+	sizet tokenCount = 0;
+	struct token* tokens;
+	struct tokenNode** parseTrees;
+	struct bitcode* bitcodeHead = make(struct bitcode, 1);
+
+	ddString file = read_file(ags[1]);
+	ddString fileOut = make_ddString("");
+
+	if (agsc > 3 && ddString_compare_cstring(make_constant_ddString("-debug"), ags[3])) debug = true;
+
+	tokens = tokenize_file(file, &tokenCount);
+
+	if (debug) ddPrintf("TokenCount: %d\n", tokenCount);
+
+	for (sizet i = 0; i < tokenCount; i++)
+	{
+		tokens[i].value.cstr[tokens[i].value.length] = '\0';
+		if (debug) ddPrintf("%d: %s: %s\n", i, TKN_STRS[tokens[i].type], tokens[i].value.cstr);
+	}
+
+	parseTrees = parser_main(tokens, tokenCount);
+
+	bitcodeHead = generate_bitcode(btcCode, tokens, tokenCount);
+
+	write_bitcode(btcCodeEnd, &fileOut);
+
+	if (agsc < 3)
+		ddPrint_ddString(fileOut);
+	else if (!debug)
+		write_file(ags[2], fileOut);
+	else ddPrint_ddString(fileOut);
+
+	if (debug) ddPrint_nl();
+
+	printf("RUNTIME: %f\n", ddTimer_stop());
+
+	raze_ddString(&file);
+	raze_ddString(&fileOut);
+	raze(tokens);
+}
 
 sizet bitcode_get_length(struct bitcode* code)
 {

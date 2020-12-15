@@ -107,6 +107,10 @@ struct bitcode
 	struct bitcode* prev;
 };
 
+void generate_bitcode_main(struct tokenNode** parseTrees, sizet treeCount)
+{
+
+}
 
 void generate_write_btc(struct bitcode** codePtr, int opc, ddString lhs, ddString rhs)
 {

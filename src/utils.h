@@ -45,6 +45,10 @@ struct scriptLine
 	sizet length;
 };
 
+void compile_reset_color(void)
+{
+	ddPrint_cstring("\x1b[38;2;255;255;255m");
+}
 void compile_message(const char* message)
 {
 	ddPrint_cstring("	");

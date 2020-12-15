@@ -1,6 +1,13 @@
 #ifndef __ddScript_parser_h__
 #define __ddScript_parser_h__
 
+struct tokenNode;
+
+void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, sizet len);
+int parser_find_closer(struct token* tokens, sizet len, int start, char obracket, char cbracket);
+
+extern bool debug;
+
 struct tokenNode
 {
 	struct tokenNode* parent;
@@ -22,6 +29,26 @@ struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left
 const char charKeys[] = {
 	'{', '=', '@', '+', '-', '*', '/', '<', '>', '!', '('
 };
+
+struct tokenNode** parser_main(struct token* tokens, sizet tokenCount)
+{
+	struct tokenNode** trees = make(struct tokenNode*, 1000000);
+	sizet treeCount = 0;
+
+	sizet commandPos = 0;
+	sizet nextCommandPos = tokens_get_next_command(tokens, commandPos, tokenCount);
+	while (commandPos < tokenCount)
+	{
+		if (debug) printf("c: %lld    nc: %lld\n", commandPos, nextCommandPos);
+		struct tokenNode* commandHead = make(struct tokenNode, 1);
+		(*commandHead) = make_tokenNode(nullptr, nullptr, nullptr, nullptr);
+		parser(tokens, commandHead, commandPos, nextCommandPos, tokenCount);
+		trees[treeCount] = commandHead;
+		commandPos = nextCommandPos+1;
+		nextCommandPos = tokens_get_next_command(tokens, commandPos, tokenCount);
+	}
+	return trees;
+}
 
 int parser_find_closer(struct token* tokens, sizet len, int start, char obracket, char cbracket)
 {
