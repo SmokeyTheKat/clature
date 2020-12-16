@@ -8,6 +8,10 @@ int parser_find_closer(struct token* tokens, sizet len, int start, char obracket
 struct tokenNode** parser_main(struct token* tokens, sizet tokenCount);
 struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left, struct tokenNode* right, struct token* value);
 
+extern bool debug;
+const sizet charKeysLength = 11;
+const char charKeys[] = { '{', '=', '@', '+', '-', '*', '/', '<', '>', '!', '(' };
+
 struct tokenNode
 {
 	struct tokenNode* parent;
@@ -26,16 +30,10 @@ struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left
 	return output;
 }
 
-extern bool debug;
-const sizet charKeysLength = 11;
-const char charKeys[] = { '{', '=', '@', '+', '-', '*', '/', '<', '>', '!', '(' };
-
-/*
 void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, sizet len)
 {
 	
 }
-*/
 
 struct tokenNode** parser_main(struct token* tokens, sizet tokenCount)
 {
