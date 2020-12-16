@@ -1,4 +1,4 @@
-@8 i = 3 + 9 * 3 - (2 * 3 + 5);
+@8 i = 3 + 9 * 3 - (2 * 3 + 5);some epic comments yo
 @8 str = "yo bro";
 @1 chr = 'y';
 @8 yo = 10-2;
