@@ -9,5 +9,10 @@ sub @8 printNum(@8 num)
 	.mov	rdx, 1;
 	.syscall;
 }
-@8 v = 10;
-iso printNum(3);
+@8 i = 0;
+
+while (i < 10)
+{
+	iso printNum(i);
+	i++;
+}

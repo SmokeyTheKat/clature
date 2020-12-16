@@ -23,11 +23,30 @@ _start:
 	push	rbp;
 	mov	rbp, rsp;
 	sub	rsp, 8;
-	push	10;
+	push	0;
 	pop	qword[rbp-8];
-	push	3;
+WL01:
+	push	10;
+	push	qword[rbp-8];
+	pop	r9;
+	pop	r8;
+	cmp	r9, r8;
+	setl	al;
+	movzx	r8, al;
+	push	r8;
+	pop	r8;
+	cmp	r8, 0;
+	je	SC01;
+	push	qword[rbp-8];
 	call	printNum;
 	add	rsp, 8;
+	push	qword[rbp-8];
+	pop	r8;
+	inc	r8;
+	push	r8;
+	pop	qword[rbp-8];
+	jmp	WL01;
+SC01:
 	mov	eax, 0;
 	pop	rbp;
 	mov	rax, 60;

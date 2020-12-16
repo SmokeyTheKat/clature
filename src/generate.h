@@ -33,6 +33,8 @@
 #define BTC_MOVSX	0x1B
 #define BTC_CALL	0x1C
 #define BTC_JMP		0x1D
+#define BTC_INC		0x1E
+#define BTC_DEC		0x1F
 
 struct variable;
 struct stackTracker;
@@ -491,8 +493,65 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 			generate_asm_1reg(node, BTC_DIV, code);
 			return;
 		case '+':
+		{
+			if (node->value->value.cstr[1] == '+')
+			{
+				struct variable var = generate_get_var(node->left->value->value, *code);
+				if (var.size == 1)
+				{
+					generate_write_btc(code, BTC_MOVSX, REG_RAX, make_format_ddString("byte[rbp-%d]", var.spos));
+					generate_write_btc(code, BTC_PUSH, REG_RAX, REG_NONE);
+				}
+				else if (var.size == 2)
+				{
+					generate_write_btc(code, BTC_MOVSX, REG_RAX, make_format_ddString("word[rbp-%d]", var.spos));
+					generate_write_btc(code, BTC_PUSH, REG_RAX, REG_NONE);
+				}
+				else if (var.size == 4)
+				{
+					generate_write_btc(code, BTC_MOV, REG_EAX, make_format_ddString("dword[rbp-%d]", var.spos));
+					//generate_write_btc(code, BTC_CDQE, REG_NONE, REG_NONE);
+					generate_write_btc(code, BTC_PUSH, REG_RAX, REG_NONE);
+				}
+				else if (var.size == 8)
+				{
+					generate_write_btc(code, BTC_PUSH, make_format_ddString("qword[rbp-%d]", var.spos), REG_NONE);
+				}
+				generate_write_btc(code, BTC_POP, REG_R8, REG_NONE);
+				generate_write_btc(code, BTC_INC, REG_R8, REG_NONE);
+				generate_write_btc(code, BTC_PUSH, REG_R8, REG_NONE);
+			
+				switch (var.size)
+				{
+					case 1:
+					{
+						generate_write_btc(code, BTC_POP, REG_RAX, REG_NONE);
+						generate_write_btc(code, BTC_MOV, make_format_ddString("byte[rbp-%d]", var.spos), REG_AL);
+						break;
+					}
+					case 2:
+					{
+						generate_write_btc(code, BTC_POP, REG_RAX, REG_NONE);
+						generate_write_btc(code, BTC_MOV, make_format_ddString("word[rbp-%d]", var.spos), REG_AX);
+						break;
+					}
+					case 4:
+					{
+						generate_write_btc(code, BTC_POP, REG_RAX, REG_NONE);
+						generate_write_btc(code, BTC_MOV, make_format_ddString("dword[rbp-%d]", var.spos), REG_EAX);
+						break;
+					}
+					case 8:
+					{
+						generate_write_btc(code, BTC_POP, make_format_ddString("qword[rbp-%d]", var.spos), REG_NONE);
+						break;
+					}
+				}
+				return;
+			}
 			generate_asm_2reg(node, BTC_ADD, code);
 			return;
+		}
 		case '-':
 			generate_asm_2reg(node, BTC_SUB, code);
 			return;
