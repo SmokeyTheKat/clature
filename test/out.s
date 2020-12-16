@@ -1,3 +1,16 @@
+printRaw:
+	push	rbp;
+	mov	rbp, rsp;
+	mov	rax, 1;
+	mov	rdi, 1;
+	add	rbp, 16;
+	mov	rsi, rbp;
+	sub	rbp, 16;
+	mov	rdx, 1;
+	syscall;
+SC00:
+	pop	rbp;
+	ret;
 printNum:
 	push	rbp;
 	mov	rbp, rsp;
@@ -15,7 +28,7 @@ printNum:
 	sub	rbp, 16;
 	mov	rdx, 1;
 	syscall;
-SC00:
+SC01:
 	pop	rbp;
 	ret;
 global _start
@@ -25,7 +38,7 @@ _start:
 	sub	rsp, 8;
 	push	0;
 	pop	qword[rbp-8];
-WL01:
+WL02:
 	push	10;
 	push	qword[rbp-8];
 	pop	r9;
@@ -36,7 +49,7 @@ WL01:
 	push	r8;
 	pop	r8;
 	cmp	r8, 0;
-	je	SC01;
+	je	SC02;
 	push	qword[rbp-8];
 	call	printNum;
 	add	rsp, 8;
@@ -45,8 +58,8 @@ WL01:
 	inc	r8;
 	push	r8;
 	pop	qword[rbp-8];
-	jmp	WL01;
-SC01:
+	jmp	WL02;
+SC02:
 	mov	eax, 0;
 	pop	rbp;
 	mov	rax, 60;

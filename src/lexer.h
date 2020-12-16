@@ -18,6 +18,8 @@
 struct token;
 
 static inline char read_char(void);
+static inline char read_next_char(void);
+static inline bool is_number(char chr);
 static bool is_keyword(void);
 static inline void set_literal(void);
 static inline void set_token(int type, ddString value);
@@ -136,7 +138,13 @@ static void sift_token(char chr)
 		case '*': case '/': case '~': case '!': case '=':
 			try_tkns(TKN_OPERATOR, chr, 1, '=');
 			break;
-		case '&': case '|': case '<': case '>': case '+': case '-':
+		case '-':
+			if (is_number(read_next_char()))
+			{
+				handel_literal(chr);
+				break;
+			}
+		case '&': case '|': case '<': case '>': case '+':
 			try_tkns(TKN_OPERATOR, chr, 2, '=', chr);
 			break;
 		case '\'':
@@ -164,6 +172,14 @@ static inline char read_char(void)
 {
 	//return (fileCount < file.length) ? file.cstr[fileCount++] : 0;
 	return file.cstr[fileCount++];
+}
+static inline char read_next_char(void)
+{
+	return file.cstr[fileCount];
+}
+static inline bool is_number(char chr)
+{
+	return (chr >= 48 && chr < 58);
 }
 static bool is_keyword(void)
 {

@@ -553,8 +553,11 @@ void generate_asm(struct tokenNode* node, struct bitcode** code)
 			return;
 		}
 		case '-':
-			generate_asm_2reg(node, BTC_SUB, code);
-			return;
+			if (node->value->type == TKN_SYNTAX)
+			{
+				generate_asm_2reg(node, BTC_SUB, code);
+				return;
+			}
 		default:
 		{
 			struct variable var = generate_get_var(node->value->value, *code);

@@ -1,3 +1,13 @@
+sub @8 printRaw(@8 num)
+{
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.add	rbp, 16;
+	.mov	rsi, rbp;
+	.sub	rbp, 16;
+	.mov	rdx, 1;
+	.syscall;
+}
 sub @8 printNum(@8 num)
 {
 	num = num + 48;
@@ -9,8 +19,8 @@ sub @8 printNum(@8 num)
 	.mov	rdx, 1;
 	.syscall;
 }
-@8 i = 0;
 
+@8 i = 0;
 while (i < 10)
 {
 	iso printNum(i);
