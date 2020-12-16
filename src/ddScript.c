@@ -4,8 +4,8 @@
 
 #include <stdio.h>
 
+#include "./lexer.h"
 #include "./utils.h"
-#include "./tokens.h"
 #include "./parser.h"
 #include "./generate.h"
 #include "./file.h"

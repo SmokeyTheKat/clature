@@ -4,7 +4,7 @@
 #include <ddcTime.h>
 
 #include "./generate.h"
-#include "./tokens.h"
+#include "./lexer.h"
 #include "regs.h"
 
 struct bitcode* generate_bitcode(struct bitcode* code, struct token* tokens, sizet tokenCount);
@@ -34,6 +34,7 @@ void compile_main(int agsc, char** ags)
 
 	if (agsc > 3 && ddString_compare_cstring(make_constant_ddString("-debug"), ags[3])) debug = true;
 
+	init_lexer();
 	tokens = tokenize_file(file, &tokenCount);
 
 	if (debug) ddPrintf("TokenCount: %d\n", tokenCount);
@@ -44,6 +45,7 @@ void compile_main(int agsc, char** ags)
 		if (debug) ddPrintf("%d: %s: %s\n", i, TKN_STRS[tokens[i].type], tokens[i].value.cstr);
 	}
 
+/*
 	parseTrees = parser_main(tokens, tokenCount);
 
 	bitcodeHead = generate_bitcode(btcCode, tokens, tokenCount);
@@ -58,6 +60,7 @@ void compile_main(int agsc, char** ags)
 
 	if (debug) ddPrint_nl();
 
+*/
 	printf("RUNTIME: %f\n", ddTimer_stop());
 
 	raze_ddString(&file);

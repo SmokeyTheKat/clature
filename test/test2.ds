@@ -1,37 +1,11 @@
-sub @8 printTrue(@8 var)
+@8 i = 3 + 9 * 3 - (2 * 3 + 5);
+@8 str = "yo bro";
+@1 chr = 'y';
+@8 yo = 10-2;
+
+if (yo == 8)
 {
-	.mov	byte[rbp-54], 't';
-	.mov	byte[rbp-53], 'r';
-	.mov	byte[rbp-52], 'u';
-	.mov	byte[rbp-51], 'e';
-	.mov	byte[rbp-50], 0;
-	.mov	rax, 1;
-	.mov	rdi, 1;
-	.sub	rbp, 54;
-	.mov	rsi, rbp;
-	.add	rbp, 54;
-	.mov	rdx, 4;
-	.syscall;
-}
-sub @8 printNum(@8 num)
-{
-	num = num + 48;
-	.mov	rax, 1;
-	.mov	rdi, 1;
-	.add	rbp, 16;
-	.mov	rsi, rbp;
-	.sub	rbp, 16;
-	.mov	rdx, 4;
-	.syscall;
+	i++;
 }
 
-iso printNum(2*3);
-
-@8 i = 0;
-
-while (i < 10)
-{
-	iso printNum(i);
-	i = i + 1;
-}
-
+@8 val = 9;

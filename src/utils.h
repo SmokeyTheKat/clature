@@ -61,8 +61,7 @@ void compile_warning(const char* warning)
 }
 void compile_error(const char* error)
 {
-	ddPrint_cstring("[\x1b[38;2;255;0;0mERROR\x1b[38;2;255;255;255m] ");
-	ddPrint_cstring_nl(error);
+	ddPrintf("[\x1b[38;2;255;0;0mERROR\x1b[38;2;255;255;255m] %s", error);
 	exit(0);
 }
 

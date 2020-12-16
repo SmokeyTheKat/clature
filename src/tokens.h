@@ -9,6 +9,7 @@
 #define TKN_SYNTAX 0x03
 #define TKN_ASSEMBLY 0x04
 #define TKN_FUNCTION 0x05
+#define TKN_LINEBREAK 0x06
 
 const char* const TKN_STRS[] = {
 	"LITERAL",
@@ -16,7 +17,8 @@ const char* const TKN_STRS[] = {
 	"OPERATOR",
 	"SYNTAX",
 	"ASSEMBLY",
-	"FUNCTION"
+	"FUNCTION",
+	"LINEBREAK"
 };
 
 struct token
