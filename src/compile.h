@@ -7,7 +7,7 @@
 #include "./lexer.h"
 #include "regs.h"
 
-struct bitcode* generate_bitcode(struct bitcode* code, struct token* tokens, sizet tokenCount);
+struct bitcode* generate_bitcode(struct bitcode* code, struct tokenNode** tokenTrees, sizet treeCount);
 void write_bitcode(struct bitcode* code, ddString* outp);
 
 bool inFunction;
@@ -27,6 +27,7 @@ void compile_main(int agsc, char** ags)
 	sizet tokenCount = 0;
 	struct token* tokens;
 	struct tokenNode** parseTrees;
+	sizet treeCount = 0;
 	struct bitcode* bitcodeHead = make(struct bitcode, 1);
 
 	ddString file = read_file(ags[1]);
@@ -45,12 +46,11 @@ void compile_main(int agsc, char** ags)
 		if (debug) ddPrintf("%d: %s: %s\n", i, TKN_STRS[tokens[i].type], tokens[i].value.cstr);
 	}
 
-/*
-	parseTrees = parser_main(tokens, tokenCount);
+	parseTrees = parser_main(tokens, tokenCount, &treeCount);
 
-	bitcodeHead = generate_bitcode(btcCode, tokens, tokenCount);
+	bitcodeHead = generate_bitcode(bitcodeHead, parseTrees, treeCount);
 
-	write_bitcode(btcCodeEnd, &fileOut);
+	write_bitcode(bitcodeHead, &fileOut);
 
 	if (agsc < 3)
 		ddPrint_ddString(fileOut);
@@ -60,7 +60,6 @@ void compile_main(int agsc, char** ags)
 
 	if (debug) ddPrint_nl();
 
-*/
 	printf("RUNTIME: %f\n", ddTimer_stop());
 
 	raze_ddString(&file);
@@ -79,7 +78,7 @@ sizet bitcode_get_length(struct bitcode* code)
 	return output;
 }
 
-struct bitcode* generate_bitcode(struct bitcode* code, struct token* tokens, sizet tokenCount)
+struct bitcode* generate_bitcode(struct bitcode* code, struct tokenNode** tokenTrees, sizet treeCount)
 {
 	struct bitcode* codeHead = code;
 	inFunction = false;
@@ -92,23 +91,18 @@ struct bitcode* generate_bitcode(struct bitcode* code, struct token* tokens, siz
 	generate_write_btc(&code, BTC_MOV, REG_RBP, REG_RSP);
 	struct bitcode* stackSizeNode = code;
 	generate_write_btc(&code, BTC_SUB, REG_RSP, REG_NONE);
+
 	init_generation();
+
 	sizet commandPos = 0;
-	sizet nextCommandPos = tokens_get_next_command(tokens, commandPos, tokenCount);
-	while (commandPos < tokenCount)
+	for (sizet i = 0; i < treeCount; i++)
 	{
-		if (debug) printf("c: %lld    nc: %lld\n", commandPos, nextCommandPos);
-		struct tokenNode* commandHead = make(struct tokenNode, 1);
-		(*commandHead) = make_tokenNode(nullptr, nullptr, nullptr, nullptr);
-		parser(tokens, commandHead, commandPos, nextCommandPos, tokenCount);
-		sizet lineCount = 0;
 		if (inFunction)
-			generate_asm(commandHead, &functionCode);
+			generate_asm(tokenTrees[i], &functionCode);
 		else
-			generate_asm(commandHead, &code);
-		commandPos = nextCommandPos+1;
-		nextCommandPos = tokens_get_next_command(tokens, commandPos, tokenCount);
+			generate_asm(tokenTrees[i], &code);
 	}
+
 	generate_write_btc(&code, BTC_MOV, REG_EAX, make_constant_ddString("0"));
 	generate_write_btc(&code, BTC_POP, REG_RBP, REG_NONE);
 	generate_write_btc(&code, BTC_MOV, REG_RAX, make_constant_ddString("60"));

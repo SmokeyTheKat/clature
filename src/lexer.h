@@ -27,6 +27,7 @@ static bool is_unclosed_string(void);
 static bool is_last_linebreak(void);
 static void try_tkns(int type, char leftOpc, int len, ...);
 static void sift_token(char chr);
+static ddString tokenize_until_semicolon(void);
 void init_lexer(void);
 struct token* tokenize_file(ddString _file, sizet* tokenCount);
 void get_token(void);
@@ -112,7 +113,15 @@ static void sift_token(char chr)
 			if (!is_last_linebreak())
 				set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
 			break;
-		case '[': case ']': case '(': case ')': case ',': case '.':
+		case '.':
+			if (is_last_linebreak())
+			{
+				set_token(TKN_ASSEMBLY, tokenize_until_semicolon());
+				goto_next_line();
+				set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
+				break;
+			}
+		case '[': case ']': case '(': case ')': case ',':
 			set_token(TKN_SYNTAX, make_ddString_length(&chr, 1));
 			break;
 		case '{': case '}':
@@ -231,4 +240,14 @@ static void try_tkns(int type, char leftOpc, int len, ...)
 	set_token(type, make_ddString_length(&leftOpc, 1));
 	sift_token(chr);
 }
+static ddString tokenize_until_semicolon(void)
+{
+	ddString output = make_ddString("");
+	for (sizet i = fileCount-1; file.cstr[i] != ';'; i++)
+	{
+		ddString_push_char_back(&output, file.cstr[i]);
+	}
+	return output;
+}
+
 #endif

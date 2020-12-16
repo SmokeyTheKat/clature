@@ -1,11 +1,13 @@
-@8 i = 3 + 9 * 3 - (2 * 3 + 5);some epic comments yo
-@8 str = "yo bro";
-@1 chr = 'y';
-@8 yo = 10-2;
-
-if (yo == 8)
+sub @8 printNum(@8 num)
 {
-	i++;
+	num = num + 48;
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.add	rbp, 16;
+	.mov	rsi, rbp;
+	.sub	rbp, 16;
+	.mov	rdx, 1;
+	.syscall;
 }
-
-@8 val = 9;
+@8 v = 10;
+iso printNum(3);
