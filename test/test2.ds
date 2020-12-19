@@ -111,25 +111,15 @@ while i != 5
 	if i == 4
 	{
 		iso printFour();
-		@8 l = 0;
-		while l != 10
-		{
-			.call	printZero;
-			l++;
-		}
 	}
 	i++;
 }
-@8 llll = 520;
-printNum(i);
-@8 lflll = 520;
-sub @8 printStr(@8 str, @8 len)
-{
-	.mov	rax, 1;
-	.mov	rdi, 1;
-	.mov	rsi, [rbp+24];
-	.mov	rdx, [rbp+16];
-	.syscall;
-}
-@8 hello = "hello";
-iso printStr("bro", 3);
+;iso printStr(" ", 1);
+;sub @8 printStr(@8 str, @8 len)
+;{
+;	.mov	rax, 1;
+;	.mov	rdi, 1;
+;	.mov	rsi, [rbp+24];
+;	.mov	rdx, [rbp+16];
+;	.syscall;
+;}

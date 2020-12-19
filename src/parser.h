@@ -10,7 +10,7 @@ struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left
 
 extern bool debug;
 const sizet charKeysLength = 12;
-const char charKeys[] = { '{', '}', '=', '@', '+', '-', '*', '/', '<', '>', '!', '(' };
+const char charKeys[] = { '{', '}', '=', '@', '+', '-', '*', '/', '<', '>', '!', '[', '(' };
 
 struct tokenNode
 {
@@ -103,6 +103,34 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 			}
 			if (tokens[i].value.cstr[0] == charKeys[k] || tokens[i].value.cstr[1] == charKeys[k])
 			{
+				if (tokens[i].type == TKN_OPERATOR)
+				{
+					if (tokens[i].value.cstr[0] == '@' && i+2 < len && tokens[i+2].value.cstr[0] == '[')
+					{
+						struct tokenNode* right = make(struct tokenNode, 1); 
+						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+						node->right = right;
+						node->value = &(tokens[i]);
+						node = right;
+						i++;
+						right = make(struct tokenNode, 1); 
+						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+						node->right = right;
+						node->value = &(tokens[i]);
+						node = right;
+						i++;
+						right = make(struct tokenNode, 1); 
+						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+						node->right = right;
+						node->value = &(tokens[i]);
+						node = right;
+						i++;
+						int ndb = parser_find_closer(tokens, len, i, '[', ']');
+						ddPrintf("range: %d  ->  %d\n", i, ndb);
+						parser(tokens, node, i, ndb, len);
+						return;
+					}
+				}
 				if (tokens[i].type == TKN_SYNTAX)
 				{
 					if (tokens[i].value.cstr[0] == '(')

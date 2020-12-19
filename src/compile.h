@@ -15,6 +15,15 @@ struct bitcode* functionCode;
 extern bool debug;
 extern struct stackTracker stackt;
 
+void print_tokentree(struct tokenNode* node)
+{
+	if (node == nullptr) return;
+	if (node->value == nullptr) return;
+	ddPrintf("TREE VALUE: %s\n", node->value->value.cstr);
+	if (node->right != nullptr) print_tokentree(node->right);
+	if (node->left != nullptr) print_tokentree(node->left);
+}
+
 void compile_main(int agsc, char** ags)
 {
 	compile_reset_color();
@@ -47,6 +56,10 @@ void compile_main(int agsc, char** ags)
 	}
 
 	parseTrees = parser_main(tokens, tokenCount, &treeCount);
+/*
+	for (sizet i = 0; i < treeCount; i++)
+		print_tokentree(parseTrees[i]);
+*/
 
 	bitcodeHead = generate_bitcode(parseTrees, treeCount);
 

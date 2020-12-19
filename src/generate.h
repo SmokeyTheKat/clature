@@ -78,6 +78,7 @@ static void generate_equels_set_asm(struct tokenNode* node);//i = 2*3;
 static void generate_1reg_operation(int opc, struct tokenNode* node);
 static void generate_2reg_operation(int opc, struct tokenNode* node);
 static void generate_function_call(struct tokenNode* node);
+static void generate_dereference(struct tokenNode* node);
 sizet get_param_count(struct tokenNode* node);
 void generate_asm_step(struct tokenNode* node);
 void generate_trees_asm(void);
@@ -88,6 +89,7 @@ static inline void switch_stacks(void);
 struct dtVariable datat_add_string(ddString value);
 struct dtVariable datat_add_data(ddString name, ddString value);
 void push_data_var(struct dtVariable var);
+static void push_ref(ddString value, sizet size);
 
 static sizet treePosition = 0;
 static sizet treeCount = 0;
@@ -109,6 +111,18 @@ sizet scopeCounts[MAX_SCOPES];
 extern bool inFunction;
 extern struct bitcode* functionCode;
 bool whileLoop = false;
+
+const char* DATA_SIZES[9] = {
+	"ERROR_SIZE",
+	"BYTE",
+	"WORD",
+	"ERROR_SIZE",
+	"DWORD",
+	"ERROR_SIZE",
+	"ERROR_SIZE",
+	"ERROR_SIZE",
+	"QWORD"
+};
 
 struct dtVariable
 {
@@ -204,6 +218,8 @@ void generate_asm_step(struct tokenNode* node)
 		switch (node->value->value.cstr[0])
 		{
 			case ',': break;
+			case '[':
+				break;
 			case '{':
 				scope++;
 				break;
@@ -224,6 +240,8 @@ void generate_asm_step(struct tokenNode* node)
 				if (node->value->value.cstr[1] == '=')
 					generate_inequality(node);
 			case '@':
+				if (node->right->right->value->value.cstr[0] == '[')
+					generate_dereference(node);
 				break;
 			case '*':
 				if (node->value->value.cstr[1] == '=')
@@ -312,6 +330,15 @@ static void generate_1reg_operation(int opc, struct tokenNode* node)
 	pop_input(REG_RAX);
 	generate_write_btc(opc, REG_R8, REG_NONE);
 	push_result(REG_RAX);
+}
+static void generate_dereference(struct tokenNode* node)
+{
+	ddPrintf("BEFOREEEEE\n");
+	ddPrintf("size: %s[RAX]\n", DATA_SIZES[ddString_to_int(node->right->value->value)]);
+	generate_split_right(node->right->right);
+	pop_input(REG_R8);
+	push_ref(make_constant_ddString("r8"), ddString_to_int(node->right->value->value));
+	ddPrintf("AFTERRRRRR\n");
 }
 static void generate_function_call(struct tokenNode* node)
 {
@@ -531,28 +558,59 @@ static void pop_stack_var(struct stVariable var)
 		case 1:
 		{
 			pop_input(REG_RAX);
-			generate_write_btc(BTC_MOV, make_format_ddString("byte[rbp-%d]", var.spos), REG_AL);
+			generate_write_btc(BTC_MOV, make_format_ddString("BYTE[rbp-%d]", var.spos), REG_AL);
 			break;
 		}
 		case 2:
 		{
 			pop_input(REG_RAX);
-			generate_write_btc(BTC_MOV, make_format_ddString("word[rbp-%d]", var.spos), REG_AX);
+			generate_write_btc(BTC_MOV, make_format_ddString("WORD[rbp-%d]", var.spos), REG_AX);
 			break;
 		}
 		case 4:
 		{
 			pop_input(REG_RAX);
-			generate_write_btc(BTC_MOV, make_format_ddString("dword[rbp-%d]", var.spos), REG_EAX);
+			generate_write_btc(BTC_MOV, make_format_ddString("DWORD[rbp-%d]", var.spos), REG_EAX);
 			break;
 		}
 		case 8:
 		{
-			generate_write_btc(BTC_POP, make_format_ddString("qword[rbp-%d]", var.spos), REG_NONE);
+			generate_write_btc(BTC_POP, make_format_ddString("QWORD[rbp-%d]", var.spos), REG_NONE);
 			break;
 		}
 		default:
 			compile_error("HOW THE FUCK DID THIS HAPPEN (POP)\n");
+	}
+}
+static void push_ref(ddString value, sizet size)
+{
+	switch (size)
+	{
+		case 1:
+		{
+			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("BYTE[%s]", value.cstr));
+			push_result(REG_RAX);
+			break;
+		}
+		case 2:
+		{
+			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("WORD[%s]", value.cstr));
+			push_result(REG_RAX);
+			break;
+		}
+		case 4:
+		{
+			generate_write_btc(BTC_MOV, REG_EAX, make_format_ddString("DWORD[%s]", value.cstr));
+			push_result(REG_RAX);
+			break;
+		}
+		case 8:
+		{
+			generate_write_btc(BTC_PUSH, make_format_ddString("QWORD[%s]", value.cstr), REG_NONE);
+			break;
+		}
+		default:
+			compile_error("HOW THE FUCK DID THIS HAPPEN (PUSH)\n");
 	}
 }
 static void push_stack_var(struct stVariable var)
@@ -561,25 +619,25 @@ static void push_stack_var(struct stVariable var)
 	{
 		case 1:
 		{
-			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("byte[rbp-%d]", var.spos));
+			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("BYTE[rbp-%d]", var.spos));
 			push_result(REG_RAX);
 			break;
 		}
 		case 2:
 		{
-			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("word[rbp-%d]", var.spos));
+			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("WORD[rbp-%d]", var.spos));
 			push_result(REG_RAX);
 			break;
 		}
 		case 4:
 		{
-			generate_write_btc(BTC_MOV, REG_EAX, make_format_ddString("dword[rbp-%d]", var.spos));
+			generate_write_btc(BTC_MOV, REG_EAX, make_format_ddString("DWORD[rbp-%d]", var.spos));
 			push_result(REG_RAX);
 			break;
 		}
 		case 8:
 		{
-			generate_write_btc(BTC_PUSH, make_format_ddString("qword[rbp-%d]", var.spos), REG_NONE);
+			generate_write_btc(BTC_PUSH, make_format_ddString("QWORD[rbp-%d]", var.spos), REG_NONE);
 			break;
 		}
 		default:

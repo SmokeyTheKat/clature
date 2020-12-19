@@ -1,1 +1,19 @@
-@8 str = "yo";
+sub @8 none(@8 value)
+{
+
+}
+sub @8 printChar(@8 chr)
+{
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.add	rbp, 16;
+	.mov	rsi, rbp;
+	.sub	rbp, 16;
+	.mov	rdx, 1;
+	.syscall;
+}
+@8 str = "yo bro what is going on yo0";
+@1 chr = @1[str+4];
+iso printChar(chr);
+
+@8 i = 0;
