@@ -1,25 +1,94 @@
-sub @8 printTrue(@8 var);
+sub @8 printFive(@8 var);
 {
-	.mov	byte[rbp-4], 't';
-	.mov	byte[rbp-3], 'r';
-	.mov	byte[rbp-2], 'u';
-	.mov	byte[rbp-1], 'e';
-	.mov	byte[rbp-0], 0;
+	.mov	byte[rbp-1], '5';
 	.mov	rax, 1;
 	.mov	rdi, 1;
-	.sub	rbp, 4;
+	.sub	rbp, 1;
 	.mov	rsi, rbp;
-	.add	rbp, 4;
-	.mov	rdx, 4;
+	.add	rbp, 1;
+	.mov	rdx, 1;
+	.syscall;
+}
+sub @8 printFour(@8 var);
+{
+	.mov	byte[rbp-1], '4';
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.sub	rbp, 1;
+	.mov	rsi, rbp;
+	.add	rbp, 1;
+	.mov	rdx, 1;
+	.syscall;
+}
+sub @8 printThree(@8 var);
+{
+	.mov	byte[rbp-1], '3';
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.sub	rbp, 1;
+	.mov	rsi, rbp;
+	.add	rbp, 1;
+	.mov	rdx, 1;
+	.syscall;
+}
+sub @8 printTwo(@8 var);
+{
+	.mov	byte[rbp-1], '2';
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.sub	rbp, 1;
+	.mov	rsi, rbp;
+	.add	rbp, 1;
+	.mov	rdx, 1;
+	.syscall;
+}
+sub @8 printOne(@8 var);
+{
+	.mov	byte[rbp-1], '1';
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.sub	rbp, 1;
+	.mov	rsi, rbp;
+	.add	rbp, 1;
+	.mov	rdx, 1;
+	.syscall;
+}
+sub @8 printZero(@8 var);
+{
+	.mov	byte[rbp-1], '0';
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.sub	rbp, 1;
+	.mov	rsi, rbp;
+	.add	rbp, 1;
+	.mov	rdx, 1;
 	.syscall;
 }
 @8 i = 0;
 @8 j = 0;
 @8 k = 0;
-while i != 2*1+2
+while i != 5
 {
-	.call	printTrue;
-	i = i + 1
+	if i == 0
+	{
+		.call	printZero;
+	}
+	if i == 1
+	{
+		.call	printOne;
+	}
+	if i == 2
+	{
+		.call	printTwo;
+	}
+	if i == 3
+	{
+		.call	printThree;
+	}
+	if i == 4
+	{
+		.call	printFour;
+	}
+	i++;
 }
-@8 lfkd = 28;
-@8 lfksd = 28;
+@8 llll = 520;
