@@ -83,11 +83,13 @@ struct token* tokenize_file(ddString _file, sizet* _tokenCount)
 	{
 		get_token();
 	}
+	if (!is_last_linebreak())
+			set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
 	(*_tokenCount) = tokenCount;
 	return tokens;
 }
 
-void get_token()
+void get_token(void)
 {
 	char chr = read_char();
 	sift_token(chr);
@@ -139,11 +141,11 @@ static void sift_token(char chr)
 			try_tkns(TKN_OPERATOR, chr, 1, '=');
 			break;
 		case '-':
-			if (is_number(read_next_char()))
-			{
+			if (!is_number(read_next_char()))
 				handel_literal(chr);
-				break;
-			}
+			else
+				try_tkns(TKN_OPERATOR, chr, 2, '=', chr);
+			break;
 		case '&': case '|': case '<': case '>': case '+':
 			try_tkns(TKN_OPERATOR, chr, 2, '=', chr);
 			break;
@@ -170,8 +172,8 @@ static void sift_token(char chr)
 
 static inline char read_char(void)
 {
-	//return (fileCount < file.length) ? file.cstr[fileCount++] : 0;
-	return file.cstr[fileCount++];
+	return (fileCount < file.length) ? file.cstr[fileCount++] : 0;
+	//return file.cstr[fileCount++];
 }
 static inline char read_next_char(void)
 {
@@ -211,7 +213,8 @@ static inline void set_token(int type, ddString value)
 }
 static inline void goto_next_line(void)
 {
-	while (read_char() != '\n');
+	char chr;
+	while ((chr = read_char()) != '\n' && chr != 0);
 }
 sizet tokens_get_command_count(struct token* tokens, sizet tokenCount)
 {
@@ -250,6 +253,7 @@ static void try_tkns(int type, char leftOpc, int len, ...)
 			value.cstr[value.length-1] = rightOpc;
 			set_token(type, value);
 			va_end(ap);
+			fileCount++;
 			return;
 		}
 	}

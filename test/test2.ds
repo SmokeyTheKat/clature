@@ -1,28 +1,25 @@
-sub @8 printRaw(@8 num)
+sub @8 printTrue(@8 var);
 {
+	.mov	byte[rbp-4], 't';
+	.mov	byte[rbp-3], 'r';
+	.mov	byte[rbp-2], 'u';
+	.mov	byte[rbp-1], 'e';
+	.mov	byte[rbp-0], 0;
 	.mov	rax, 1;
 	.mov	rdi, 1;
-	.add	rbp, 16;
+	.sub	rbp, 4;
 	.mov	rsi, rbp;
-	.sub	rbp, 16;
-	.mov	rdx, 1;
+	.add	rbp, 4;
+	.mov	rdx, 4;
 	.syscall;
 }
-sub @8 printNum(@8 num)
-{
-	num = num + 48;
-	.mov	rax, 1;
-	.mov	rdi, 1;
-	.add	rbp, 16;
-	.mov	rsi, rbp;
-	.sub	rbp, 16;
-	.mov	rdx, 1;
-	.syscall;
-}
-
 @8 i = 0;
-while (i < 10)
+@8 j = 0;
+@8 k = 0;
+while i != 2*1+2
 {
-	iso printNum(i);
-	i++;
+	.call	printTrue;
+	i = i + 1
 }
+@8 lfkd = 28;
+@8 lfksd = 28;

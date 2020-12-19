@@ -1,65 +1,69 @@
-printRaw:
+printTrue:
 	push	rbp;
 	mov	rbp, rsp;
+	sub	rsp, 0;
+	mov	byte[rbp-4], 't';
+	mov	byte[rbp-3], 'r';
+	mov	byte[rbp-2], 'u';
+	mov	byte[rbp-1], 'e';
+	mov	byte[rbp-0], 0;
 	mov	rax, 1;
 	mov	rdi, 1;
-	add	rbp, 16;
+	sub	rbp, 4;
 	mov	rsi, rbp;
-	sub	rbp, 16;
-	mov	rdx, 1;
+	add	rbp, 4;
+	mov	rdx, 4;
 	syscall;
 SC00:
-	pop	rbp;
-	ret;
-printNum:
-	push	rbp;
-	mov	rbp, rsp;
-	push	qword[rbp--16];
-	push	48;
-	pop	r9;
-	pop	r8;
-	add	r8, r9;
-	push	r8;
-	pop	qword[rbp--16];
-	mov	rax, 1;
-	mov	rdi, 1;
-	add	rbp, 16;
-	mov	rsi, rbp;
-	sub	rbp, 16;
-	mov	rdx, 1;
-	syscall;
-SC01:
+	add	rsp, 0;
 	pop	rbp;
 	ret;
 global _start
 _start:
 	push	rbp;
 	mov	rbp, rsp;
-	sub	rsp, 8;
+	sub	rsp, 40;
 	push	0;
 	pop	qword[rbp-8];
-WL02:
-	push	10;
+	push	0;
+	pop	qword[rbp-16];
+	push	0;
+	pop	qword[rbp-24];
+WL01:
+	call	printTrue;
 	push	qword[rbp-8];
-	pop	r9;
+	push	1;
 	pop	r8;
+	pop	r9;
+	add	r9, r8;
+	push	r9;
+	pop	qword[rbp-8];
+SC01:
+	push	qword[rbp-8];
+	push	2;
+	push	1;
+	pop	r8;
+	pop	rax;
+	mul	r8;
+	push	rax;
+	push	2;
+	pop	r8;
+	pop	r9;
+	add	r9, r8;
+	push	r9;
+	pop	r8;
+	pop	r9;
 	cmp	r9, r8;
-	setl	al;
+	setne	al;
 	movzx	r8, al;
 	push	r8;
 	pop	r8;
-	cmp	r8, 0;
-	je	SC02;
-	push	qword[rbp-8];
-	call	printNum;
-	add	rsp, 8;
-	push	qword[rbp-8];
-	pop	r8;
-	inc	r8;
-	push	r8;
-	pop	qword[rbp-8];
-	jmp	WL02;
-SC02:
+	cmp	r8, 1;
+	je	WL01;
+	push	28;
+	pop	qword[rbp-32];
+	push	28;
+	pop	qword[rbp-40];
 	mov	eax, 0;
 	pop	rbp;
 	mov	rax, 60;

@@ -7,7 +7,7 @@
 #include "./lexer.h"
 #include "regs.h"
 
-struct bitcode* generate_bitcode(struct bitcode* code, struct tokenNode** tokenTrees, sizet treeCount);
+struct bitcode* generate_bitcode(struct tokenNode** tokenTrees, sizet treeCount);
 void write_bitcode(struct bitcode* code, ddString* outp);
 
 bool inFunction;
@@ -28,7 +28,7 @@ void compile_main(int agsc, char** ags)
 	struct token* tokens;
 	struct tokenNode** parseTrees;
 	sizet treeCount = 0;
-	struct bitcode* bitcodeHead = make(struct bitcode, 1);
+	struct bitcode* bitcodeHead;
 
 	ddString file = read_file(ags[1]);
 	ddString fileOut = make_ddString("");
@@ -48,7 +48,7 @@ void compile_main(int agsc, char** ags)
 
 	parseTrees = parser_main(tokens, tokenCount, &treeCount);
 
-	bitcodeHead = generate_bitcode(bitcodeHead, parseTrees, treeCount);
+	bitcodeHead = generate_bitcode(parseTrees, treeCount);
 
 	write_bitcode(bitcodeHead, &fileOut);
 
@@ -78,44 +78,15 @@ sizet bitcode_get_length(struct bitcode* code)
 	return output;
 }
 
-struct bitcode* generate_bitcode(struct bitcode* code, struct tokenNode** tokenTrees, sizet treeCount)
+struct bitcode* generate_bitcode(struct tokenNode** tokenTrees, sizet treeCount)
 {
-	struct bitcode* codeHead = code;
 	inFunction = false;
-	functionCode = make(struct bitcode, 1);
-	struct bitcode* functionCodeHead = functionCode;
 	init_regs();
-	generate_write_btc(&code, BTC_GLOBAL, make_constant_ddString("_start"), REG_NONE);
-	generate_write_btc(&code, BTC_LABEL, make_constant_ddString("_start"), REG_NONE);
-	generate_write_btc(&code, BTC_PUSH, REG_RBP, REG_NONE);
-	generate_write_btc(&code, BTC_MOV, REG_RBP, REG_RSP);
-	struct bitcode* stackSizeNode = code;
-	generate_write_btc(&code, BTC_SUB, REG_RSP, REG_NONE);
 
-	init_generation();
+	struct bitcode* bitcode = generate_bitcode_main(tokenTrees, treeCount);
 
-	sizet commandPos = 0;
-	for (sizet i = 0; i < treeCount; i++)
-	{
-		if (inFunction)
-			generate_asm(tokenTrees[i], &functionCode);
-		else
-			generate_asm(tokenTrees[i], &code);
-	}
-
-	generate_write_btc(&code, BTC_MOV, REG_EAX, make_constant_ddString("0"));
-	generate_write_btc(&code, BTC_POP, REG_RBP, REG_NONE);
-	generate_write_btc(&code, BTC_MOV, REG_RAX, make_constant_ddString("60"));
-	generate_write_btc(&code, BTC_MOV, REG_RDI, make_constant_ddString("0"));
-	generate_write_btc(&code, BTC_SYSCALL, REG_NONE, REG_NONE);
-	if (functionCode->prev != nullptr)
-	{
-		codeHead->prev = functionCode->prev;
-		functionCode->prev->next = codeHead;
-	}
-	else functionCodeHead = codeHead;
-	stackSizeNode->rhs = make_ddString_from_int(stackt.size);
-	return functionCodeHead;
+	//stackSizeNode->rhs = make_ddString_from_int(stackt.size);
+	return bitcode;
 }
 
 void write_bitcode(struct bitcode* code, ddString* outp)
