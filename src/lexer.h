@@ -14,6 +14,7 @@
 #define TKN_ASSEMBLY 0x04
 #define TKN_FUNCTION 0x05
 #define TKN_LINEBREAK 0x06
+#define TKN_STRING 0x07
 
 struct token;
 
@@ -21,6 +22,7 @@ static inline char read_char(void);
 static inline char read_next_char(void);
 static inline bool is_number(char chr);
 static bool is_keyword(void);
+static bool is_string(void);
 static inline void set_literal(void);
 static inline void set_token(int type, ddString value);
 static void handel_literal(char chr);
@@ -56,7 +58,8 @@ const char* const TKN_STRS[] = {
 	"SYNTAX",
 	"ASSEMBLY",
 	"FUNCTION",
-	"LINEBREAK"
+	"LINEBREAK",
+	"STRING"
 };
 
 void init_lexer(void)
@@ -190,6 +193,12 @@ static bool is_keyword(void)
 			return true;
 	return false;
 }
+static bool is_string(void)
+{
+	if (tokens[tokenCount].value.cstr[tokens[tokenCount].value.length-1] == '"')
+		return true;
+	return false;
+}
 static void handel_literal(char chr)
 {
 	if (!inLiteral) inLiteral = true;
@@ -197,10 +206,12 @@ static void handel_literal(char chr)
 }
 static inline void set_literal(void)
 {
+	literal.cstr[literal.length] = '\0';
 	inLiteral = false;
 	tokens[tokenCount].type = TKN_LITERAL;
 	tokens[tokenCount].value = literal;
 	if (is_keyword()) tokens[tokenCount].type = TKN_KEYWORD;
+	else if (is_string()) tokens[tokenCount].type = TKN_STRING;
 	tokenCount++;
 	literal = make_ddString("");
 }

@@ -123,7 +123,8 @@ void write_bitcode(struct bitcode* code, ddString* outp)
 		make_constant_ddString("call"),
 		make_constant_ddString("jmp"),
 		make_constant_ddString("inc"),
-		make_constant_ddString("dec")
+		make_constant_ddString("dec"),
+		make_constant_ddString("")
 	};
 	ddString tb = make_constant_ddString("	");
 	ddString cn = make_constant_ddString(":");
@@ -149,6 +150,13 @@ void write_bitcode(struct bitcode* code, ddString* outp)
 				goto wcont;
 			case BTC_ILA:
 				ddString_push_back(outp, code->lhs);
+				ddString_push_back(outp, ed);
+				goto wcont;
+			case BTC_TAG:
+				ddString_push_back(outp, tb);
+				ddString_push_back(outp, code->lhs);
+				ddString_push_back(outp, tb);
+				ddString_push_back(outp, code->rhs);
 				ddString_push_back(outp, ed);
 				goto wcont;
 		}

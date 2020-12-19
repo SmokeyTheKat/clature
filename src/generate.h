@@ -35,7 +35,10 @@
 #define BTC_JMP		0x1D
 #define BTC_INC		0x1E
 #define BTC_DEC		0x1F
+#define BTC_TAG		0x20
 
+struct dtVariable;
+struct dataTracker;
 struct stVariable;
 struct stackTracker;
 struct function;
@@ -74,11 +77,17 @@ static void generate_equels_make_set_asm(struct tokenNode* node);//@8 i = 9-3;
 static void generate_equels_set_asm(struct tokenNode* node);//i = 2*3;
 static void generate_1reg_operation(int opc, struct tokenNode* node);
 static void generate_2reg_operation(int opc, struct tokenNode* node);
+static void generate_function_call(struct tokenNode* node);
+sizet get_param_count(struct tokenNode* node);
 void generate_asm_step(struct tokenNode* node);
 void generate_trees_asm(void);
 struct stVariable stackt_get_var(ddString name);
 struct stVariable stackt_set_var(ddString name, sizet size);
+void stackt_set_param_var(ddString name, sizet pos);
 static inline void switch_stacks(void);
+struct dtVariable datat_add_string(ddString value);
+struct dtVariable datat_add_data(ddString name, ddString value);
+void push_data_var(struct dtVariable var);
 
 static sizet treePosition = 0;
 static sizet treeCount = 0;
@@ -91,6 +100,8 @@ static struct bitcode* bitcodeHead;
 
 struct stackTracker stackt;
 struct stackTracker fstackt;
+struct dataTracker datat;
+sizet stringCount = 0;
 struct functionTracker functiont;
 struct functionTracker functiont;
 sizet scope = 0;
@@ -99,32 +110,38 @@ extern bool inFunction;
 extern struct bitcode* functionCode;
 bool whileLoop = false;
 
+struct dtVariable
+{
+	ddString name;
+	ddString data;
+};
+struct dataTracker
+{
+	sizet top;
+	struct dtVariable data[500];
+};
 struct stVariable
 {
 	ddString name;
 	sizet spos;
 	sizet size;
 };
-
 struct stackTracker
 {
 	sizet size;
 	sizet top;
 	struct stVariable vars[500];
 };
-
 struct function
 {
 	ddString name;
 	sizet retSize;
 };
-
 struct functionTracker
 {
 	sizet size;
 	struct function funs[500];
 };
-
 struct bitcode
 {
 	int opc;
@@ -137,30 +154,39 @@ struct bitcode
 struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _treeCount)
 {
  	for (sizet i = 0; i < MAX_SCOPES; i++) scopeCounts[i] = 0;
-
 	tokenTrees = parseTrees;
 	treeCount = _treeCount;
-
 	bitcode = make(struct bitcode, 1);
 	struct bitcode* btcHead = bitcode;
 	bitcodeHead = bitcode;
-
 	generate_write_btc(BTC_GLOBAL, make_constant_ddString("_start"), REG_NONE);
 	generate_write_btc(BTC_LABEL, make_constant_ddString("_start"), REG_NONE);
 	generate_write_btc(BTC_PUSH, REG_RBP, REG_NONE);
 	generate_write_btc(BTC_MOV, REG_RBP, REG_RSP);
 	struct bitcode* bitcodeMoveStack = bitcode;
 	generate_write_btc(BTC_SUB, REG_RSP, REG_NONE);
-
 	generate_trees_asm();
-
 	generate_write_btc(BTC_MOV, REG_EAX, make_constant_ddString("0"));
 	generate_write_btc(BTC_POP, REG_RBP, REG_NONE);
 	generate_write_btc(BTC_MOV, REG_RAX, make_constant_ddString("60"));
 	generate_write_btc(BTC_MOV, REG_RDI, make_constant_ddString("0"));
 	generate_write_btc(BTC_SYSCALL, REG_NONE, REG_NONE);
-
 	bitcodeMoveStack->rhs = make_ddString_from_int(stackt.size);
+	
+	struct bitcode* temp = bitcode;
+	struct bitcode* datacode = make(struct bitcode, 1);
+	bitcode = datacode;
+	generate_write_btc(BTC_ILA, make_constant_ddString("section .data"), REG_NONE);
+	for (sizet i = 0; i < datat.top; i++)
+	{
+		generate_write_btc(BTC_LABEL, datat.data[i].name, REG_NONE);
+		generate_write_btc(BTC_TAG, make_constant_ddString("db"), datat.data[i].data);
+	}
+	bitcodeHead->prev = bitcode->prev;
+	bitcode->prev->next = bitcodeHead;
+	bitcodeHead = datacode;
+	bitcode = temp;
+	
 	return bitcodeHead;
 }
 
@@ -177,12 +203,13 @@ void generate_asm_step(struct tokenNode* node)
 	{
 		switch (node->value->value.cstr[0])
 		{
+			case ',': break;
 			case '{':
 				scope++;
 				break;
 			case '}':
 				scope--;
-				generate_write_btc(BTC_LABEL, make_format_ddString("SC%d%d", scope, scopeCounts[scope]), REG_NONE);
+				generate_write_btc(BTC_LABEL, make_format_ddString(".SC%d%d", scope, scopeCounts[scope]), REG_NONE);
 				scopeCounts[scope]++;
 				break;
 			case '=':
@@ -213,7 +240,7 @@ void generate_asm_step(struct tokenNode* node)
 			case '+':
 				if (node->value->value.cstr[1] == '=')
 					generate_plus_equals(node);
-				if (node->value->value.cstr[1] == '+')
+				else if (node->value->value.cstr[1] == '+')
 					generate_plus_plus(node);
 				else
 					generate_2reg_operation(BTC_ADD, node);
@@ -221,7 +248,7 @@ void generate_asm_step(struct tokenNode* node)
 			case '-':
 				if (node->value->value.cstr[1] == '=')
 					generate_minus_equals(node);
-				if (node->value->value.cstr[1] == '-')
+				else if (node->value->value.cstr[1] == '-')
 					generate_minus_minus(node);
 				else
 					generate_2reg_operation(BTC_SUB, node);
@@ -242,6 +269,10 @@ void generate_asm_step(struct tokenNode* node)
 			generate_write_btc(BTC_PUSH, node->value->value, REG_NONE);
 		}
 	}
+	else if (node->value->type == TKN_STRING)
+	{
+		push_data_var(datat_add_string(node->value->value));
+	}
 	else if (node->value->type == TKN_KEYWORD)
 	{
 		if (ddString_compare_cstring(node->value->value, "if"))
@@ -250,6 +281,15 @@ void generate_asm_step(struct tokenNode* node)
 			generate_while_statement(node);
 		else if (ddString_compare_cstring(node->value->value, "sub"))
 			generate_sub_statement(node);
+		else if (ddString_compare_cstring(node->value->value, "iso"))
+		{
+			generate_function_call(node->right);
+			push_result(REG_R8);
+		}
+	}
+	else if (node->value->type == TKN_FUNCTION)
+	{
+		generate_function_call(node);
 	}
 	else if (node->value->type == TKN_ASSEMBLY)
 	{
@@ -272,6 +312,21 @@ static void generate_1reg_operation(int opc, struct tokenNode* node)
 	pop_input(REG_RAX);
 	generate_write_btc(opc, REG_R8, REG_NONE);
 	push_result(REG_RAX);
+}
+static void generate_function_call(struct tokenNode* node)
+{
+	struct tokenNode* nameNode = node;
+	if (node->right == nullptr) compile_error("BROKEN FUNCTION CALL\n");
+	node = node->right;
+	while (node->value->value.cstr[0] != ')' && node->value->value.cstr[0] != ';')
+	{
+		if (node->value->value.cstr[0] != '(') generate_asm_step(node);
+		if (node->right != nullptr) node = node->right;
+		else break;
+	}
+	generate_write_btc(BTC_CALL, nameNode->value->value, REG_NONE);
+	generate_write_btc(BTC_ADD, REG_RSP, make_ddString_from_int((get_param_count(nameNode)) * 8));
+	return;
 }
 static inline struct bitcode* generate_write_function_headder(ddString name)// returns the code line of the sub rsp
 {
@@ -297,6 +352,13 @@ static void generate_sub_statement(struct tokenNode* node)
 	fstackt.size = 0;
 	fstackt.top = 0;
 	switch_stacks();
+	sizet paramCount = get_param_count(node->right->right->right->right);
+	struct tokenNode* pnode = node->right->right->right->right->right;
+	for (sizet i = paramCount-1; i >= 0; i--)
+	{
+		stackt_set_param_var(pnode->right->right->value->value, i);
+		pnode = pnode->right->right->right->right;
+	}
 	while ((cnode = next_tree())->value->value.cstr[0] != '}')
 		generate_asm_step(cnode);
 	generate_asm_step(cnode);//also generate code for '}'
@@ -311,8 +373,7 @@ static void generate_sub_statement(struct tokenNode* node)
 }
 static void generate_while_statement(struct tokenNode* node)
 {
-	generate_write_btc(BTC_LABEL, make_format_ddString("WL%d%d", scope, scopeCounts[scope]), REG_NONE);
-
+	generate_write_btc(BTC_LABEL, make_format_ddString(".WL%d%d", scope, scopeCounts[scope]), REG_NONE);
 	sizet tscope = scope;
 	cnode = next_tree();
 	generate_asm_step(cnode);
@@ -324,18 +385,17 @@ static void generate_while_statement(struct tokenNode* node)
 	generate_split_right(node);
 	pop_input(REG_R8);
 	generate_write_btc(BTC_CMP, REG_R8, make_constant_ddString("1"));
-	generate_write_btc(BTC_JE, make_format_ddString("WL%d%d", scope, scopeCounts[scope]-1), REG_NONE);
+	generate_write_btc(BTC_JE, make_format_ddString(".WL%d%d", scope, scopeCounts[scope]-1), REG_NONE);
 }
 static void generate_if_statement(struct tokenNode* node)
 {
 	generate_split_right(node);
 	pop_input(REG_R8);
 	generate_write_btc(BTC_CMP, REG_R8, make_constant_ddString("0"));
-	generate_write_btc(BTC_JE, make_format_ddString("SC%d%d", scope, scopeCounts[scope]), REG_NONE);
+	generate_write_btc(BTC_JE, make_format_ddString(".SC%d%d", scope, scopeCounts[scope]), REG_NONE);
 }
 static void generate_equels_set_asm(struct tokenNode* node)//i = 2*3;
 {
-	ddPrintf("it here\n");
 	struct stVariable var = stackt_get_var(node->left->value->value);
 	generate_split_right(node);
 	pop_stack_var(var);
@@ -541,6 +601,13 @@ struct stVariable stackt_get_var(ddString name)
 	out.size = -6969;
 	return out;
 }
+void stackt_set_param_var(ddString name, sizet pos)
+{
+	stackt.vars[stackt.top].name = name;
+	stackt.vars[stackt.top].size = 8;
+	stackt.top++;
+	stackt.vars[stackt.top-1].spos = -(16 + (pos*8));
+}
 struct stVariable stackt_set_var(ddString name, sizet size)
 {
 	stackt.vars[stackt.top].name = name;
@@ -556,5 +623,32 @@ static inline void switch_stacks(void)
 	temp = stackt;
 	stackt = fstackt;
 	fstackt = temp;
+}
+sizet get_param_count(struct tokenNode* node)
+{
+	if (node->right->value->value.cstr[0] == '(' && node->right->right->value->value.cstr[0] == ')') return 0;
+	sizet output = 0;
+	while (node != nullptr && node->value->value.cstr[0] != ')' && node->value->value.cstr[0] != ';')
+	{
+		if (node->value->value.cstr[0] == ',') output++;
+		node = node->right;
+	}
+	return output+1;
+}
+struct dtVariable datat_add_data(ddString name, ddString value)
+{
+	datat.data[datat.top].name = name;
+	datat.data[datat.top].data = value;
+	return datat.data[datat.top++];
+}
+struct dtVariable datat_add_string(ddString value)
+{
+	datat.data[datat.top].data = value;
+	datat.data[datat.top].name = make_format_ddString(".str%d", stringCount++);
+	return datat.data[datat.top++];
+}
+void push_data_var(struct dtVariable var)
+{
+	generate_write_btc(BTC_PUSH, var.name, REG_NONE);
 }
 #endif

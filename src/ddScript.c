@@ -20,7 +20,7 @@ bool debug;
 int main(int agsc, char** ags)
 {
 	compile_main(agsc, ags);
-	system_compile_nasm(agsc, ags);
-	system_compile_ld(agsc, ags);
+	//system_compile_nasm(agsc, ags);
+	//system_compile_ld(agsc, ags);
 	return 0;
 }
