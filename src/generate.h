@@ -240,7 +240,7 @@ void generate_asm_step(struct tokenNode* node)
 				if (node->value->value.cstr[1] == '=')
 					generate_inequality(node);
 			case '@':
-				if (node->right->right->value->value.cstr[0] == '[')
+				if (node->right != nullptr && node->right->right != nullptr && node->right->right->right != nullptr && node->right->right->value->value.cstr[0] == '[')
 					generate_dereference(node);
 				break;
 			case '*':
@@ -333,12 +333,9 @@ static void generate_1reg_operation(int opc, struct tokenNode* node)
 }
 static void generate_dereference(struct tokenNode* node)
 {
-	ddPrintf("BEFOREEEEE\n");
-	ddPrintf("size: %s[RAX]\n", DATA_SIZES[ddString_to_int(node->right->value->value)]);
 	generate_split_right(node->right->right);
 	pop_input(REG_R8);
 	push_ref(make_constant_ddString("r8"), ddString_to_int(node->right->value->value));
-	ddPrintf("AFTERRRRRR\n");
 }
 static void generate_function_call(struct tokenNode* node)
 {
@@ -702,6 +699,8 @@ struct dtVariable datat_add_data(ddString name, ddString value)
 struct dtVariable datat_add_string(ddString value)
 {
 	datat.data[datat.top].data = value;
+	ddString_push_cstring_back(&(datat.data[datat.top].data), ",0");
+	datat.data[datat.top].data.cstr[datat.data[datat.top].data.length] = '\0';
 	datat.data[datat.top].name = make_format_ddString(".str%d", stringCount++);
 	return datat.data[datat.top++];
 }

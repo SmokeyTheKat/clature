@@ -1,6 +1,6 @@
 section .data;
 .str0:
-	db	"yo bro what is going on yo0";
+	db	"yo bro what is going on yo",0;
 printChar:
 	push	rbp;
 	mov	rbp, rsp;
@@ -12,14 +12,6 @@ printChar:
 	sub	rbp, 16;
 	mov	rdx, 1;
 	syscall;
-.SC01:
-	add	rsp, 0;
-	pop	rbp;
-	ret;
-none:
-	push	rbp;
-	mov	rbp, rsp;
-	sub	rsp, 0;
 .SC00:
 	add	rsp, 0;
 	pop	rbp;
@@ -28,11 +20,17 @@ global _start
 _start:
 	push	rbp;
 	mov	rbp, rsp;
-	sub	rsp, 17;
+	sub	rsp, 25;
 	push	.str0;
 	pop	QWORD[rbp-8];
+	push	0;
+	pop	rax;
+	mov	BYTE[rbp-9], al;
+	push	0;
+	pop	QWORD[rbp-17];
+.WL01:
 	push	QWORD[rbp-8];
-	push	4;
+	push	QWORD[rbp-17];
 	pop	r8;
 	pop	r9;
 	add	r9, r8;
@@ -46,9 +44,33 @@ _start:
 	push	rax;
 	call	printChar;
 	add	rsp, 8;
+	push	QWORD[rbp-17];
+	pop	r8;
+	inc	r8;
 	push	r8;
-	push	0;
 	pop	QWORD[rbp-17];
+.SC01:
+	push	QWORD[rbp-8];
+	push	QWORD[rbp-17];
+	pop	r8;
+	pop	r9;
+	add	r9, r8;
+	push	r9;
+	pop	r8;
+	movsx	rax, BYTE[r8];
+	push	rax;
+	push	0;
+	pop	r8;
+	pop	r9;
+	cmp	r9, r8;
+	setne	al;
+	movzx	r8, al;
+	push	r8;
+	pop	r8;
+	cmp	r8, 1;
+	je	.WL01;
+	push	10;
+	pop	QWORD[rbp-25];
 	mov	eax, 0;
 	pop	rbp;
 	mov	rax, 60;

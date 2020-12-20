@@ -1,7 +1,3 @@
-sub @8 none(@8 value)
-{
-
-}
 sub @8 printChar(@8 chr)
 {
 	.mov	rax, 1;
@@ -12,8 +8,13 @@ sub @8 printChar(@8 chr)
 	.mov	rdx, 1;
 	.syscall;
 }
-@8 str = "yo bro what is going on yo0";
-@1 chr = @1[str+4];
-iso printChar(chr);
-
+@8 str = "yo bro what is going on yo";
+@1 chr = 0;
 @8 i = 0;
+while @1[str+i] != 0
+{
+	chr = @1[str+i];
+	printChar(chr);
+	i++;
+}
+@8 empty = 10;

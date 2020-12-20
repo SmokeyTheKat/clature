@@ -156,6 +156,11 @@ static void sift_token(char chr)
 			handel_literal(chr);
 			chr = read_char();
 			handel_literal(chr);
+			if (chr == '\\')
+			{
+				chr = read_char();
+				handel_literal(chr);
+			}
 			chr = read_char();
 			if (chr != '\'') compile_error("UNCLOSED CHARACTER LITERAL\n");
 			handel_literal(chr);
