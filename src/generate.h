@@ -78,6 +78,7 @@ static void generate_equels_set_asm(struct tokenNode* node);//i = 2*3;
 static void generate_1reg_operation(int opc, struct tokenNode* node);
 static void generate_2reg_operation(int opc, struct tokenNode* node);
 static void generate_function_call(struct tokenNode* node);
+static void generate_function_return(struct tokenNode* node);
 static void generate_dereference(struct tokenNode* node);
 sizet get_param_count(struct tokenNode* node);
 void generate_asm_step(struct tokenNode* node);
@@ -300,14 +301,14 @@ void generate_asm_step(struct tokenNode* node)
 		else if (ddString_compare_cstring(node->value->value, "sub"))
 			generate_sub_statement(node);
 		else if (ddString_compare_cstring(node->value->value, "iso"))
-		{
 			generate_function_call(node->right);
-			push_result(REG_R8);
-		}
+		else if (ddString_compare_cstring(node->value->value, "return"))
+			generate_function_return(node);
 	}
 	else if (node->value->type == TKN_FUNCTION)
 	{
 		generate_function_call(node);
+		push_result(REG_R8);
 	}
 	else if (node->value->type == TKN_ASSEMBLY)
 	{
@@ -336,6 +337,12 @@ static void generate_dereference(struct tokenNode* node)
 	generate_split_right(node->right->right);
 	pop_input(REG_R8);
 	push_ref(make_constant_ddString("r8"), ddString_to_int(node->right->value->value));
+}
+static void generate_function_return(struct tokenNode* node)
+{
+	ddPrintf("right node: %s\n", node->right->value->value.cstr);
+	generate_split_right(node);
+	pop_input(REG_R8);
 }
 static void generate_function_call(struct tokenNode* node)
 {
@@ -383,9 +390,19 @@ static void generate_sub_statement(struct tokenNode* node)
 		stackt_set_param_var(pnode->right->right->value->value, i);
 		pnode = pnode->right->right->right->right;
 	}
+	sizet tscope = scope;
+	cnode = next_tree();
+	generate_asm_step(cnode);
+	while (scope != tscope)
+	{
+		cnode = next_tree();
+		generate_asm_step(cnode);
+	}
+/*
 	while ((cnode = next_tree())->value->value.cstr[0] != '}')
 		generate_asm_step(cnode);
 	generate_asm_step(cnode);//also generate code for '}'
+*/
 	generate_write_btc(BTC_ADD, REG_RSP, make_ddString_from_int(stackt.size));
 	generate_write_function_footer();
 	btcMoveStack->rhs = make_ddString_from_int(stackt.size);

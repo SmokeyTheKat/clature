@@ -80,8 +80,8 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 					}
 					return;
 				}
-				parser_split_right(tokens, node, min, max, len, i);
 				node->value = &(tokens[i]);
+				parser_split_right(tokens, node, min, max, len, i);
 				return;
 			}
 			else if (k == charKeysLength-1 && tokens[i].type == TKN_LITERAL && tokens[i+1].value.cstr[0] == '(')

@@ -170,6 +170,7 @@ static void sift_token(char chr)
 		case '0' ... '9':
 		case 'a' ... 'z':
 		case 'A' ... 'Z':
+		case '_':
 			handel_literal(chr);
 			break;
 		default:
