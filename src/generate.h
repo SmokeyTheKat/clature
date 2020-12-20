@@ -340,9 +340,9 @@ static void generate_dereference(struct tokenNode* node)
 }
 static void generate_function_return(struct tokenNode* node)
 {
-	ddPrintf("right node: %s\n", node->right->value->value.cstr);
 	generate_split_right(node);
 	pop_input(REG_R8);
+	generate_write_btc(BTC_JMP, make_format_ddString(".SC%d%d", 0, scopeCounts[0]), REG_NONE);
 }
 static void generate_function_call(struct tokenNode* node)
 {

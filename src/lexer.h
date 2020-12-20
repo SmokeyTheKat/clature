@@ -144,9 +144,9 @@ static void sift_token(char chr)
 			try_tkns(TKN_OPERATOR, chr, 1, '=');
 			break;
 		case '-':
-			if (!is_number(read_next_char()))
-				handel_literal(chr);
-			else
+			//if (!is_number(read_next_char()))
+			//	handel_literal(chr);
+			//else
 				try_tkns(TKN_OPERATOR, chr, 2, '=', chr);
 			break;
 		case '&': case '|': case '<': case '>': case '+':

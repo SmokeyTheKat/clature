@@ -28,7 +28,7 @@ void compile_main(int agsc, char** ags)
 {
 	compile_reset_color();
 
-	if (agsc < 2) compile_error("NO INPUT FILES");
+	if (agsc < 2) compile_error("NO INPUT FILES\n");
 
 	ddTimer_start();
 

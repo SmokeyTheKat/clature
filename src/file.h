@@ -3,10 +3,14 @@
 
 void write_file(const char* path, ddString content)
 {
-	FILE* fp = fopen(path, "w");
+	ddString filename = make_ddString(path);
+	ddString_push_cstring_back(&filename, ".s");
+	filename.cstr[filename.length] = '\0';
+	FILE* fp = fopen(filename.cstr, "w");
 	if (fp == null) return;
 	fwrite(content.cstr, sizeof(char), content.length, fp);
 	fclose(fp);
+	raze_ddString(&filename);
 }
 
 ddString read_file(const char* path)

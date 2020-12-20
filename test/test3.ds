@@ -22,10 +22,7 @@ sub @8 printNum(@8 num)
 sub @8 getLength(@8 str)
 {
 	@8 output = 0;
-	while @1[str+output] != 0
-	{
-		output++;
-	}
+	while @1[str+output] != 0 { output++ }
 	return output;
 }
 sub @8 printChar(@8 chr)
@@ -38,6 +35,8 @@ sub @8 printChar(@8 chr)
 	.mov	rdx, 1;
 	.syscall;
 }
+
+
 @8 text_length = "the length is: ";
 @1 endl = 10;
 
@@ -46,7 +45,8 @@ iso printChar(endl);
 
 
 @8 hello = "hello";
-iso ddPrint_cstring(hello);
+@8 chello = hello;
+iso ddPrint_cstring(chello);
 
 iso printChar(endl);
 
@@ -68,3 +68,4 @@ while @1[str+i] != 0
 	i++;
 }
 @8 empty = 4;
+iso printChar(endl);

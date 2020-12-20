@@ -102,7 +102,7 @@ global _start
 _start:
 	push	rbp;
 	mov	rbp, rsp;
-	sub	rsp, 50;
+	sub	rsp, 58;
 	push	.str0;
 	pop	QWORD[rbp-8];
 	push	10;
@@ -119,6 +119,8 @@ _start:
 	push	.str1;
 	pop	QWORD[rbp-17];
 	push	QWORD[rbp-17];
+	pop	QWORD[rbp-25];
+	push	QWORD[rbp-25];
 	call	ddPrint_cstring;
 	add	rsp, 8;
 	movsx	rax, BYTE[rbp-9];
@@ -129,11 +131,11 @@ _start:
 	call	getLength;
 	add	rsp, 8;
 	push	r8;
-	pop	QWORD[rbp-25];
+	pop	QWORD[rbp-33];
 	push	QWORD[rbp-8];
 	call	ddPrint_cstring;
 	add	rsp, 8;
-	push	QWORD[rbp-25];
+	push	QWORD[rbp-33];
 	call	printNum;
 	add	rsp, 8;
 	movsx	rax, BYTE[rbp-9];
@@ -141,8 +143,8 @@ _start:
 	call	printChar;
 	add	rsp, 8;
 	push	.str2;
-	pop	QWORD[rbp-33];
-	push	QWORD[rbp-33];
+	pop	QWORD[rbp-41];
+	push	QWORD[rbp-41];
 	call	ddPrint_cstring;
 	add	rsp, 8;
 	movsx	rax, BYTE[rbp-9];
@@ -151,12 +153,12 @@ _start:
 	add	rsp, 8;
 	push	0;
 	pop	rax;
-	mov	BYTE[rbp-34], al;
+	mov	BYTE[rbp-42], al;
 	push	0;
-	pop	QWORD[rbp-42];
+	pop	QWORD[rbp-50];
 .WL04:
-	push	QWORD[rbp-33];
-	push	QWORD[rbp-42];
+	push	QWORD[rbp-41];
+	push	QWORD[rbp-50];
 	pop	r8;
 	pop	r9;
 	add	r9, r8;
@@ -165,20 +167,20 @@ _start:
 	movsx	rax, BYTE[r8];
 	push	rax;
 	pop	rax;
-	mov	BYTE[rbp-34], al;
-	movsx	rax, BYTE[rbp-34];
+	mov	BYTE[rbp-42], al;
+	movsx	rax, BYTE[rbp-42];
 	push	rax;
 	call	printChar;
 	add	rsp, 8;
 	push	r8;
-	push	QWORD[rbp-42];
+	push	QWORD[rbp-50];
 	pop	r8;
 	inc	r8;
 	push	r8;
-	pop	QWORD[rbp-42];
+	pop	QWORD[rbp-50];
 .SC04:
-	push	QWORD[rbp-33];
-	push	QWORD[rbp-42];
+	push	QWORD[rbp-41];
+	push	QWORD[rbp-50];
 	pop	r8;
 	pop	r9;
 	add	r9, r8;
@@ -197,7 +199,11 @@ _start:
 	cmp	r8, 1;
 	je	.WL04;
 	push	4;
-	pop	QWORD[rbp-50];
+	pop	QWORD[rbp-58];
+	movsx	rax, BYTE[rbp-9];
+	push	rax;
+	call	printChar;
+	add	rsp, 8;
 	mov	eax, 0;
 	pop	rbp;
 	mov	rax, 60;

@@ -3,6 +3,7 @@
 #include <ddcTime.h>
 
 #include <stdio.h>
+#include <unistd.h>
 
 #include "./lexer.h"
 #include "./utils.h"
@@ -20,7 +21,8 @@ bool debug;
 int main(int agsc, char** ags)
 {
 	compile_main(agsc, ags);
-	//system_compile_nasm(agsc, ags);
-	//system_compile_ld(agsc, ags);
+	system_compile_nasm(agsc, ags);
+	system_compile_ld(agsc, ags);
+	//system_compile_clear(agsc, ags);
 	return 0;
 }
