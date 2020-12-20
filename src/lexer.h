@@ -114,7 +114,8 @@ static void sift_token(char chr)
 			break;
 		case ';':
 			goto_next_line();
-			set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
+			if (!is_last_linebreak())
+				set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
 			break;
 		case '\n':
 			if (!is_last_linebreak())

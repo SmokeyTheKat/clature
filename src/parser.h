@@ -126,7 +126,6 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 						node = right;
 						i++;
 						int ndb = parser_find_closer(tokens, len, i, '[', ']');
-						ddPrintf("range: %d  ->  %d\n", i, ndb);
 						parser(tokens, node, i, ndb, len);
 						return;
 					}

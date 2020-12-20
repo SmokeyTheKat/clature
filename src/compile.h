@@ -5,6 +5,7 @@
 
 #include "./generate.h"
 #include "./lexer.h"
+#include "./macros.h"
 #include "regs.h"
 
 struct bitcode* generate_bitcode(struct tokenNode** tokenTrees, sizet treeCount);
@@ -43,6 +44,13 @@ void compile_main(int agsc, char** ags)
 	ddString fileOut = make_ddString("");
 
 	if (agsc > 3 && ddString_compare_cstring(make_constant_ddString("-debug"), ags[3])) debug = true;
+
+	read_macros(&file);
+	execute_macros(&file);
+/*
+	ddPrint_nl();
+	ddPrint_ddString_nl(file);
+*/
 
 	init_lexer();
 	tokens = tokenize_file(file, &tokenCount);
