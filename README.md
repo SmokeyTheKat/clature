@@ -21,10 +21,19 @@ $ cds file.ds -s file.s
 ```
 
 ## Syntax
-Square brackets \[pointer\] are used to dereference a pointer;
+Square brackets \[pointer\] are used to dereference a pointer
 ```
 @8 str = "Test String";
 @1 chr = @1[str+3];
 --------------------------
-chr is equal to 't'
+chr == 't'
+```
+
+A '?' is used to reference a variable
+```
+@8 value1 = 10;
+@8 value2 = ?value1; value2 is a pointer
+[value2] = 5;
+--------------------------
+value1 == 5
 ```
