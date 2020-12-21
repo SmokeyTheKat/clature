@@ -141,6 +141,9 @@ static void sift_token(char chr)
 		case '@':
 			set_token(TKN_OPERATOR, make_ddString_length("@", 1));
 			break;
+		case '?':
+			set_token(TKN_OPERATOR, make_ddString_length("?", 1));
+			break;
 		case '*': case '/': case '~': case '!': case '=':
 			try_tkns(TKN_OPERATOR, chr, 1, '=');
 			break;

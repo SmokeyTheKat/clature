@@ -80,6 +80,8 @@ static void generate_2reg_operation(int opc, struct tokenNode* node);
 static void generate_function_call(struct tokenNode* node);
 static void generate_function_return(struct tokenNode* node);
 static void generate_dereference(struct tokenNode* node);
+static void generate_reference(struct tokenNode* node);
+static void generate_set_dereference(struct tokenNode* node);
 sizet get_param_count(struct tokenNode* node);
 void generate_asm_step(struct tokenNode* node);
 void generate_trees_asm(void);
@@ -91,6 +93,7 @@ struct dtVariable datat_add_string(ddString value);
 struct dtVariable datat_add_data(ddString name, ddString value);
 void push_data_var(struct dtVariable var);
 static void push_ref(ddString value, sizet size);
+static void pop_ref(ddString value, sizet size);
 
 static sizet treePosition = 0;
 static sizet treeCount = 0;
@@ -232,6 +235,8 @@ void generate_asm_step(struct tokenNode* node)
 			case '=':
 				if (node->value->value.cstr[1] == '=')
 					generate_equality(node);
+				else if (node->left != nullptr && node->left->right != nullptr && node->left->right->right != nullptr && node->left->right->right->value->value.cstr[0] == '[')
+					generate_set_dereference(node);
 				else if (is_equals_new_assignemnt(node))
 					generate_equels_make_set_asm(node);
 				else
@@ -243,6 +248,9 @@ void generate_asm_step(struct tokenNode* node)
 			case '@':
 				if (node->right != nullptr && node->right->right != nullptr && node->right->right->right != nullptr && node->right->right->value->value.cstr[0] == '[')
 					generate_dereference(node);
+				break;
+			case '?':
+				generate_reference(node);
 				break;
 			case '*':
 				if (node->value->value.cstr[1] == '=')
@@ -331,6 +339,20 @@ static void generate_1reg_operation(int opc, struct tokenNode* node)
 	pop_input(REG_RAX);
 	generate_write_btc(opc, REG_R8, REG_NONE);
 	push_result(REG_RAX);
+}
+static void generate_set_dereference(struct tokenNode* node)
+{
+	generate_split_right(node);
+	generate_split_right(node->left->right->right);
+	pop_input(REG_R8);
+	pop_ref(REG_R8, ddString_to_int(node->left->right->value->value));
+}
+static void generate_reference(struct tokenNode* node)
+{
+	struct stVariable var = stackt_get_var(node->right->value->value);
+	generate_write_btc(BTC_MOV, REG_R8, REG_RBP);
+	generate_write_btc(BTC_SUB, REG_R8, make_ddString_from_int(var.spos));
+	push_result(REG_R8);
 }
 static void generate_dereference(struct tokenNode* node)
 {
@@ -590,6 +612,37 @@ static void pop_stack_var(struct stVariable var)
 		case 8:
 		{
 			generate_write_btc(BTC_POP, make_format_ddString("QWORD[rbp-%d]", var.spos), REG_NONE);
+			break;
+		}
+		default:
+			compile_error("HOW THE FUCK DID THIS HAPPEN (POP)\n");
+	}
+}
+static void pop_ref(ddString value, sizet size)
+{
+	switch (size)
+	{
+		case 1:
+		{
+			pop_input(REG_RAX);
+			generate_write_btc(BTC_MOV, make_format_ddString("BYTE[%s]", value.cstr), REG_AL);
+			break;
+		}
+		case 2:
+		{
+			pop_input(REG_RAX);
+			generate_write_btc(BTC_MOV, make_format_ddString("WORD[%s]", value.cstr), REG_AX);
+			break;
+		}
+		case 4:
+		{
+			pop_input(REG_RAX);
+			generate_write_btc(BTC_MOV, make_format_ddString("DWORD[%s]", value.cstr), REG_EAX);
+			break;
+		}
+		case 8:
+		{
+			generate_write_btc(BTC_POP, make_format_ddString("QWORD[%s]", value.cstr), REG_NONE);
 			break;
 		}
 		default:

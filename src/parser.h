@@ -10,7 +10,7 @@ struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left
 
 extern bool debug;
 const sizet charKeysLength = 13;
-const char charKeys[] = { '{', '}', '=', '@', '+', '-', '*', '/', '<', '>', '!', '[', '(' };
+const char charKeys[] = { '{', '}', '=', '@', '+', '-', '*', '/', '<', '>', '!', '?', '[', '(' };
 
 struct tokenNode
 {
@@ -127,6 +127,12 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 						i++;
 						int ndb = parser_find_closer(tokens, len, i, '[', ']');
 						parser(tokens, node, i, ndb, len);
+						return;
+					}
+					else if (tokens[i].value.cstr[0] == '?')
+					{
+						parser_split_right(tokens, node, min, max, len, i);
+						node->value = &(tokens[i]);
 						return;
 					}
 				}

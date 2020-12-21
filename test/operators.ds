@@ -1,0 +1,4 @@
+@8 valueA = 5 == 4+1;
+@4 valueB = valueA * 10 / 2;
+valueA += 10;
+valueB++;

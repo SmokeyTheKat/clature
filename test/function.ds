@@ -1,0 +1,5 @@
+sub @8 add(@8 valueA, @8 valueB)
+{
+	return valueA + valueB;
+}
+@8 value = add(5, 4);

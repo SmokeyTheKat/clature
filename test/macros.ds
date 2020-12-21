@@ -1,0 +1,11 @@
+@8 none = 0;
+/def int @4
+/def long @8
+/def short @2
+/def char @1
+/def ptr @8
+/def string @8
+
+string str = "hello";
+char chr = 'L';
+int a = 4;

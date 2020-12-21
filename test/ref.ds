@@ -1,0 +1,11 @@
+sub @8 changeNum(@8 ptr)
+{
+	@8[ptr] = 4;
+}
+@8 value = 0;
+@4[?value] = 1;
+@4[?value+4] = '2';
+
+@8 mynum = 3;
+@8 myptr = ?mynum;
+iso changeNum(myptr);

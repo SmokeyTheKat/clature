@@ -1,0 +1,7 @@
+@8 valueA = 75;
+@8 valueB = 25;
+if valueA + valueB == 100
+{
+	valueA = 50;
+	valueB = 50;
+}
