@@ -1,5 +1,5 @@
 # ddScript
-ddScript is a small language with x86_64 nasm code generation. The language 
+ddScript is a small language with x86_64 nasm assembly code generation. The language is 
 
 ## Build
 make targets
@@ -11,3 +11,11 @@ make targets
 | unstall | removes config files and file from /usr/bin |
 
 ## Usage
+Compile to executable
+```
+$ cds file.ds -o file
+```
+Compile file to assembly
+```
+$ cds file.ds -s file.s
+```
