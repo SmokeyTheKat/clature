@@ -80,6 +80,11 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 					}
 					return;
 				}
+				else if (ddString_compare_cstring(tokens[i].value, "continue"))
+				{
+					node->value = &(tokens[i]);
+					return;
+				}
 				node->value = &(tokens[i]);
 				parser_split_right(tokens, node, min, max, len, i);
 				return;

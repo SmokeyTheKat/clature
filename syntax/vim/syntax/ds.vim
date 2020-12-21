@@ -10,7 +10,7 @@ endif
 
 runtime! ~/.vim/syntax/ds.vim
 
-syntax keyword dsLangKeywords		fun sub iso if while for return struct global
+syntax keyword dsLangKeywords		fun sub iso if while for return struct global continue
 syntax match dsLangDecNumber 		"\d\+"
 syntax match dsLangHexNumber 		"\<0[xX]\x\+\>"
 syntax match dsLangBinNumber 		"\<0[bB][01]\+\>"

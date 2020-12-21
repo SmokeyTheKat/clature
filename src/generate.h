@@ -49,6 +49,8 @@ struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _tree
 static inline struct tokenNode* next_tree(void);
 void generate_write_btc(int opc, ddString lhs, ddString rhs);
 static inline bool is_equals_new_assignemnt(struct tokenNode* node);
+static inline bool is_dereference(struct tokenNode* node);
+static inline bool is_dereference_assignment(struct tokenNode* node);
 static void push_stack_var(struct stVariable var);
 static void pop_stack_var(struct stVariable var);
 static inline void push_result(ddString reg);
@@ -72,6 +74,7 @@ static inline struct bitcode* generate_write_function_headder(ddString name);// 
 static inline void generate_write_function_footer(void);
 static void generate_if_statement(struct tokenNode* node);
 static void generate_while_statement(struct tokenNode* node);
+static void generate_continue(struct tokenNode* node);
 static void generate_sub_statement(struct tokenNode* node);
 static void generate_equels_make_set_asm(struct tokenNode* node);//@8 i = 9-3;
 static void generate_equels_set_asm(struct tokenNode* node);//i = 2*3;
@@ -235,7 +238,7 @@ void generate_asm_step(struct tokenNode* node)
 			case '=':
 				if (node->value->value.cstr[1] == '=')
 					generate_equality(node);
-				else if (node->left != nullptr && node->left->right != nullptr && node->left->right->right != nullptr && node->left->right->right->value->value.cstr[0] == '[')
+				else if (is_dereference_assignment(node))
 					generate_set_dereference(node);
 				else if (is_equals_new_assignemnt(node))
 					generate_equels_make_set_asm(node);
@@ -246,7 +249,7 @@ void generate_asm_step(struct tokenNode* node)
 				if (node->value->value.cstr[1] == '=')
 					generate_inequality(node);
 			case '@':
-				if (node->right != nullptr && node->right->right != nullptr && node->right->right->right != nullptr && node->right->right->value->value.cstr[0] == '[')
+				if (is_dereference(node))
 					generate_dereference(node);
 				break;
 			case '?':
@@ -312,6 +315,8 @@ void generate_asm_step(struct tokenNode* node)
 			generate_function_call(node->right);
 		else if (ddString_compare_cstring(node->value->value, "return"))
 			generate_function_return(node);
+		else if (ddString_compare_cstring(node->value->value, "continue"))
+			generate_continue(node);
 	}
 	else if (node->value->type == TKN_FUNCTION)
 	{
@@ -433,6 +438,10 @@ static void generate_sub_statement(struct tokenNode* node)
 	bitcodeHead = functionCodeHead;
 	bitcode = temp;
 	switch_stacks();
+}
+static void generate_continue(struct tokenNode* node)
+{
+	generate_write_btc(BTC_JMP, make_format_ddString(".SC%d%d", scope-1, scopeCounts[scope]), REG_NONE);
 }
 static void generate_while_statement(struct tokenNode* node)
 {
@@ -777,5 +786,17 @@ struct dtVariable datat_add_string(ddString value)
 void push_data_var(struct dtVariable var)
 {
 	generate_write_btc(BTC_PUSH, var.name, REG_NONE);
+}
+static inline bool is_dereference(struct tokenNode* node)
+{
+	if (node->right != nullptr && node->right->right != nullptr && node->right->right->right != nullptr && node->right->right->value->value.cstr[0] == '[')
+		return true;
+	return false;
+}
+static inline bool is_dereference_assignment(struct tokenNode* node)
+{
+	if (node->left != nullptr && node->left->right != nullptr && node->left->right->right != nullptr && node->left->right->right->value->value.cstr[0] == '[')
+		return true;
+	return false;
 }
 #endif
