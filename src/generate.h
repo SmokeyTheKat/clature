@@ -70,6 +70,11 @@ static inline void generate_plus_equals(struct tokenNode* node);
 static inline void generate_minus_equals(struct tokenNode* node);
 static inline void generate_plus_plus(struct tokenNode* node);
 static inline void generate_minus_minus(struct tokenNode* node);
+static inline void generate_lessthan_equals(struct tokenNode* node);
+static inline void generate_lessthan_operator(struct tokenNode* node);
+static inline void generate_greaterthan_equals(struct tokenNode* node);
+static inline void generate_greaterthan_operator(struct tokenNode* node);
+static inline void generate_mod_operator(struct tokenNode* node);
 static inline struct bitcode* generate_write_function_headder(ddString name);// returns the code line of the sub rsp
 static inline void generate_write_function_footer(void);
 static void generate_if_statement(struct tokenNode* node);
@@ -282,6 +287,28 @@ void generate_asm_step(struct tokenNode* node)
 					generate_minus_minus(node);
 				else
 					generate_2reg_operation(BTC_SUB, node);
+				break;
+			case '<':
+				if (node->value->value.cstr[1] == '=')
+					generate_lessthan_equals(node);
+				else if (node->value->value.cstr[1] == '<')
+					;//generate_lessthan_lessthan(node);
+				else
+					generate_lessthan_operator(node);
+				break;
+			case '>':
+				if (node->value->value.cstr[1] == '=')
+					generate_greaterthan_equals(node);
+				else if (node->value->value.cstr[1] == '<')
+					;//generate_greaterthan_lessthan(node);
+				else
+					generate_greaterthan_operator(node);
+				break;
+			case '%':
+				if (node->value->value.cstr[1] == '=')
+					;//generate_mod_equals(node);
+				else
+					generate_mod_operator(node);
 				break;
 			default:
 				compile_error(make_format_ddString("UNDEFINED OPERATOR/SYNTAX/SYMBOL \"%s\"\n", node->value->value.cstr).cstr);
@@ -535,6 +562,26 @@ static inline void generate_minus_minus(struct tokenNode* node)
 	generate_write_btc(BTC_DEC, REG_R8, REG_NONE);
 	push_result(REG_R8);
 	pop_stack_var(var);
+}
+static inline void generate_lessthan_equals(struct tokenNode* node)
+{
+
+}
+static inline void generate_lessthan_operator(struct tokenNode* node)
+{
+
+}
+static inline void generate_greaterthan_equals(struct tokenNode* node)
+{
+
+}
+static inline void generate_greaterthan_operator(struct tokenNode* node)
+{
+
+}
+static inline void generate_mod_operator(struct tokenNode* node)
+{
+
 }
 static inline void generate_bisplit(struct tokenNode* node)
 {
