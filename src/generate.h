@@ -55,6 +55,10 @@ static void push_stack_var(struct stVariable var);
 static void pop_stack_var(struct stVariable var);
 static inline void push_result(ddString reg);
 static inline void compare_equal_flag(void);
+static inline void compare_lessthan_equal_flag(void);
+static inline void compare_lessthan_flag(void);
+static inline void compare_greaterthan_flag(void);
+static inline void compare_greaterthan_equal_flag(void);
 static inline void compare_not_equal_flag(void);
 static inline void compare_sides(void);
 static inline void pop_input(ddString reg);
@@ -71,9 +75,9 @@ static inline void generate_minus_equals(struct tokenNode* node);
 static inline void generate_plus_plus(struct tokenNode* node);
 static inline void generate_minus_minus(struct tokenNode* node);
 static inline void generate_lessthan_equals(struct tokenNode* node);
-static inline void generate_lessthan_operator(struct tokenNode* node);
+static inline void generate_lessthan(struct tokenNode* node);
 static inline void generate_greaterthan_equals(struct tokenNode* node);
-static inline void generate_greaterthan_operator(struct tokenNode* node);
+static inline void generate_greaterthan(struct tokenNode* node);
 static inline void generate_mod_operator(struct tokenNode* node);
 static inline struct bitcode* generate_write_function_headder(ddString name);// returns the code line of the sub rsp
 static inline void generate_write_function_footer(void);
@@ -123,7 +127,6 @@ sizet scopeCounts[MAX_SCOPES];
 extern bool inFunction;
 extern struct bitcode* functionCode;
 bool whileLoop = false;
-
 const char* DATA_SIZES[9] = {
 	"ERROR_SIZE",
 	"BYTE",
@@ -294,7 +297,7 @@ void generate_asm_step(struct tokenNode* node)
 				else if (node->value->value.cstr[1] == '<')
 					;//generate_lessthan_lessthan(node);
 				else
-					generate_lessthan_operator(node);
+					generate_lessthan(node);
 				break;
 			case '>':
 				if (node->value->value.cstr[1] == '=')
@@ -302,7 +305,7 @@ void generate_asm_step(struct tokenNode* node)
 				else if (node->value->value.cstr[1] == '<')
 					;//generate_greaterthan_lessthan(node);
 				else
-					generate_greaterthan_operator(node);
+					generate_greaterthan(node);
 				break;
 			case '%':
 				if (node->value->value.cstr[1] == '=')
@@ -565,19 +568,39 @@ static inline void generate_minus_minus(struct tokenNode* node)
 }
 static inline void generate_lessthan_equals(struct tokenNode* node)
 {
-
+	generate_bisplit(node);
+	pop_input(REG_R8);
+	pop_input(REG_R9);
+	compare_sides();
+	compare_lessthan_equal_flag();
+	push_result(REG_R8);
 }
-static inline void generate_lessthan_operator(struct tokenNode* node)
+static inline void generate_lessthan(struct tokenNode* node)
 {
-
+	generate_bisplit(node);
+	pop_input(REG_R8);
+	pop_input(REG_R9);
+	compare_sides();
+	compare_lessthan_flag();
+	push_result(REG_R8);
 }
 static inline void generate_greaterthan_equals(struct tokenNode* node)
 {
-
+	generate_bisplit(node);
+	pop_input(REG_R8);
+	pop_input(REG_R9);
+	compare_sides();
+	compare_greaterthan_equal_flag();
+	push_result(REG_R8);
 }
-static inline void generate_greaterthan_operator(struct tokenNode* node)
+static inline void generate_greaterthan(struct tokenNode* node)
 {
-
+	generate_bisplit(node);
+	pop_input(REG_R8);
+	pop_input(REG_R9);
+	compare_sides();
+	compare_greaterthan_flag();
+	push_result(REG_R8);
 }
 static inline void generate_mod_operator(struct tokenNode* node)
 {
@@ -608,6 +631,26 @@ static inline void pop_input(ddString reg)
 static inline void compare_sides(void)
 {
 	generate_write_btc(BTC_CMP, REG_R9, REG_R8);
+}
+static inline void compare_lessthan_equal_flag(void)
+{
+	generate_write_btc(BTC_SETLE, REG_AL, REG_NONE);
+	generate_write_btc(BTC_MOVZX, REG_R8, REG_AL);
+}
+static inline void compare_lessthan_flag(void)
+{
+	generate_write_btc(BTC_SETL, REG_AL, REG_NONE);
+	generate_write_btc(BTC_MOVZX, REG_R8, REG_AL);
+}
+static inline void compare_greaterthan_flag(void)
+{
+	generate_write_btc(BTC_SETG, REG_AL, REG_NONE);
+	generate_write_btc(BTC_MOVZX, REG_R8, REG_AL);
+}
+static inline void compare_greaterthan_equal_flag(void)
+{
+	generate_write_btc(BTC_SETGE, REG_AL, REG_NONE);
+	generate_write_btc(BTC_MOVZX, REG_R8, REG_AL);
 }
 static inline void compare_equal_flag(void)
 {

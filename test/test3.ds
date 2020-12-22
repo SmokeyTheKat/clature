@@ -36,7 +36,6 @@ sub @8 printChar(@8 chr)
 	.syscall;
 }
 
-
 @8 text_length = "the length is: ";
 @1 endl = 10;
 

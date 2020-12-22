@@ -1,5 +1,5 @@
 @8 i = 0;
-while i != 50
+while i < 50
 {
 	i++;
 	continue;
