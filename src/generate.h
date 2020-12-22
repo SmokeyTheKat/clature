@@ -604,7 +604,11 @@ static inline void generate_greaterthan(struct tokenNode* node)
 }
 static inline void generate_mod_operator(struct tokenNode* node)
 {
-
+	generate_bisplit(node);
+	pop_input(REG_R8);
+	pop_input(REG_RAX);
+	generate_write_btc(BTC_DIV, REG_R8, REG_NONE);
+	push_result(REG_RDX);
 }
 static inline void generate_bisplit(struct tokenNode* node)
 {

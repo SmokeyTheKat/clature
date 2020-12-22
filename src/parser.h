@@ -9,8 +9,8 @@ struct tokenNode** parser_main(struct token* tokens, sizet tokenCount, sizet* _t
 struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left, struct tokenNode* right, struct token* value);
 
 extern bool debug;
-const sizet charKeysLength = 14;
-const char charKeys[] = { '{', '}', '=', '@', '+', '-', '*', '/', '<', '>', '!', '?', '[', '(' };
+const sizet charKeysLength = 15;
+const char charKeys[] = { '{', '}', '=', '@', '+', '-', '*', '/', '%', '<', '>', '!', '?', '[', '(' };
 
 struct tokenNode
 {
