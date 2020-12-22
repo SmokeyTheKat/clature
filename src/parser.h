@@ -9,9 +9,9 @@ struct tokenNode** parser_main(struct token* tokens, sizet tokenCount, sizet* _t
 struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left, struct tokenNode* right, struct token* value);
 
 extern bool debug;
-const sizet charKeysLength = 15;
-const char charKeys[] = { '{', '}', '=', '@', '+', '-', '*', '/', '%', '<', '>', '!', '?', '[', '(' };
-
+const sizet charKeysLength = 18;
+const char charKeys[] = { '{', '}', '=', '@', '|', '&', '=', '!', '+', '-', '*', '/', '%', '<', '>', '?', '[', '(' };
+//                                            ||   &&   ==   !=                                                     
 struct tokenNode
 {
 	struct tokenNode* parent;
@@ -110,6 +110,13 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 			{
 				if (tokens[i].type == TKN_OPERATOR)
 				{
+					if (tokens[i].value.cstr[0] == '=' && tokens[i].value.cstr[1] == '=')
+					{
+						if (k == 2) continue;
+						parser_bisplit(tokens, node, min, max, len, i);
+						node->value = &(tokens[i]);
+						return;
+					}
 					if (tokens[i].value.cstr[0] == '@' && i+2 < len && tokens[i+2].value.cstr[0] == '[')
 					{
 						struct tokenNode* right = make(struct tokenNode, 1); 

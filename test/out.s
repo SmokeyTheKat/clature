@@ -104,12 +104,63 @@ _start:
 	push	rbp;
 	mov	rbp, rsp;
 	sub	rsp, 66;
-	push	537;
-	push	10;
+	push	2;
+	push	1;
+	pop	r8;
+	pop	r9;
+	cmp	r9, r8;
+	sete	al;
+	movzx	r8, al;
+	push	r8;
+	push	5;
+	push	4;
+	push	1;
+	pop	r8;
+	pop	r9;
+	add	r9, r8;
+	push	r9;
+	pop	r8;
+	pop	r9;
+	cmp	r9, r8;
+	sete	al;
+	movzx	r8, al;
+	push	r8;
+	pop	r8;
+	pop	r9;
+	cmp	r8, 0;
+	je	.OP0;
+	cmp	r9, 0;
+	je	.OP0;
+	push	1;
+	jmp	.OP1;
+.OP0:
+	push	0;
+.OP1:
+	push	2;
+	push	1;
+	push	2;
 	pop	r8;
 	pop	rax;
-	div	r8;
-	push	rdx;
+	mul	r8;
+	push	rax;
+	pop	r8;
+	pop	r9;
+	cmp	r9, r8;
+	sete	al;
+	movzx	r8, al;
+	push	r8;
+	pop	r8;
+	pop	r9;
+	cmp	r8, 0;
+	jne	.OP2;
+	cmp	r9, 0;
+	je	.OP3;
+.OP2:
+	push	1;
+	jmp	.OP4;
+.OP3:
+	push	0;
+.OP4:
 	pop	QWORD[rbp-8];
 	push	QWORD[rbp-8];
 	call	printNum;

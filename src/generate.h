@@ -79,6 +79,8 @@ static inline void generate_lessthan(struct tokenNode* node);
 static inline void generate_greaterthan_equals(struct tokenNode* node);
 static inline void generate_greaterthan(struct tokenNode* node);
 static inline void generate_mod_operator(struct tokenNode* node);
+static inline void generate_logic_and(struct tokenNode* node);
+static inline void generate_logic_or(struct tokenNode* node);
 static inline struct bitcode* generate_write_function_headder(ddString name);// returns the code line of the sub rsp
 static inline void generate_write_function_footer(void);
 static void generate_if_statement(struct tokenNode* node);
@@ -123,6 +125,7 @@ sizet stringCount = 0;
 struct functionTracker functiont;
 struct functionTracker functiont;
 sizet scope = 0;
+sizet optrCount = 0;
 sizet scopeCounts[MAX_SCOPES];
 extern bool inFunction;
 extern struct bitcode* functionCode;
@@ -312,6 +315,14 @@ void generate_asm_step(struct tokenNode* node)
 					;//generate_mod_equals(node);
 				else
 					generate_mod_operator(node);
+				break;
+			case '&':
+				if (node->value->value.cstr[1] == '&')
+					generate_logic_and(node);
+				break;
+			case '|':
+				if (node->value->value.cstr[1] == '|')
+					generate_logic_or(node);
 				break;
 			default:
 				compile_error(make_format_ddString("UNDEFINED OPERATOR/SYNTAX/SYMBOL \"%s\"\n", node->value->value.cstr).cstr);
@@ -569,8 +580,7 @@ static inline void generate_minus_minus(struct tokenNode* node)
 static inline void generate_lessthan_equals(struct tokenNode* node)
 {
 	generate_bisplit(node);
-	pop_input(REG_R8);
-	pop_input(REG_R9);
+	pop_both_sides();
 	compare_sides();
 	compare_lessthan_equal_flag();
 	push_result(REG_R8);
@@ -578,8 +588,7 @@ static inline void generate_lessthan_equals(struct tokenNode* node)
 static inline void generate_lessthan(struct tokenNode* node)
 {
 	generate_bisplit(node);
-	pop_input(REG_R8);
-	pop_input(REG_R9);
+	pop_both_sides();
 	compare_sides();
 	compare_lessthan_flag();
 	push_result(REG_R8);
@@ -587,8 +596,7 @@ static inline void generate_lessthan(struct tokenNode* node)
 static inline void generate_greaterthan_equals(struct tokenNode* node)
 {
 	generate_bisplit(node);
-	pop_input(REG_R8);
-	pop_input(REG_R9);
+	pop_both_sides();
 	compare_sides();
 	compare_greaterthan_equal_flag();
 	push_result(REG_R8);
@@ -596,8 +604,7 @@ static inline void generate_greaterthan_equals(struct tokenNode* node)
 static inline void generate_greaterthan(struct tokenNode* node)
 {
 	generate_bisplit(node);
-	pop_input(REG_R8);
-	pop_input(REG_R9);
+	pop_both_sides();
 	compare_sides();
 	compare_greaterthan_flag();
 	push_result(REG_R8);
@@ -609,6 +616,43 @@ static inline void generate_mod_operator(struct tokenNode* node)
 	pop_input(REG_RAX);
 	generate_write_btc(BTC_DIV, REG_R8, REG_NONE);
 	push_result(REG_RDX);
+}
+static inline void generate_logic_and(struct tokenNode* node)
+{
+	generate_bisplit(node);
+	pop_both_sides();
+	generate_write_btc(BTC_CMP, REG_R8, make_constant_ddString("0"));
+	generate_write_btc(BTC_JE, make_format_ddString(".OP%d", optrCount), REG_NONE);
+
+	generate_write_btc(BTC_CMP, REG_R9, make_constant_ddString("0"));
+	generate_write_btc(BTC_JE, make_format_ddString(".OP%d", optrCount), REG_NONE);
+
+	generate_write_btc(BTC_PUSH, make_constant_ddString("1"), REG_NONE);
+	generate_write_btc(BTC_JMP, make_format_ddString(".OP%d", optrCount+1), REG_NONE);
+
+	generate_write_btc(BTC_LABEL, make_format_ddString(".OP%d", optrCount++), REG_NONE);
+	generate_write_btc(BTC_PUSH, make_constant_ddString("0"), REG_NONE);
+
+	generate_write_btc(BTC_LABEL, make_format_ddString(".OP%d", optrCount++), REG_NONE);
+}
+static inline void generate_logic_or(struct tokenNode* node)
+{
+	generate_bisplit(node);
+	pop_both_sides();
+
+	generate_write_btc(BTC_CMP, REG_R8, make_constant_ddString("0"));
+	generate_write_btc(BTC_JNE, make_format_ddString(".OP%d", optrCount), REG_NONE);
+
+	generate_write_btc(BTC_CMP, REG_R9, make_constant_ddString("0"));
+	generate_write_btc(BTC_JE, make_format_ddString(".OP%d", optrCount+1), REG_NONE);
+
+	generate_write_btc(BTC_LABEL, make_format_ddString(".OP%d", optrCount++), REG_NONE);
+	generate_write_btc(BTC_PUSH, make_constant_ddString("1"), REG_NONE);
+	generate_write_btc(BTC_JMP, make_format_ddString(".OP%d", optrCount+1), REG_NONE);
+
+	generate_write_btc(BTC_LABEL, make_format_ddString(".OP%d", optrCount++), REG_NONE);
+	generate_write_btc(BTC_PUSH, make_constant_ddString("0"), REG_NONE);
+	generate_write_btc(BTC_LABEL, make_format_ddString(".OP%d", optrCount++), REG_NONE);
 }
 static inline void generate_bisplit(struct tokenNode* node)
 {
