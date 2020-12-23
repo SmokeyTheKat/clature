@@ -36,6 +36,7 @@
 #define BTC_INC		0x1E
 #define BTC_DEC		0x1F
 #define BTC_TAG		0x20
+#define BTC_XOR		0x21
 
 struct dtVariable;
 struct dataTracker;
@@ -612,10 +613,15 @@ static inline void generate_greaterthan(struct tokenNode* node)
 static inline void generate_mod_operator(struct tokenNode* node)
 {
 	generate_bisplit(node);
+	generate_write_btc(BTC_XOR, REG_RAX, REG_RAX);
+	generate_write_btc(BTC_XOR, REG_RDX, REG_RDX);
 	pop_input(REG_R8);
 	pop_input(REG_RAX);
 	generate_write_btc(BTC_DIV, REG_R8, REG_NONE);
-	push_result(REG_RDX);
+	generate_write_btc(BTC_MOV, REG_R8, REG_RDX);
+	generate_write_btc(BTC_XOR, REG_RAX, REG_RAX);
+	generate_write_btc(BTC_XOR, REG_RDX, REG_RDX);
+	push_result(REG_R8);
 }
 static inline void generate_logic_and(struct tokenNode* node)
 {
@@ -733,24 +739,24 @@ static void pop_stack_var(struct stVariable var)
 		case 1:
 		{
 			pop_input(REG_RAX);
-			generate_write_btc(BTC_MOV, make_format_ddString("BYTE[rbp-%d]", var.spos), REG_AL);
+			generate_write_btc(BTC_MOV, make_format_ddString("BYTE[RBP-%d]", var.spos), REG_AL);
 			break;
 		}
 		case 2:
 		{
 			pop_input(REG_RAX);
-			generate_write_btc(BTC_MOV, make_format_ddString("WORD[rbp-%d]", var.spos), REG_AX);
+			generate_write_btc(BTC_MOV, make_format_ddString("WORD[RBP-%d]", var.spos), REG_AX);
 			break;
 		}
 		case 4:
 		{
 			pop_input(REG_RAX);
-			generate_write_btc(BTC_MOV, make_format_ddString("DWORD[rbp-%d]", var.spos), REG_EAX);
+			generate_write_btc(BTC_MOV, make_format_ddString("DWORD[RBP-%d]", var.spos), REG_EAX);
 			break;
 		}
 		case 8:
 		{
-			generate_write_btc(BTC_POP, make_format_ddString("QWORD[rbp-%d]", var.spos), REG_NONE);
+			generate_write_btc(BTC_POP, make_format_ddString("QWORD[RBP-%d]", var.spos), REG_NONE);
 			break;
 		}
 		default:
@@ -825,25 +831,25 @@ static void push_stack_var(struct stVariable var)
 	{
 		case 1:
 		{
-			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("BYTE[rbp-%d]", var.spos));
+			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("BYTE[RBP-%d]", var.spos));
 			push_result(REG_RAX);
 			break;
 		}
 		case 2:
 		{
-			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("WORD[rbp-%d]", var.spos));
+			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("WORD[RBP-%d]", var.spos));
 			push_result(REG_RAX);
 			break;
 		}
 		case 4:
 		{
-			generate_write_btc(BTC_MOV, REG_EAX, make_format_ddString("DWORD[rbp-%d]", var.spos));
+			generate_write_btc(BTC_MOV, REG_EAX, make_format_ddString("DWORD[RBP-%d]", var.spos));
 			push_result(REG_RAX);
 			break;
 		}
 		case 8:
 		{
-			generate_write_btc(BTC_PUSH, make_format_ddString("QWORD[rbp-%d]", var.spos), REG_NONE);
+			generate_write_btc(BTC_PUSH, make_format_ddString("QWORD[RBP-%d]", var.spos), REG_NONE);
 			break;
 		}
 		default:
