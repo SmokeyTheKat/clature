@@ -21,6 +21,8 @@ check: all
 	@echo "PASSED ref.ds"
 	@./ddScript ./test/macros.ds ./test/out
 	@echo "PASSED macros.ds"
+	@./ddScript ./test/arr.ds ./test/out
+	@echo "PASSED arr.ds"
 	@echo "PASSED ALL TESTS WOW :)"
 tc: all
 	./ddScript ./test/test3.ds ./test/out
