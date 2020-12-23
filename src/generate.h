@@ -623,33 +623,25 @@ static inline void generate_logic_and(struct tokenNode* node)
 	pop_both_sides();
 	generate_write_btc(BTC_CMP, REG_R8, make_constant_ddString("0"));
 	generate_write_btc(BTC_JE, make_format_ddString(".OP%d", optrCount), REG_NONE);
-
 	generate_write_btc(BTC_CMP, REG_R9, make_constant_ddString("0"));
 	generate_write_btc(BTC_JE, make_format_ddString(".OP%d", optrCount), REG_NONE);
-
 	generate_write_btc(BTC_PUSH, make_constant_ddString("1"), REG_NONE);
 	generate_write_btc(BTC_JMP, make_format_ddString(".OP%d", optrCount+1), REG_NONE);
-
 	generate_write_btc(BTC_LABEL, make_format_ddString(".OP%d", optrCount++), REG_NONE);
 	generate_write_btc(BTC_PUSH, make_constant_ddString("0"), REG_NONE);
-
 	generate_write_btc(BTC_LABEL, make_format_ddString(".OP%d", optrCount++), REG_NONE);
 }
 static inline void generate_logic_or(struct tokenNode* node)
 {
 	generate_bisplit(node);
 	pop_both_sides();
-
 	generate_write_btc(BTC_CMP, REG_R8, make_constant_ddString("0"));
 	generate_write_btc(BTC_JNE, make_format_ddString(".OP%d", optrCount), REG_NONE);
-
 	generate_write_btc(BTC_CMP, REG_R9, make_constant_ddString("0"));
 	generate_write_btc(BTC_JE, make_format_ddString(".OP%d", optrCount+1), REG_NONE);
-
 	generate_write_btc(BTC_LABEL, make_format_ddString(".OP%d", optrCount++), REG_NONE);
 	generate_write_btc(BTC_PUSH, make_constant_ddString("1"), REG_NONE);
 	generate_write_btc(BTC_JMP, make_format_ddString(".OP%d", optrCount+1), REG_NONE);
-
 	generate_write_btc(BTC_LABEL, make_format_ddString(".OP%d", optrCount++), REG_NONE);
 	generate_write_btc(BTC_PUSH, make_constant_ddString("0"), REG_NONE);
 	generate_write_btc(BTC_LABEL, make_format_ddString(".OP%d", optrCount++), REG_NONE);

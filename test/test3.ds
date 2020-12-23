@@ -1,3 +1,28 @@
+sub @8 numToString(@8 value, @8 string, @8 length)
+{
+	if value == 0
+	{
+		@1[string] = '0';
+		@1[string+1] = 0;
+		return 0;
+	}
+	@8 i = 0;
+	while i < length
+	{
+		@1[string+i] = '0';
+		i++;
+	}
+	@1[string+(length-1)] = 0;
+	@8 pos = length-2;
+	@8 x = 0;
+	while value
+	{
+		x = value % 10;
+		value /= 10;
+		@1[string+pos] = '0' + x;
+		pos--;
+	}
+}
 sub @8 ddPrint_cstring(@8 strconst)
 {
 	@8 strlen = getLength(strconst);
@@ -35,12 +60,25 @@ sub @8 printChar(@8 chr)
 	.mov	rdx, 1;
 	.syscall;
 }
+@1 endl = 10;
+
+@8 istr = "          ";
+@8 istrlen = 9;
+@8 inum = 369;
+iso numToString(inum, istr, istrlen);
+iso ddPrint_cstring(istr);
+;while inum < 15
+;{
+;	iso numToString(inum, istr, istrlen);
+;	iso ddPrint_cstring(istr);
+;	inum++;
+;	iso printChar(endl);
+;}
 
 @8 value = 2 == 1 && 5 == 4+1 || 2 == 1*2;
-iso printNum(value);
+;iso printNum(value);
 
 @8 text_length = "the length is: ";
-@1 endl = 10;
 
 iso printChar(endl);
 iso printChar(endl);
