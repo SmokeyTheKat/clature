@@ -1,0 +1,79 @@
+sub @0 numToString(@8 value, @8 string, @8 length)
+{
+	if value == 0
+	{
+		@1[string] = '0';
+		@1[string+1] = 0;
+		return 0;
+	}
+	@8 sign = '+';
+	if sign < 0
+	{
+		sign = '-';
+		;value *= -1;
+	}
+	@8 i = 0;
+	while i < length
+	{
+		@1[string+i] = '0';
+		i++;
+	}
+	@1[string+(length-1)] = 0;
+	@8 pos = length-2;
+	@8 x = 0;
+	while value > 0
+	{
+		x = value % 10;
+		value /= 10;
+		@1[string+pos] = '0' + x;
+		pos--;
+	}
+	@1[string+pos] = sign;
+}
+sub @0 pstr(@8 str)
+{
+	@8 len = strlen(str);
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.mov	rsi, [rbp+16];
+	.mov	rdx, [rbp-8];
+	.syscall;
+}
+sub @0 pnl(@0)
+{
+	@8 nl = 10;
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.sub	rbp, 8;
+	.mov	rsi, rbp;
+	.add	rbp, 8;
+	.mov	rdx, 1;
+	.syscall;
+}
+sub @8 strlen(@8 str)
+{
+	@8 output = 0;
+	while @1[str+output] != 0 { output++ }
+	return output;
+}
+sub @0 printNum(@8 num)
+{
+	num += 48;
+	.mov	rax, 1;
+	.mov	rdi, 1;
+	.add	rbp, 16;
+	.mov	rsi, rbp;
+	.sub	rbp, 16;
+	.mov	rdx, 1;
+	.syscall;
+}
+
+@8 arr = @1<27>;
+@8 i = 0;
+while i < 26
+{
+	@1[arr+i] = 'a' + i;
+	i++;
+}
+@1[arr+(27-1)] = 0;
+iso pstr(arr);

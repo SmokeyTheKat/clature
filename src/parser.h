@@ -117,6 +117,37 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 						node->value = &(tokens[i]);
 						return;
 					}
+					if (tokens[i].value.cstr[0] == '@' && i+2 < len && tokens[i+2].value.cstr[0] == '<')
+					{
+						struct tokenNode* right = make(struct tokenNode, 1); 
+						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+						node->right = right;
+						node->value = &(tokens[i]);
+						node = right;
+						i++;
+						right = make(struct tokenNode, 1); 
+						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+						node->right = right;
+						node->value = &(tokens[i]);
+						node = right;
+						i++;
+						right = make(struct tokenNode, 1); 
+						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+						node->right = right;
+						node->value = &(tokens[i]);
+						node = right;
+						i++;
+						right = make(struct tokenNode, 1); 
+						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
+						node->right = right;
+						node->value = &(tokens[i]);
+						node = right;
+						i++;
+						if (tokens[i].value.cstr[0] != '>') compile_error(make_format_ddString("UNEXPECTED SYMBOL FOUND IN ARRAY DEFINITION!\n        SYMBOL '%c' WAS FOUND WHERE '>' WAS EXPECTED!\n", tokens[i].value.cstr[0]).cstr);
+						//int ndb = parser_find_closer(tokens, len, i, '<', '>');
+						//parser(tokens, node, i, ndb, len);
+						return;
+					}
 					if (tokens[i].value.cstr[0] == '@' && i+2 < len && tokens[i+2].value.cstr[0] == '[')
 					{
 						struct tokenNode* right = make(struct tokenNode, 1); 

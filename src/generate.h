@@ -52,6 +52,7 @@ void generate_write_btc(int opc, ddString lhs, ddString rhs);
 static inline bool is_equals_new_assignemnt(struct tokenNode* node);
 static inline bool is_dereference(struct tokenNode* node);
 static inline bool is_dereference_assignment(struct tokenNode* node);
+static inline bool is_array_def(struct tokenNode* node);
 static void push_stack_var(struct stVariable var);
 static void pop_stack_var(struct stVariable var);
 static inline void push_result(ddString reg);
@@ -95,6 +96,7 @@ static void generate_2reg_operation(int opc, struct tokenNode* node);
 static void generate_function_call(struct tokenNode* node);
 static void generate_function_return(struct tokenNode* node);
 static void generate_dereference(struct tokenNode* node);
+static void generate_array_def(struct tokenNode* node);
 static void generate_reference(struct tokenNode* node);
 static void generate_set_dereference(struct tokenNode* node);
 sizet get_param_count(struct tokenNode* node);
@@ -263,6 +265,8 @@ void generate_asm_step(struct tokenNode* node)
 			case '@':
 				if (is_dereference(node))
 					generate_dereference(node);
+				if (is_array_def(node))
+					generate_array_def(node);
 				break;
 			case '?':
 				generate_reference(node);
@@ -399,6 +403,16 @@ static void generate_reference(struct tokenNode* node)
 	struct stVariable var = stackt_get_var(node->right->value->value);
 	generate_write_btc(BTC_MOV, REG_R8, REG_RBP);
 	generate_write_btc(BTC_SUB, REG_R8, make_ddString_from_int(var.spos));
+	push_result(REG_R8);
+}
+static void generate_array_def(struct tokenNode* node)
+{
+	sizet typesize = ddString_to_int(node->right->value->value);
+	sizet length = ddString_to_int(node->right->right->right->value->value);
+	sizet size = typesize*length;
+	stackt.size += size;
+	generate_write_btc(BTC_MOV, REG_R8, REG_RBP);
+	generate_write_btc(BTC_SUB, REG_R8, make_ddString_from_int(stackt.size));
 	push_result(REG_R8);
 }
 static void generate_dereference(struct tokenNode* node)
@@ -922,6 +936,12 @@ struct dtVariable datat_add_string(ddString value)
 void push_data_var(struct dtVariable var)
 {
 	generate_write_btc(BTC_PUSH, var.name, REG_NONE);
+}
+static inline bool is_array_def(struct tokenNode* node)
+{
+	if (node->right != nullptr && node->right->right != nullptr && node->right->right->right != nullptr && node->right->right->value->value.cstr[0] == '<')
+		return true;
+	return false;
 }
 static inline bool is_dereference(struct tokenNode* node)
 {
