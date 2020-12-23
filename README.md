@@ -48,6 +48,12 @@ Square brackets \[pointer\] are used to dereference a pointer.
 chr == 't'
 ```
 
+Arrays can be created like so yo.
+```
+@8 arrayPointer = @4<20>;  '@4<20>' creates a 20 element array with each element 4 bytes big
+@4[arrayPointer+10] = 398; It allaocates 80 bytes on the stack so you could also use it as a 8 byte array with 10 elements
+```
+
 A '?' is used to reference a variable.
 ```
 @8 value1 = 10;
