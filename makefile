@@ -25,6 +25,8 @@ check: all
 	@echo "PASSED arr.ds"
 	@./ddScript ./test/malloc.ds ./test/out
 	@echo "PASSED malloc.ds"
+	@./ddScript ./test/scopes.ds ./test/out
+	@echo "PASSED scopes.ds"
 	@echo "PASSED ALL TESTS WOW :)"
 tc: all
 	./ddScript ./test/test3.ds ./test/out

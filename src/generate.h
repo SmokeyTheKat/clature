@@ -100,6 +100,7 @@ static void generate_dereference(struct tokenNode* node);
 static void generate_array_def(struct tokenNode* node);
 static void generate_reference(struct tokenNode* node);
 static void generate_set_dereference(struct tokenNode* node);
+static void define_variable(struct tokenNode* node);
 static void generate_malloc(struct tokenNode* node);
 sizet get_param_count(struct tokenNode* node);
 void generate_asm_step(struct tokenNode* node);
@@ -132,6 +133,8 @@ struct functionTracker functiont;
 sizet scope = 0;
 sizet optrCount = 0;
 sizet scopeCounts[MAX_SCOPES];
+sizet scopeStackPos = 0;
+sizet scopeStack[MAX_SCOPES];
 extern bool inFunction;
 extern struct bitcode* functionCode;
 bool whileLoop = false;
@@ -190,6 +193,7 @@ struct bitcode
 struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _treeCount)
 {
  	for (sizet i = 0; i < MAX_SCOPES; i++) scopeCounts[i] = 0;
+ 	for (sizet i = 0; i < MAX_SCOPES; i++) scopeStack[i] = 0;
 	tokenTrees = parseTrees;
 	treeCount = _treeCount;
 	bitcode = make(struct bitcode, 1);
@@ -245,9 +249,11 @@ void generate_asm_step(struct tokenNode* node)
 			case '[':
 				break;
 			case '{':
+				scopeStack[scopeStackPos++] = stackt.top;
 				scope++;
 				break;
 			case '}':
+				stackt.top = scopeStack[--scopeStackPos];
 				scope--;
 				generate_write_btc(BTC_LABEL, make_format_ddString(".SC%d%d", scope, scopeCounts[scope]), REG_NONE);
 				scopeCounts[scope]++;
@@ -265,11 +271,14 @@ void generate_asm_step(struct tokenNode* node)
 			case '!':
 				if (node->value->value.cstr[1] == '=')
 					generate_inequality(node);
+				break;
 			case '@':
 				if (is_dereference(node))
 					generate_dereference(node);
 				if (is_array_def(node))
 					generate_array_def(node);
+				else
+					define_variable(node);
 				break;
 			case '?':
 				generate_reference(node);
@@ -395,6 +404,10 @@ static void generate_1reg_operation(int opc, struct tokenNode* node)
 	pop_input(REG_RAX);
 	generate_write_btc(opc, REG_R8, REG_NONE);
 	push_result(REG_RAX);
+}
+static void define_variable(struct tokenNode* node)
+{
+	stackt_set_var(node->right->right->value->value, ddString_to_int(node->right->value->value));
 }
 static void generate_malloc(struct tokenNode* node)
 {
@@ -791,7 +804,7 @@ static void pop_stack_var(struct stVariable var)
 			break;
 		}
 		default:
-			compile_error("HOW THE FUCK DID THIS HAPPEN (POP)\n");
+			compile_error("UNDEFINED VARIABLE (POP)\n");
 	}
 }
 static void pop_ref(ddString value, sizet size)
@@ -884,7 +897,7 @@ static void push_stack_var(struct stVariable var)
 			break;
 		}
 		default:
-			compile_error("HOW THE FUCK DID THIS HAPPEN (PUSH)\n");
+			compile_error("UNDEFINED VARIABLE (PUSH)\n");
 	}
 }
 struct stVariable stackt_get_var(ddString name)
