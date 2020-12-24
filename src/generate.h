@@ -207,6 +207,10 @@ struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _tree
 	generate_write_btc(BTC_MOV, REG_RBP, REG_RSP);
 	struct bitcode* bitcodeMoveStack = bitcode;
 	generate_write_btc(BTC_SUB, REG_RSP, REG_NONE);
+	generate_write_btc(BTC_MOV, make_constant_ddString("QWORD[RBP-8]"), REG_RSI);
+	generate_write_btc(BTC_MOV, make_constant_ddString("DWORD[RBP-12]"), REG_EDI);
+	stackt_set_var(make_ddString("argv"), 8);
+	stackt_set_var(make_ddString("argc"), 4);
 	generate_trees_asm();
 	generate_write_btc(BTC_MOV, REG_EAX, make_constant_ddString("0"));
 	generate_write_btc(BTC_POP, REG_RBP, REG_NONE);
