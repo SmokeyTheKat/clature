@@ -43,7 +43,7 @@ static bool inString = false;
 static sizet fileCount = 0;
 static sizet tokenCount = 0;
 static struct token* tokens;
-ddString keywords[10];
+ddString keywords[11];
 
 struct token
 {
@@ -78,6 +78,7 @@ void init_lexer(void)
 	keywords[7] = make_constant_ddString("iso");
 	keywords[8] = make_constant_ddString("global");
 	keywords[9] = make_constant_ddString("continue");
+	keywords[10] = make_constant_ddString("malloc");
 }
 
 struct token* tokenize_file(ddString _file, sizet* _tokenCount)
@@ -200,7 +201,7 @@ static inline bool is_number(char chr)
 }
 static bool is_keyword(void)
 {
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 11; i++)
 		if (ddString_compare(tokens[tokenCount].value, keywords[i]))
 			return true;
 	return false;

@@ -23,6 +23,8 @@ check: all
 	@echo "PASSED macros.ds"
 	@./ddScript ./test/arr.ds ./test/out
 	@echo "PASSED arr.ds"
+	@./ddScript ./test/malloc.ds ./test/out
+	@echo "PASSED malloc.ds"
 	@echo "PASSED ALL TESTS WOW :)"
 tc: all
 	./ddScript ./test/test3.ds ./test/out

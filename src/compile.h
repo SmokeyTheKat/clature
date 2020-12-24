@@ -146,7 +146,8 @@ void write_bitcode(struct bitcode* code, ddString* outp)
 		make_constant_ddString("INC"),
 		make_constant_ddString("DEC"),
 		make_constant_ddString(""),
-		make_constant_ddString("XOR")
+		make_constant_ddString("XOR"),
+		make_constant_ddString("EXTERN")
 	};
 	ddString tb = make_constant_ddString("	");
 	ddString cn = make_constant_ddString(":");

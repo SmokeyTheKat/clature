@@ -37,6 +37,7 @@
 #define BTC_DEC		0x1F
 #define BTC_TAG		0x20
 #define BTC_XOR		0x21
+#define BTC_EXTERN	0x22
 
 struct dtVariable;
 struct dataTracker;
@@ -99,6 +100,7 @@ static void generate_dereference(struct tokenNode* node);
 static void generate_array_def(struct tokenNode* node);
 static void generate_reference(struct tokenNode* node);
 static void generate_set_dereference(struct tokenNode* node);
+static void generate_malloc(struct tokenNode* node);
 sizet get_param_count(struct tokenNode* node);
 void generate_asm_step(struct tokenNode* node);
 void generate_trees_asm(void);
@@ -165,8 +167,7 @@ struct stackTracker
 {
 	sizet size;
 	sizet top;
-	struct stVariable vars[500];
-};
+	struct stVariable vars[500]; };
 struct function
 {
 	ddString name;
@@ -194,6 +195,8 @@ struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _tree
 	bitcode = make(struct bitcode, 1);
 	struct bitcode* btcHead = bitcode;
 	bitcodeHead = bitcode;
+	generate_write_btc(BTC_EXTERN, make_constant_ddString("malloc"), REG_NONE);
+	generate_write_btc(BTC_EXTERN, make_constant_ddString("free"), REG_NONE);
 	generate_write_btc(BTC_GLOBAL, make_constant_ddString("main"), REG_NONE);
 	generate_write_btc(BTC_LABEL, make_constant_ddString("main"), REG_NONE);
 	generate_write_btc(BTC_PUSH, REG_RBP, REG_NONE);
@@ -363,6 +366,8 @@ void generate_asm_step(struct tokenNode* node)
 			generate_function_return(node);
 		else if (ddString_compare_cstring(node->value->value, "continue"))
 			generate_continue(node);
+		else if (ddString_compare_cstring(node->value->value, "malloc"))
+			generate_malloc(node);
 	}
 	else if (node->value->type == TKN_FUNCTION)
 	{
@@ -390,6 +395,18 @@ static void generate_1reg_operation(int opc, struct tokenNode* node)
 	pop_input(REG_RAX);
 	generate_write_btc(opc, REG_R8, REG_NONE);
 	push_result(REG_RAX);
+}
+static void generate_malloc(struct tokenNode* node)
+{
+	sizet typesize = ddString_to_int(node->right->right->value->value);
+	generate_split_right(node->right->right->right);
+	generate_write_btc(BTC_POP, REG_RAX, REG_NONE);
+	generate_write_btc(BTC_MOV, REG_R8, make_ddString_from_int(typesize));
+	generate_write_btc(BTC_MUL, REG_R8, REG_NONE);
+	generate_write_btc(BTC_MOV, REG_RAX, REG_R8);
+	generate_write_btc(BTC_MOV, REG_EDI, REG_EAX);
+	generate_write_btc(BTC_CALL, make_constant_ddString("malloc"), REG_NONE);
+	generate_write_btc(BTC_PUSH, REG_RAX, REG_NONE);
 }
 static void generate_set_dereference(struct tokenNode* node)
 {

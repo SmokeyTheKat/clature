@@ -1,0 +1,9 @@
+@8 length = 20;
+@8 ptr = malloc@8<length>;
+
+@8 i = 0;
+while i < length
+{
+	@8[ptr+(i*8)] = i*8;
+	i++
+}
