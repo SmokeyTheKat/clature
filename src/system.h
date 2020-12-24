@@ -27,10 +27,11 @@ void system_compile_ld(int agsc, char** ags)
 	ddString input = make_ddString(ags[2]);
 	ddString_push_cstring_back(&input, ".o");
 
-	ddString ldcommand = make_ddString("ld ");
+	ddString ldcommand = make_ddString("gcc -static -v ");
 	ddString_push_back(&ldcommand, input);
 	ddString_push_cstring_back(&ldcommand, " -o ");
 	ddString_push_back(&ldcommand, output);
+	ddString_push_cstring_back(&ldcommand, " > /dev/null 2>&1");
 
 	ldcommand.cstr[ldcommand.length] = '\0';
 

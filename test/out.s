@@ -265,8 +265,8 @@ numToString:
 	ADD	RSP, 32;
 	POP	RBP;
 	RET;
-global _start
-_start:
+global main
+main:
 	PUSH	RBP;
 	MOV	RBP, RSP;
 	SUB	RSP, 43;
