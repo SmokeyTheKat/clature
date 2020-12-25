@@ -102,8 +102,27 @@ void read_macros(ddString* file)
 			    	 file->cstr[i+3] == 'c')
 			{
 				ddString path = read_word(file, i+5);
-				sizet nlpos = get_nextline_pos(file, i);
+				sizet pathlen = path.length;
+				if (path.cstr[0] == '~')
+				{
+					ddString incpath = make_ddString("usr/share/ds/include/");
+					path.cstr[0] = '/';
+					for (sizet k = 0; k < incpath.length; k++)
+					{
+						ddString_insert_char_at(&path, incpath.cstr[k], 1+k);
+					}
+				}
+				ddPrint_ddString_nl(path);
 				ddString newfile = read_file(path.cstr);
+				ddString_push_char_back(&newfile, '\n');
+				sizet k;
+				for (k = 0; k < newfile.length; k++)
+				{
+					ddString_insert_char_at(file, newfile.cstr[k], (i+5+pathlen+1)+k);
+				}
+				file->cstr[i] = ';';
+				i = i+5+pathlen;
+				ddPrint_ddString_nl(*file);
 			}
 		}
 	}

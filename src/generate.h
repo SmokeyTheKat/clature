@@ -964,7 +964,7 @@ struct dtVariable datat_add_string(ddString value)
 	datat.data[datat.top].data = value;
 	ddString_push_cstring_back(&(datat.data[datat.top].data), ",0");
 	datat.data[datat.top].data.cstr[datat.data[datat.top].data.length] = '\0';
-	datat.data[datat.top].name = make_format_ddString(".str%d", stringCount++);
+	datat.data[datat.top].name = make_format_ddString("_69_str%d", stringCount++);
 	return datat.data[datat.top++];
 }
 void push_data_var(struct dtVariable var)

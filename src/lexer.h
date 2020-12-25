@@ -104,7 +104,7 @@ static void sift_token(char chr)
 {
 	if (inString)
 	{
-		if (chr == '"') inString = false;
+		if (chr == '"' || chr == '`') inString = false;
 		if (chr == '\n' && is_unclosed_string()) compile_error("UNCLOSED STRING LITERAL\n");
 		handel_literal(chr);
 		return;
@@ -132,6 +132,7 @@ static void sift_token(char chr)
 				set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
 				break;
 			}
+			break;
 		case '[': case ']': case '(': case ')': case ',':
 			set_token(TKN_SYNTAX, make_ddString_length(&chr, 1));
 			break;
@@ -173,6 +174,7 @@ static void sift_token(char chr)
 			handel_literal(chr);
 			break;
 		case '"':
+		case '`':
 			inString = !inString;
 		case '0' ... '9':
 		case 'a' ... 'z':
@@ -208,7 +210,7 @@ static bool is_keyword(void)
 }
 static bool is_string(void)
 {
-	if (tokens[tokenCount].value.cstr[tokens[tokenCount].value.length-1] == '"')
+	if (tokens[tokenCount].value.cstr[tokens[tokenCount].value.length-1] == '"' || tokens[tokenCount].value.cstr[tokens[tokenCount].value.length-1] == '`')
 		return true;
 	return false;
 }

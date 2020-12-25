@@ -27,6 +27,8 @@ check: all
 	@echo "PASSED malloc.ds"
 	@./ddScript ./test/scopes.ds ./test/out
 	@echo "PASSED scopes.ds"
+	@./ddScript ./test/include.ds ./test/out
+	@echo "PASSED include.ds"
 	@echo "PASSED ALL TESTS WOW :)"
 tc: all
 	./ddScript ./test/test3.ds ./test/out

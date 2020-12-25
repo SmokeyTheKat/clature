@@ -1,0 +1,4 @@
+@8 none = 0;
+/inc test/include/ic.ds
+
+@8 value = multiply(2, 5);

@@ -1,22 +1,37 @@
 section .data;
+multiply:
+	PUSH	RBP;
+	MOV	RBP, RSP;
+	SUB	RSP, 0;
+	PUSH	QWORD[RBP--24];
+	PUSH	QWORD[RBP--16];
+	POP	R8;
+	POP	RAX;
+	MUL	R8;
+	PUSH	RAX;
+	POP	R8;
+	JMP	.SC00;
+.SC00:
+	ADD	RSP, 0;
+	POP	RBP;
+	RET;
 	EXTERN	malloc;
 	EXTERN	free;
 global main
 main:
 	PUSH	RBP;
 	MOV	RBP, RSP;
-	SUB	RSP, 36;
+	SUB	RSP, 28;
 	MOV	QWORD[RBP-8], RSI;
 	MOV	DWORD[RBP-12], EDI;
-	PUSH	10;
+	PUSH	0;
 	POP	QWORD[RBP-20];
-	PUSH	10;
-	POP	QWORD[RBP-28];
-	PUSH	10;
-	POP	QWORD[RBP-36];
-.SC00:
+	PUSH	2;
 	PUSH	5;
-	POP	QWORD[RBP-20];
+	CALL	multiply;
+	ADD	RSP, 16;
+	PUSH	R8;
+	POP	QWORD[RBP-28];
 	MOV	EAX, 0;
 	POP	RBP;
 	MOV	RAX, 60;

@@ -1,0 +1,4 @@
+sub @8 multiply(@8 a, @8 b)
+{
+	return a * b;
+}
