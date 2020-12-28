@@ -7,6 +7,7 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 int parser_find_closer(struct token* tokens, sizet len, int start, char obracket, char cbracket);
 struct tokenNode** parser_main(struct token* tokens, sizet tokenCount, sizet* _treeCount);
 struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left, struct tokenNode* right, struct token* value);
+int parser_find_next_comma(struct token* tokens, int start, sizet len);
 
 extern bool debug;
 const sizet charKeysLength = 18;
@@ -14,18 +15,26 @@ const char charKeys[] = { '{', '}', '=', '@', '|', '&', '=', '!', '+', '-', '*',
 //                                            ||   &&   ==   !=                                                     
 struct tokenNode
 {
-	struct tokenNode* parent;
-	struct tokenNode* left;
-	struct tokenNode* right;
+	struct tokenNode** nodes;
+	sizet nodeCount;
 	struct token* value;
 };
 
 struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left, struct tokenNode* right, struct token* value)
 {
 	struct tokenNode output;
-	output.parent = parent;
-	output.left = left;
-	output.right = right;
+	output.nodes = make(struct tokenNode*, 10);
+	output.nodes[0] = nullptr;
+	output.nodes[1] = nullptr;
+	output.nodes[2] = nullptr;
+	output.nodes[3] = nullptr;
+	output.nodes[4] = nullptr;
+	output.nodes[5] = nullptr;
+	output.nodes[6] = nullptr;
+	output.nodes[7] = nullptr;
+	output.nodes[8] = nullptr;
+	output.nodes[9] = nullptr;
+	output.nodeCount = 0;
 	output.value = value;
 	return output;
 }
@@ -37,7 +46,7 @@ static inline struct tokenNode* parser_split_right(struct token* tokens, struct 
 		struct tokenNode* right = make(struct tokenNode, 1); 
 		(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
 		parser(tokens, right, i+1, max, len);
-		node->right = right;
+		node->nodes[1] = right;
 		return right;
 	}
 	return nullptr;
@@ -49,7 +58,7 @@ static inline struct tokenNode* parser_split_left(struct token* tokens, struct t
 		struct tokenNode* left = make(struct tokenNode, 1); 
 		(*left) = make_tokenNode(node, nullptr, nullptr, nullptr);
 		parser(tokens, left, min, i, len);
-		node->left = left;
+		node->nodes[0] = left;
 		return left;
 	}
 	return nullptr;
@@ -75,8 +84,8 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 						node->value = &(tokens[i]);
 						struct tokenNode* right = make(struct tokenNode, 1); 
 						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->right = right;
-						node = node->right;
+						node->nodes[1] = right;
+						node = node->nodes[1] ;
 					}
 					return;
 				}
@@ -96,19 +105,30 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 				parser_split_right(tokens, node, min, max, len, i);
 				return;
 			}
-			else if (k == charKeysLength-1 && tokens[i].type == TKN_LITERAL && tokens[i+1].value.cstr[0] == '(')
+			else if (k == charKeysLength-1 && tokens[i].type == TKN_LITERAL && tokens[i+1].value.cstr[0] == '(')//function call    printstr("yo")
 			{
 				tokens[i].type = TKN_FUNCTION;
-				while (tokens[i].value.cstr[0] != ')')
+				node->value = &(tokens[i]);
+				sizet closer = parser_find_closer(tokens, len, i+1, '(', ')');
+				int cmin = i+2;
+				if (tokens[cmin].value.cstr[0] == ')') goto PARSE_FUN_CALL_SKIP_WHILE;
+				bool done = false;
+				while (!done)
 				{
-					struct tokenNode* right = make(struct tokenNode, 1); 
-					(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-					node->right =right ;
-					node->value = &(tokens[i]);
-					node = right;
-					i++;
+					int cmax = parser_find_next_comma(tokens, cmin, len);
+					if (cmax == -1)
+					{
+						cmax = closer;
+						done = true;
+					}
+					struct tokenNode* next = make(struct tokenNode, 1); 
+					(*next) = make_tokenNode(node, nullptr, nullptr, nullptr);
+					parser(tokens, next, cmin, cmax, len);
+					node->nodes[node->nodeCount++] = next;
+					cmin = cmax+1;
 				}
-				parser_split_right(tokens, node, min, max, len, i);
+PARSE_FUN_CALL_SKIP_WHILE:
+				parser_split_right(tokens, node, closer, max, len, i);
 				node->value = &(tokens[i]);
 				i++;
 				return;
@@ -128,25 +148,25 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 					{
 						struct tokenNode* right = make(struct tokenNode, 1); 
 						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->right = right;
+						node->nodes[1] = right;
 						node->value = &(tokens[i]);
 						node = right;
 						i++;
 						right = make(struct tokenNode, 1); 
 						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->right = right;
+						node->nodes[1] = right;
 						node->value = &(tokens[i]);
 						node = right;
 						i++;
 						right = make(struct tokenNode, 1); 
 						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->right = right;
+						node->nodes[1] = right;
 						node->value = &(tokens[i]);
 						node = right;
 						i++;
 						right = make(struct tokenNode, 1); 
 						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->right = right;
+						node->nodes[1] = right;
 						node->value = &(tokens[i]);
 						node = right;
 						i++;
@@ -159,19 +179,19 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 					{
 						struct tokenNode* right = make(struct tokenNode, 1); 
 						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->right = right;
+						node->nodes[1] = right;
 						node->value = &(tokens[i]);
 						node = right;
 						i++;
 						right = make(struct tokenNode, 1); 
 						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->right = right;
+						node->nodes[1] = right;
 						node->value = &(tokens[i]);
 						node = right;
 						i++;
 						right = make(struct tokenNode, 1); 
 						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->right = right;
+						node->nodes[1] = right;
 						node->value = &(tokens[i]);
 						node = right;
 						i++;
@@ -254,5 +274,12 @@ int parser_find_closer(struct token* tokens, sizet len, int start, char obracket
 		}
 	}
 	return i-1;
+}
+int parser_find_next_comma(struct token* tokens, int start, sizet len)
+{
+	int i = start;
+	for (; i < len && tokens[i].value.cstr[0] != ','; i++);
+	if (i == len) return -1;
+	return i;
 }
 #endif

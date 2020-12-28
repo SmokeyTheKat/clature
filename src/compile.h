@@ -21,8 +21,8 @@ void print_tokentree(struct tokenNode* node)
 	if (node == nullptr) return;
 	if (node->value == nullptr) return;
 	ddPrintf("TREE VALUE: %s\n", node->value->value.cstr);
-	if (node->right != nullptr) print_tokentree(node->right);
-	if (node->left != nullptr) print_tokentree(node->left);
+	if (node->nodes[1] != nullptr) print_tokentree(node->nodes[1]);
+	if (node->nodes[0] != nullptr) print_tokentree(node->nodes[0]);
 }
 
 void compile_main(int agsc, char** ags)

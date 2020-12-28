@@ -27,7 +27,7 @@ main:
 	PUSH	0;
 	POP	QWORD[RBP-20];
 	PUSH	2;
-	PUSH	5;
+	PUSH	2;
 	CALL	multiply;
 	ADD	RSP, 16;
 	PUSH	R8;

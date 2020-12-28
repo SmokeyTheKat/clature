@@ -374,7 +374,7 @@ void generate_asm_step(struct tokenNode* node)
 		else if (ddString_compare_cstring(node->value->value, "sub"))
 			generate_sub_statement(node);
 		else if (ddString_compare_cstring(node->value->value, "iso"))
-			generate_function_call(node->right);
+			generate_function_call(node->nodes[1]);
 		else if (ddString_compare_cstring(node->value->value, "return"))
 			generate_function_return(node);
 		else if (ddString_compare_cstring(node->value->value, "continue"))
@@ -411,12 +411,12 @@ static void generate_1reg_operation(int opc, struct tokenNode* node)
 }
 static void define_variable(struct tokenNode* node)
 {
-	stackt_set_var(node->right->right->value->value, ddString_to_int(node->right->value->value));
+	stackt_set_var(node->nodes[1]->nodes[1]->value->value, ddString_to_int(node->nodes[1]->value->value));
 }
 static void generate_malloc(struct tokenNode* node)
 {
-	sizet typesize = ddString_to_int(node->right->right->value->value);
-	generate_split_right(node->right->right->right);
+	sizet typesize = ddString_to_int(node->nodes[1]->nodes[1]->value->value);
+	generate_split_right(node->nodes[1]->nodes[1]->nodes[1]);
 	generate_write_btc(BTC_POP, REG_RAX, REG_NONE);
 	generate_write_btc(BTC_MOV, REG_R8, make_ddString_from_int(typesize));
 	generate_write_btc(BTC_MUL, REG_R8, REG_NONE);
@@ -428,21 +428,21 @@ static void generate_malloc(struct tokenNode* node)
 static void generate_set_dereference(struct tokenNode* node)
 {
 	generate_split_right(node);
-	generate_split_right(node->left->right->right);
+	generate_split_right(node->nodes[0]->nodes[1]->nodes[1]);
 	pop_input(REG_R8);
-	pop_ref(REG_R8, ddString_to_int(node->left->right->value->value));
+	pop_ref(REG_R8, ddString_to_int(node->nodes[0]->nodes[1]->value->value));
 }
 static void generate_reference(struct tokenNode* node)
 {
-	struct stVariable var = stackt_get_var(node->right->value->value);
+	struct stVariable var = stackt_get_var(node->nodes[1]->value->value);
 	generate_write_btc(BTC_MOV, REG_R8, REG_RBP);
 	generate_write_btc(BTC_SUB, REG_R8, make_ddString_from_int(var.spos));
 	push_result(REG_R8);
 }
 static void generate_array_def(struct tokenNode* node)
 {
-	sizet typesize = ddString_to_int(node->right->value->value);
-	sizet length = ddString_to_int(node->right->right->right->value->value);
+	sizet typesize = ddString_to_int(node->nodes[1]->value->value);
+	sizet length = ddString_to_int(node->nodes[1]->nodes[1]->nodes[1]->value->value);
 	sizet size = typesize*length;
 	stackt.size += size;
 	generate_write_btc(BTC_MOV, REG_R8, REG_RBP);
@@ -451,9 +451,9 @@ static void generate_array_def(struct tokenNode* node)
 }
 static void generate_dereference(struct tokenNode* node)
 {
-	generate_split_right(node->right->right);
+	generate_split_right(node->nodes[1]->nodes[1]);
 	pop_input(REG_R8);
-	push_ref(make_constant_ddString("r8"), ddString_to_int(node->right->value->value));
+	push_ref(make_constant_ddString("r8"), ddString_to_int(node->nodes[1]->value->value));
 }
 static void generate_function_return(struct tokenNode* node)
 {
@@ -463,17 +463,12 @@ static void generate_function_return(struct tokenNode* node)
 }
 static void generate_function_call(struct tokenNode* node)
 {
-	struct tokenNode* nameNode = node;
-	if (node->right == nullptr) compile_error("BROKEN FUNCTION CALL\n");
-	node = node->right;
-	while (node->value->value.cstr[0] != ')' && node->value->value.cstr[0] != ';')
+	for (sizet i = 0; i < node->nodeCount; i++)
 	{
-		if (node->value->value.cstr[0] != '(') generate_asm_step(node);
-		if (node->right != nullptr) node = node->right;
-		else break;
+		generate_asm_step(node->nodes[i]);
 	}
-	generate_write_btc(BTC_CALL, nameNode->value->value, REG_NONE);
-	generate_write_btc(BTC_ADD, REG_RSP, make_ddString_from_int((get_param_count(nameNode)) * 8));
+	generate_write_btc(BTC_CALL, node->value->value, REG_NONE);
+	generate_write_btc(BTC_ADD, REG_RSP, make_ddString_from_int((node->nodeCount) * 8));
 	return;
 }
 static inline struct bitcode* generate_write_function_headder(ddString name)// returns the code line of the sub rsp
@@ -496,16 +491,16 @@ static void generate_sub_statement(struct tokenNode* node)
 	struct bitcode* temp = bitcode;
 	struct bitcode* functionCodeHead= make(struct bitcode, 1);
 	bitcode = functionCodeHead;
-	struct bitcode* btcMoveStack = generate_write_function_headder(node->right->right->right->value->value);
+	struct bitcode* btcMoveStack = generate_write_function_headder(node->nodes[1]->nodes[1]->nodes[1]->value->value);
 	fstackt.size = 0;
 	fstackt.top = 0;
 	switch_stacks();
-	sizet paramCount = get_param_count(node->right->right->right->right);
-	struct tokenNode* pnode = node->right->right->right->right->right;
+	sizet paramCount = get_param_count(node->nodes[1]->nodes[1]->nodes[1]->nodes[1]);
+	struct tokenNode* pnode = node->nodes[1]->nodes[1]->nodes[1]->nodes[1]->nodes[1];
 	for (sizet i = paramCount-1; i >= 0; i--)
 	{
-		stackt_set_param_var(pnode->right->right->value->value, i);
-		pnode = pnode->right->right->right->right;
+		stackt_set_param_var(pnode->nodes[1]->nodes[1]->value->value, i);
+		pnode = pnode->nodes[1]->nodes[1]->nodes[1]->nodes[1];
 	}
 	sizet tscope = scope;
 	cnode = next_tree();
@@ -558,13 +553,13 @@ static void generate_if_statement(struct tokenNode* node)
 }
 static void generate_equels_set_asm(struct tokenNode* node)//i = 2*3;
 {
-	struct stVariable var = stackt_get_var(node->left->value->value);
+	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
 	generate_split_right(node);
 	pop_stack_var(var);
 }
 static void generate_equels_make_set_asm(struct tokenNode* node)//@8 i = 9-3;
 {
-	struct stVariable var = stackt_set_var(node->left->right->right->value->value, ddString_to_int(node->left->right->value->value));
+	struct stVariable var = stackt_set_var(node->nodes[0]->nodes[1]->nodes[1]->value->value, ddString_to_int(node->nodes[0]->nodes[1]->value->value));
 	generate_split_right(node);
 	pop_stack_var(var);
 }
@@ -586,31 +581,31 @@ static inline void generate_inequality(struct tokenNode* node)//2 != 3
 }
 static inline void generate_times_equals(struct tokenNode* node)
 {
-	struct stVariable var = stackt_get_var(node->left->value->value);
+	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
 	generate_1reg_operation(BTC_MUL, node);
 	pop_stack_var(var);
 }
 static inline void generate_divide_equals(struct tokenNode* node)
 {
-	struct stVariable var = stackt_get_var(node->left->value->value);
+	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
 	generate_1reg_operation(BTC_DIV, node);
 	pop_stack_var(var);
 }
 static inline void generate_plus_equals(struct tokenNode* node)
 {
-	struct stVariable var = stackt_get_var(node->left->value->value);
+	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
 	generate_2reg_operation(BTC_ADD, node);
 	pop_stack_var(var);
 }
 static inline void generate_minus_equals(struct tokenNode* node)
 {
-	struct stVariable var = stackt_get_var(node->left->value->value);
+	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
 	generate_2reg_operation(BTC_SUB, node);
 	pop_stack_var(var);
 }
 static inline void generate_plus_plus(struct tokenNode* node)
 {
-	struct stVariable var = stackt_get_var(node->left->value->value);
+	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
 	generate_split_left(node);
 	pop_input(REG_R8);
 	generate_write_btc(BTC_INC, REG_R8, REG_NONE);
@@ -619,7 +614,7 @@ static inline void generate_plus_plus(struct tokenNode* node)
 }
 static inline void generate_minus_minus(struct tokenNode* node)
 {
-	struct stVariable var = stackt_get_var(node->left->value->value);
+	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
 	generate_split_left(node);
 	pop_input(REG_R8);
 	generate_write_btc(BTC_DEC, REG_R8, REG_NONE);
@@ -702,16 +697,16 @@ static inline void generate_logic_or(struct tokenNode* node)
 }
 static inline void generate_bisplit(struct tokenNode* node)
 {
-	generate_asm_step(node->left);
-	generate_asm_step(node->right);
+	generate_asm_step(node->nodes[0]);
+	generate_asm_step(node->nodes[1]);
 }
 static inline void generate_split_right(struct tokenNode* node)
 {
-	generate_asm_step(node->right);
+	generate_asm_step(node->nodes[1]);
 }
 static inline void generate_split_left(struct tokenNode* node)
 {
-	generate_asm_step(node->left);
+	generate_asm_step(node->nodes[0]);
 }
 static inline void pop_both_sides(void)
 {
@@ -762,7 +757,7 @@ static inline void push_result(ddString reg)
 }
 static inline bool is_equals_new_assignemnt(struct tokenNode* node)
 {
-	if (node->left != nullptr && node->left->value->value.cstr[0] == '@')
+	if (node->nodes[0]!= nullptr && node->nodes[0]->value->value.cstr[0] == '@')
 		return true;
 	return false;
 }
@@ -944,12 +939,12 @@ static inline void switch_stacks(void)
 }
 sizet get_param_count(struct tokenNode* node)
 {
-	if (node->right->value->value.cstr[0] == '(' && node->right->right->value->value.cstr[0] == ')') return 0;
+	if (node->nodes[1]->value->value.cstr[0] == '(' && node->nodes[1]->nodes[1]->value->value.cstr[0] == ')') return 0;
 	sizet output = 0;
 	while (node != nullptr && node->value->value.cstr[0] != ')' && node->value->value.cstr[0] != ';')
 	{
 		if (node->value->value.cstr[0] == ',') output++;
-		node = node->right;
+		node = node->nodes[1];
 	}
 	return output+1;
 }
@@ -973,19 +968,19 @@ void push_data_var(struct dtVariable var)
 }
 static inline bool is_array_def(struct tokenNode* node)
 {
-	if (node->right != nullptr && node->right->right != nullptr && node->right->right->right != nullptr && node->right->right->value->value.cstr[0] == '<')
+	if (node->nodes[1]!= nullptr && node->nodes[1]->nodes[1]!= nullptr && node->nodes[1]->nodes[1]->nodes[1]!= nullptr && node->nodes[1]->nodes[1]->value->value.cstr[0] == '<')
 		return true;
 	return false;
 }
 static inline bool is_dereference(struct tokenNode* node)
 {
-	if (node->right != nullptr && node->right->right != nullptr && node->right->right->right != nullptr && node->right->right->value->value.cstr[0] == '[')
+	if (node->nodes[1]!= nullptr && node->nodes[1]->nodes[1]!= nullptr && node->nodes[1]->nodes[1]->nodes[1]!= nullptr && node->nodes[1]->nodes[1]->value->value.cstr[0] == '[')
 		return true;
 	return false;
 }
 static inline bool is_dereference_assignment(struct tokenNode* node)
 {
-	if (node->left != nullptr && node->left->right != nullptr && node->left->right->right != nullptr && node->left->right->right->value->value.cstr[0] == '[')
+	if (node->nodes[0]!= nullptr && node->nodes[0]->nodes[1]!= nullptr && node->nodes[0]->nodes[1]->nodes[1]!= nullptr && node->nodes[0]->nodes[1]->nodes[1]->value->value.cstr[0] == '[')
 		return true;
 	return false;
 }

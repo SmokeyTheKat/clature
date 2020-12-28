@@ -122,7 +122,6 @@ void read_macros(ddString* file)
 				}
 				file->cstr[i] = ';';
 				i = i+5+pathlen;
-				ddPrint_ddString_nl(*file);
 			}
 		}
 	}
