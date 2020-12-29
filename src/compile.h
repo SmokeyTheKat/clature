@@ -29,7 +29,6 @@ void compile_main(int agsc, char** ags)
 {
 	compile_reset_color();
 
-	if (agsc < 2) compile_error("NO INPUT FILES\n");
 
 	ddTimer_start();
 
@@ -40,13 +39,17 @@ void compile_main(int agsc, char** ags)
 	sizet treeCount = 0;
 	struct bitcode* bitcodeHead;
 
-	ddString file = read_file(ags[1]);
+	ddString file;
+	if (args_if_def(make_constant_ddString("__INPUT_FILE")))
+		file = read_file(args_get_value(make_constant_ddString("__INPUT_FILE")).cstr);
+	else compile_error("NO INPUT FILES\n");
+		
 	ddString fileOut = make_ddString("");
 
-	if (agsc > 3 && ddString_compare_cstring(make_constant_ddString("-debug"), ags[3])) debug = true;
 
+	if (args_if_def(make_constant_ddString("-debug"))) debug = true;
 	read_macros(&file);
-	execute_macros(&file);
+	//execute_macros(&file);
 /*
 	ddPrint_nl();
 	ddPrint_ddString_nl(file);
@@ -73,18 +76,20 @@ void compile_main(int agsc, char** ags)
 
 	write_bitcode(bitcodeHead, &fileOut);
 
-	if (agsc < 3)
+	if (!args_if_def(make_constant_ddString("-o")))
 		ddPrint_ddString(fileOut);
-	else if (!debug)
-		write_file(ags[2], fileOut);
-	else ddPrint_ddString(fileOut);
+	else
+	{
+		if (!debug)
+			write_file(args_get_value(make_constant_ddString("-o")).cstr, fileOut);
+		else
+			ddPrint_ddString(fileOut);
+	}
 
 	if (debug) ddPrint_nl();
 
 	printf("RUNTIME: %f\n", ddTimer_stop());
 
-	raze_ddString(&file);
-	raze_ddString(&fileOut);
 	raze(tokens);
 }
 

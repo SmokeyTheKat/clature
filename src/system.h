@@ -1,11 +1,12 @@
 #ifndef __ddScript_system_h__
 #define __ddScript_system_h__
 
-void system_compile_nasm(int agsc, char** ags)
+
+void system_compile_nasm(void)
 {
-	ddString output = make_ddString(ags[2]);
+	ddString output = make_ddString(args_get_value(make_constant_ddString("-o")).cstr);
 	ddString_push_cstring_back(&output, ".o");
-	ddString input = make_ddString(ags[2]);
+	ddString input = make_ddString(args_get_value(make_constant_ddString("-o")).cstr);
 	ddString_push_cstring_back(&input, ".s");
 
 	ddString nasmcommand = make_ddString("nasm -f elf64 ");
@@ -21,10 +22,10 @@ void system_compile_nasm(int agsc, char** ags)
 	raze_ddString(&output);
 	raze_ddString(&input);
 }
-void system_compile_ld(int agsc, char** ags)
+void system_compile_ld(void)
 {
-	ddString output = make_ddString(ags[2]);
-	ddString input = make_ddString(ags[2]);
+	ddString output = make_ddString(args_get_value(make_constant_ddString("-o")).cstr);
+	ddString input = make_ddString(args_get_value(make_constant_ddString("-o")).cstr);
 	ddString_push_cstring_back(&input, ".o");
 
 	ddString ldcommand = make_ddString("gcc -static -v ");
@@ -42,9 +43,9 @@ void system_compile_ld(int agsc, char** ags)
 	raze_ddString(&output);
 	raze_ddString(&input);
 }
-void system_compile_clear(int agsc, char** ags)
+void system_compile_clear(void)
 {
-	ddString rmout = make_ddString(ags[2]);//name
+	ddString rmout = make_ddString(args_get_value(make_constant_ddString("-o")).cstr);//name
 	ddString_push_cstring_back(&rmout, ".o");//name.o
 	rmout.cstr[rmout.length] = '\0';//name
 

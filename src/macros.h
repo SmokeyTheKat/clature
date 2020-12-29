@@ -85,6 +85,42 @@ void read_macros(ddString* file)
 {
 	for (sizet i = 0; i < file->length; i++)
 	{
+		for (sizet j = 0; j < defCount; j++)
+		{
+			switch (file->cstr[i+defs[j].lhs.length])
+			{
+				case 'a' ... 'z':
+				case 'A' ... 'Z':
+				case '0' ... '9':
+				case '_':
+					continue;
+			}
+			switch (file->cstr[i-1])
+			{
+				case 'a' ... 'z':
+				case 'A' ... 'Z':
+				case '0' ... '9':
+				case '_':
+					continue;
+			}
+			bool found = true;
+			for (sizet k = 0; k < defs[j].lhs.length; k++)
+			{
+				if (file->cstr[i+k] != defs[j].lhs.cstr[k]) found = false;
+			}
+			if (found)
+			{
+				for (sizet k = 0; k < defs[j].lhs.length; k++)
+				{
+					ddString_delete_at(file, i);
+				}
+				for (sizet k = 0; k < defs[j].rhs.length; k++)
+				{
+					ddString_insert_char_at(file, defs[j].rhs.cstr[k], i+k);
+				}
+				i = i+defs[i].rhs.length;
+			}
+		}
 		if (file->cstr[i] == '/')
 		{
 			if (file->cstr[i+1] == 'd' &&

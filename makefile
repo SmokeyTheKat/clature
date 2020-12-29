@@ -3,31 +3,31 @@ all:
 install: all
 	sudo cp ./ddScript /usr/bin/cds
 check: all
-	@./ddScript ./test/variable.ds ./test/out
+	@./ddScript test/variable.ds	-o test/out
 	@echo "PASSED variable.ds"
-	@./ddScript ./test/operators.ds ./test/out
+	@./ddScript test/operators.ds	-o test/out
 	@echo "PASSED operators.ds"
-	@./ddScript ./test/if.ds ./test/out
+	@./ddScript test/if.ds		-o test/out
 	@echo "PASSED if.ds"
-	@./ddScript ./test/while.ds ./test/out
+	@./ddScript test/while.ds	-o test/out
 	@echo "PASSED while.ds"
-	@./ddScript ./test/function.ds ./test/out
+	@./ddScript test/function.ds	-o test/out
 	@echo "PASSED function.ds"
-	@./ddScript ./test/string.ds ./test/out
+	@./ddScript test/string.ds	-o test/out
 	@echo "PASSED string.ds"
-	@./ddScript ./test/deref.ds ./test/out
+	@./ddScript test/deref.ds	-o test/out
 	@echo "PASSED deref.ds"
-	@./ddScript ./test/ref.ds ./test/out
+	@./ddScript test/ref.ds		-o test/out
 	@echo "PASSED ref.ds"
-	@./ddScript ./test/macros.ds ./test/out
+	@./ddScript test/macros.ds	-o test/out
 	@echo "PASSED macros.ds"
-	@./ddScript ./test/arr.ds ./test/out
+	@./ddScript test/arr.ds		-o test/out
 	@echo "PASSED arr.ds"
-	@./ddScript ./test/malloc.ds ./test/out
+	@./ddScript test/malloc.ds	-o test/out
 	@echo "PASSED malloc.ds"
-	@./ddScript ./test/scopes.ds ./test/out
+	@./ddScript test/scopes.ds	-o test/out
 	@echo "PASSED scopes.ds"
-	@./ddScript ./test/include.ds ./test/out
+	@./ddScript test/include.ds	-o test/out
 	@echo "PASSED include.ds"
 	@echo "PASSED ALL TESTS WOW :)"
 tc: all

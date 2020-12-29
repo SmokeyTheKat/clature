@@ -5,8 +5,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "./lexer.h"
+#include "./args.h"
 #include "./utils.h"
+#include "./lexer.h"
 #include "./parser.h"
 #include "./generate.h"
 #include "./file.h"
@@ -18,11 +19,15 @@
 
 bool debug;
 
-int main(int agsc, char** ags)
+int main(int argc, char** argv)
 {
-	compile_main(agsc, ags);
-	system_compile_nasm(agsc, ags);
-	system_compile_ld(agsc, ags);
-	//system_compile_clear(agsc, ags);
+	read_args(argc, argv);
+	compile_main(argc, argv);
+	if (args_if_def(make_constant_ddString("-o")))
+	{
+		system_compile_nasm();
+		system_compile_ld();
+		//system_compile_clear();
+	}
 	return 0;
 }
