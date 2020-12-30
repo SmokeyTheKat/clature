@@ -48,7 +48,8 @@ void compile_main(int agsc, char** ags)
 
 
 	if (args_if_def(make_constant_ddString("-debug"))) debug = true;
-	read_macros(&file);
+	if (!args_if_def(make_constant_ddString("--no-macros")))
+		read_macros(&file);
 	//execute_macros(&file);
 /*
 	ddPrint_nl();
@@ -76,9 +77,7 @@ void compile_main(int agsc, char** ags)
 
 	write_bitcode(bitcodeHead, &fileOut);
 
-	if (!args_if_def(make_constant_ddString("-o")))
-		ddPrint_ddString(fileOut);
-	else
+	if (args_if_def(make_constant_ddString("-o")))
 	{
 		if (!debug)
 			write_file(args_get_value(make_constant_ddString("-o")).cstr, fileOut);
