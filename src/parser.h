@@ -115,7 +115,7 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 				bool done = false;
 				while (!done)
 				{
-					int cmax = parser_find_next_comma(tokens, cmin, len);
+					int cmax = parser_find_next_comma(tokens, cmin, closer);
 					if (cmax == -1)
 					{
 						cmax = closer;
@@ -127,8 +127,10 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 					node->nodes[node->nodeCount++] = next;
 					cmin = cmax+1;
 				}
+				goto PARSE_FUN_CALL_SKIP_WHILE_END;
 PARSE_FUN_CALL_SKIP_WHILE:
 				parser_split_right(tokens, node, closer, max, len, i);
+PARSE_FUN_CALL_SKIP_WHILE_END:
 				node->value = &(tokens[i]);
 				i++;
 				return;

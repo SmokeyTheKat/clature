@@ -27,7 +27,8 @@ int main(int argc, char** argv)
 	{
 		system_compile_nasm();
 		system_compile_ld();
-		//system_compile_clear();
+		if (!args_if_def(make_constant_ddString("--no-clean-up")))
+			system_compile_clear();
 	}
 	return 0;
 }
