@@ -139,6 +139,7 @@ sizet scopeStack[MAX_SCOPES];
 extern bool inFunction;
 extern struct bitcode* functionCode;
 bool whileLoop = false;
+bool statementIsEquality = false;
 const char* DATA_SIZES[9] = {
 	"ERROR_SIZE",
 	"BYTE",
@@ -388,7 +389,8 @@ void generate_asm_step(struct tokenNode* node)
 	else if (node->value->type == TKN_FUNCTION)
 	{
 		generate_function_call(node);
-		push_result(REG_R8);
+		if (statementIsEquality)
+			push_result(REG_R8);
 	}
 	else if (node->value->type == TKN_ASSEMBLY)
 	{
@@ -435,6 +437,7 @@ static void generate_malloc(struct tokenNode* node)
 }
 static void generate_set_dereference(struct tokenNode* node)
 {
+	statementIsEquality = true;
 	generate_split_right(node);
 	generate_split_right(node->nodes[0]->nodes[1]->nodes[1]);
 	pop_input(REG_R8);
@@ -561,12 +564,14 @@ static void generate_if_statement(struct tokenNode* node)
 }
 static void generate_equels_set_asm(struct tokenNode* node)//i = 2*3;
 {
+	statementIsEquality = true;
 	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
 	generate_split_right(node);
 	pop_stack_var(var);
 }
 static void generate_equels_make_set_asm(struct tokenNode* node)//@8 i = 9-3;
 {
+	statementIsEquality = true;
 	struct stVariable var = stackt_set_var(node->nodes[0]->nodes[1]->nodes[1]->value->value, ddString_to_int(node->nodes[0]->nodes[1]->value->value));
 	generate_split_right(node);
 	pop_stack_var(var);
@@ -771,6 +776,7 @@ static inline bool is_equals_new_assignemnt(struct tokenNode* node)
 }
 static inline struct tokenNode* next_tree(void)
 {
+	statementIsEquality = false;
 	return (treePosition < treeCount) ? tokenTrees[treePosition++] : (struct tokenNode*)nullptr;
 }
 void generate_write_btc(int opc, ddString lhs, ddString rhs)
