@@ -102,6 +102,7 @@ static void generate_reference(struct tokenNode* node);
 static void generate_set_dereference(struct tokenNode* node);
 static void define_variable(struct tokenNode* node);
 static void generate_malloc(struct tokenNode* node);
+static void generate_extern(struct tokenNode* node);
 sizet get_param_count(struct tokenNode* node);
 void generate_asm_step(struct tokenNode* node);
 void generate_trees_asm(void);
@@ -381,6 +382,8 @@ void generate_asm_step(struct tokenNode* node)
 			generate_continue(node);
 		else if (ddString_compare_cstring(node->value->value, "malloc"))
 			generate_malloc(node);
+		else if (ddString_compare_cstring(node->value->value, "extern"))
+			generate_extern(node);
 	}
 	else if (node->value->type == TKN_FUNCTION)
 	{
@@ -412,6 +415,11 @@ static void generate_1reg_operation(int opc, struct tokenNode* node)
 static void define_variable(struct tokenNode* node)
 {
 	stackt_set_var(node->nodes[1]->nodes[1]->value->value, ddString_to_int(node->nodes[1]->value->value));
+}
+static void generate_extern(struct tokenNode* node)
+{
+	ddPrintf("EXT: %s\n", node->nodes[0]->value->value);
+	generate_write_btc(BTC_EXTERN, node->nodes[1]->value->value, REG_NONE);
 }
 static void generate_malloc(struct tokenNode* node)
 {
