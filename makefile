@@ -42,6 +42,9 @@ check: all
 	@./ddScript test/include.ds	-o test/out
 	@./test/out
 	@echo "PASSED include.ds"
+	@./ddScript test/global.ds	-o test/out
+	@./test/out
+	@echo "PASSED global.ds"
 	@echo "PASSED ALL TESTS WOW :)"
 tc: all
 	./ddScript ./test/test3.ds ./test/out

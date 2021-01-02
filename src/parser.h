@@ -94,6 +94,11 @@ void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, 
 					node->value = &(tokens[i]);
 					return;
 				}
+				else if (ddString_compare_cstring(tokens[i].value, "format"))
+				{
+					node->value = &(tokens[i]);
+					return;
+				}
 				else if (ddString_compare_cstring(tokens[i].value, "malloc"))
 				{
 					if (k != 3) continue;

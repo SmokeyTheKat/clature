@@ -54,6 +54,7 @@ static inline bool is_equals_new_assignemnt(struct tokenNode* node);
 static inline bool is_dereference(struct tokenNode* node);
 static inline bool is_dereference_assignment(struct tokenNode* node);
 static inline bool is_array_def(struct tokenNode* node);
+static inline bool is_global(struct tokenNode* node);
 static void push_stack_var(struct stVariable var);
 static void pop_stack_var(struct stVariable var);
 static inline void push_result(ddString reg);
@@ -103,6 +104,8 @@ static void generate_set_dereference(struct tokenNode* node);
 static void define_variable(struct tokenNode* node);
 static void generate_malloc(struct tokenNode* node);
 static void generate_extern(struct tokenNode* node);
+static void generate_format(struct tokenNode* node);
+static void generate_global(struct tokenNode* node);
 sizet get_param_count(struct tokenNode* node);
 void generate_asm_step(struct tokenNode* node);
 void generate_trees_asm(void);
@@ -111,7 +114,8 @@ struct stVariable stackt_set_var(ddString name, sizet size);
 void stackt_set_param_var(ddString name, sizet pos);
 static inline void switch_stacks(void);
 struct dtVariable datat_add_string(ddString value);
-struct dtVariable datat_add_data(ddString name, ddString value);
+struct dtVariable datat_add_data(ddString name, ddString value, sizet size);
+struct dtVariable datat_get_data(ddString name);
 void push_data_var(struct dtVariable var);
 static void push_ref(ddString value, sizet size);
 static void pop_ref(ddString value, sizet size);
@@ -140,6 +144,17 @@ extern bool inFunction;
 extern struct bitcode* functionCode;
 bool whileLoop = false;
 bool statementIsEquality = false;
+const char* DEFINE_SIZES[9] = {
+	"ERROR_SIZE",
+	"DB",
+	"DW",
+	"ERROR_SIZE",
+	"DD",
+	"ERROR_SIZE",
+	"ERROR_SIZE",
+	"ERROR_SIZE",
+	"DQ"
+};
 const char* DATA_SIZES[9] = {
 	"ERROR_SIZE",
 	"BYTE",
@@ -156,6 +171,8 @@ struct dtVariable
 {
 	ddString name;
 	ddString data;
+	ddString defineSize;
+	sizet size;
 };
 struct dataTracker
 {
@@ -228,7 +245,7 @@ struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _tree
 	for (sizet i = 0; i < datat.top; i++)
 	{
 		generate_write_btc(BTC_LABEL, datat.data[i].name, REG_NONE);
-		generate_write_btc(BTC_TAG, make_constant_ddString("db"), datat.data[i].data);
+		generate_write_btc(BTC_TAG, datat.data[i].defineSize, datat.data[i].data);
 	}
 	bitcodeHead->prev = bitcode->prev;
 	bitcode->prev->next = bitcodeHead;
@@ -353,14 +370,22 @@ void generate_asm_step(struct tokenNode* node)
 	}
 	else if (node->value->type == TKN_LITERAL)
 	{
-		struct stVariable var = stackt_get_var(node->value->value);
-		if (var.size != -6969)
+		if (is_global(node))
 		{
-			push_stack_var(var);
+			struct dtVariable var = datat_get_data(node->value->value);
+			push_ref(var.name, var.size);
 		}
-		else 
+		else
 		{
-			generate_write_btc(BTC_PUSH, node->value->value, REG_NONE);
+			struct stVariable var = stackt_get_var(node->value->value);
+			if (var.size != -6969)
+			{
+				push_stack_var(var);
+			}
+			else
+			{
+				generate_write_btc(BTC_PUSH, node->value->value, REG_NONE);
+			}
 		}
 	}
 	else if (node->value->type == TKN_STRING)
@@ -385,6 +410,10 @@ void generate_asm_step(struct tokenNode* node)
 			generate_malloc(node);
 		else if (ddString_compare_cstring(node->value->value, "extern"))
 			generate_extern(node);
+		else if (ddString_compare_cstring(node->value->value, "format"))
+			generate_format(node);
+		else if (ddString_compare_cstring(node->value->value, "global"))
+			generate_global(node);
 	}
 	else if (node->value->type == TKN_FUNCTION)
 	{
@@ -413,6 +442,15 @@ static void generate_1reg_operation(int opc, struct tokenNode* node)
 	pop_input(REG_RAX);
 	generate_write_btc(opc, REG_R8, REG_NONE);
 	push_result(REG_RAX);
+}
+static void generate_global(struct tokenNode* node)
+{
+	datat_add_data(node->nodes[1]->nodes[1]->nodes[1]->value->value, make_constant_ddString("0"), ddString_to_int(node->nodes[1]->nodes[1]->value->value));
+}
+static void generate_format(struct tokenNode* node)
+{
+	sizet size = ddString_to_int(node->nodes[1]->nodes[1]->value->value);
+	ddPrintf("size: %d\n", size);
 }
 static void define_variable(struct tokenNode* node)
 {
@@ -565,9 +603,18 @@ static void generate_if_statement(struct tokenNode* node)
 static void generate_equels_set_asm(struct tokenNode* node)//i = 2*3;
 {
 	statementIsEquality = true;
-	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
-	generate_split_right(node);
-	pop_stack_var(var);
+	if (is_global(node->nodes[0]))
+	{
+		struct dtVariable var = datat_get_data(node->nodes[0]->value->value);
+		generate_split_right(node);
+		pop_ref(var.name, var.size);
+	}
+	else
+	{
+		struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
+		generate_split_right(node);
+		pop_stack_var(var);
+	}
 }
 static void generate_equels_make_set_asm(struct tokenNode* node)//@8 i = 9-3;
 {
@@ -962,10 +1009,19 @@ sizet get_param_count(struct tokenNode* node)
 	}
 	return output+1;
 }
-struct dtVariable datat_add_data(ddString name, ddString value)
+struct dtVariable datat_get_data(ddString name)
+{
+	for (sizet i = 0; i < datat.top; i++)
+	{
+		if (ddString_compare(name, datat.data[i].name)) return datat.data[i];
+	}
+}
+struct dtVariable datat_add_data(ddString name, ddString value, sizet size)
 {
 	datat.data[datat.top].name = name;
 	datat.data[datat.top].data = value;
+	datat.data[datat.top].size = size;
+	datat.data[datat.top].defineSize = make_constant_ddString(DEFINE_SIZES[size]);
 	return datat.data[datat.top++];
 }
 struct dtVariable datat_add_string(ddString value)
@@ -974,6 +1030,7 @@ struct dtVariable datat_add_string(ddString value)
 	ddString_push_cstring_back(&(datat.data[datat.top].data), ",0");
 	datat.data[datat.top].data.cstr[datat.data[datat.top].data.length] = '\0';
 	datat.data[datat.top].name = make_format_ddString("_69_str%d", stringCount++);
+	datat.data[datat.top].defineSize = make_constant_ddString("dw");
 	return datat.data[datat.top++];
 }
 void push_data_var(struct dtVariable var)
@@ -996,6 +1053,14 @@ static inline bool is_dereference_assignment(struct tokenNode* node)
 {
 	if (node->nodes[0]!= nullptr && node->nodes[0]->nodes[1]!= nullptr && node->nodes[0]->nodes[1]->nodes[1]!= nullptr && node->nodes[0]->nodes[1]->nodes[1]->value->value.cstr[0] == '[')
 		return true;
+	return false;
+}
+static inline bool is_global(struct tokenNode* node)
+{
+	for (sizet i = 0; i < datat.top; i++)
+	{
+		if (ddString_compare(node->value->value, datat.data[i].name)) return true;
+	}
 	return false;
 }
 #endif

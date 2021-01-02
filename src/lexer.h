@@ -1,6 +1,5 @@
 #ifndef __ddScript_lexer_h__
-#define __ddScript_lexer_h__
-
+#define __ddScript_lexer_h__ 
 #include <ddcString.h>
 #include <ddcPrint.h>
 #include <stdarg.h>
@@ -43,7 +42,7 @@ static bool inString = false;
 static sizet fileCount = 0;
 static sizet tokenCount = 0;
 static struct token* tokens;
-ddString keywords[12];
+ddString keywords[13];
 
 struct token
 {
@@ -79,6 +78,7 @@ void init_lexer(void)
 	keywords[9] = make_constant_ddString("continue");
 	keywords[10] = make_constant_ddString("malloc");
 	keywords[11] = make_constant_ddString("extern");
+	keywords[12] = make_constant_ddString("format");
 }
 
 struct token* tokenize_file(ddString _file, sizet* _tokenCount)
@@ -203,7 +203,7 @@ static inline bool is_number(char chr)
 }
 static bool is_keyword(void)
 {
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < 13; i++)
 		if (ddString_compare(tokens[tokenCount].value, keywords[i]))
 			return true;
 	return false;
