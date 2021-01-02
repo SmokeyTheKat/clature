@@ -16,7 +16,8 @@ void system_compile_nasm(void)
 	nasmcommand.cstr[nasmcommand.length] = '\0';
 
 	system(nasmcommand.cstr);
-	ddPrint_ddString_nl(nasmcommand);
+	if (!args_if_def(make_constant_ddString("--silent")))
+		ddPrint_ddString_nl(nasmcommand);
 
 	raze_ddString(&nasmcommand);
 	raze_ddString(&output);
@@ -37,7 +38,8 @@ void system_compile_ld(void)
 	ldcommand.cstr[ldcommand.length] = '\0';
 
 	system(ldcommand.cstr);
-	ddPrint_ddString_nl(ldcommand);
+	if (!args_if_def(make_constant_ddString("--silent")))
+		ddPrint_ddString_nl(ldcommand);
 
 	raze_ddString(&ldcommand);
 	raze_ddString(&output);
@@ -51,14 +53,16 @@ void system_compile_clear(void)
 
 	ddString rmcommand = make_ddString("rm ");
 	ddString_push_back(&rmcommand, rmout);
-	ddPrint_ddString_nl(rmcommand);
+	if (!args_if_def(make_constant_ddString("--silent")))
+		ddPrint_ddString_nl(rmcommand);
 	system(rmcommand.cstr);
 
 	rmout.cstr[rmout.length-1] = 's';
 
 	remake_ddString(&rmcommand, "rm ");
 	ddString_push_back(&rmcommand, rmout);
-	ddPrint_ddString_nl(rmcommand);
+	if (!args_if_def(make_constant_ddString("--silent")))
+		ddPrint_ddString_nl(rmcommand);
 	system(rmcommand.cstr);
 
 	raze_ddString(&rmout);

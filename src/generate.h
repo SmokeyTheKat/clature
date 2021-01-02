@@ -218,10 +218,10 @@ struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _tree
 	bitcode = make(struct bitcode, 1);
 	struct bitcode* btcHead = bitcode;
 	bitcodeHead = bitcode;
-	generate_write_btc(BTC_EXTERN, make_constant_ddString("malloc"), REG_NONE);
-	generate_write_btc(BTC_EXTERN, make_constant_ddString("free"), REG_NONE);
 	generate_write_btc(BTC_GLOBAL, make_constant_ddString("main"), REG_NONE);
 	generate_write_btc(BTC_LABEL, make_constant_ddString("main"), REG_NONE);
+	generate_write_btc(BTC_EXTERN, make_constant_ddString("malloc"), REG_NONE);
+	generate_write_btc(BTC_EXTERN, make_constant_ddString("free"), REG_NONE);
 	generate_write_btc(BTC_PUSH, REG_RBP, REG_NONE);
 	generate_write_btc(BTC_MOV, REG_RBP, REG_RSP);
 	struct bitcode* bitcodeMoveStack = bitcode;

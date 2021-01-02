@@ -87,7 +87,8 @@ void compile_main(int agsc, char** ags)
 
 	if (debug) ddPrint_nl();
 
-	printf("RUNTIME: %f\n", ddTimer_stop());
+	if (!args_if_def(make_constant_ddString("--silent")))
+		printf("RUNTIME: %f\n", ddTimer_stop());
 
 	raze(tokens);
 }

@@ -148,7 +148,6 @@ void read_macros(ddString* file)
 						ddString_insert_char_at(&path, incpath.cstr[k], 1+k);
 					}
 				}
-				ddPrint_ddString_nl(path);
 				ddString newfile = read_file(path.cstr);
 				ddString_push_char_back(&newfile, '\n');
 				sizet k;
