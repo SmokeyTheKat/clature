@@ -247,6 +247,7 @@ struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _tree
 		generate_write_btc(BTC_LABEL, datat.data[i].name, REG_NONE);
 		generate_write_btc(BTC_TAG, datat.data[i].defineSize, datat.data[i].data);
 	}
+	generate_write_btc(BTC_ILA, make_constant_ddString("section .text"), REG_NONE);
 	bitcodeHead->prev = bitcode->prev;
 	bitcode->prev->next = bitcodeHead;
 	bitcodeHead = datacode;
@@ -1030,7 +1031,7 @@ struct dtVariable datat_add_string(ddString value)
 	ddString_push_cstring_back(&(datat.data[datat.top].data), ",0");
 	datat.data[datat.top].data.cstr[datat.data[datat.top].data.length] = '\0';
 	datat.data[datat.top].name = make_format_ddString("_69_str%d", stringCount++);
-	datat.data[datat.top].defineSize = make_constant_ddString("dw");
+	datat.data[datat.top].defineSize = make_constant_ddString("DW");
 	return datat.data[datat.top++];
 }
 void push_data_var(struct dtVariable var)
