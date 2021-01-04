@@ -32,48 +32,6 @@ static ddString read_word(ddString* file, sizet low)
 	return output;
 }
 
-void execute_macros(ddString* file)
-{
-	for (sizet i = 0; i < defCount; i++)
-	{
-		for (sizet j = 0; j < file->length; j++)
-		{
-			switch (file->cstr[j-1])
-			{
-				case 'a' ... 'z':
-				case 'A' ... 'Z':
-				case '0' ... '9':
-				case '_':
-					continue;
-			}
-			switch (file->cstr[j+defs[i].lhs.length])
-			{
-				case 'a' ... 'z':
-				case 'A' ... 'Z':
-				case '0' ... '9':
-				case '_':
-					continue;
-			}
-			bool found = true;
-			for (sizet k = 0; k < defs[i].lhs.length; k++)
-			{
-				if (file->cstr[j+k] != defs[i].lhs.cstr[k]) found = false;
-			}
-			if (found)
-			{
-				for (sizet k = 0; k < defs[i].lhs.length; k++)
-				{
-					ddString_delete_at(file, j);
-				}
-				for (sizet k = 0; k < defs[i].rhs.length; k++)
-				{
-					ddString_insert_char_at(file, defs[i].rhs.cstr[k], j+k);
-				}
-			}
-		}
-	}
-}
-
 void read_macros(ddString* file)
 {
 	for (sizet i = 0; i < file->length; i++)
