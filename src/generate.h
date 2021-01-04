@@ -225,10 +225,12 @@ struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _tree
 	generate_write_btc(BTC_MOV, REG_RBP, REG_RSP);
 	struct bitcode* bitcodeMoveStack = bitcode;
 	generate_write_btc(BTC_SUB, REG_RSP, REG_NONE);
-	generate_write_btc(BTC_MOV, make_constant_ddString("QWORD[RBP-8]"), REG_RSI);
-	generate_write_btc(BTC_MOV, make_constant_ddString("DWORD[RBP-12]"), REG_EDI);
-	stackt_set_var(make_ddString("argv"), 8);
-	stackt_set_var(make_ddString("argc"), 4);
+
+	datat_add_data(make_constant_ddString("argv"), make_constant_ddString("0"), 8);
+	datat_add_data(make_constant_ddString("argc"), make_constant_ddString("0"), 4);
+	generate_write_btc(BTC_MOV, make_constant_ddString("QWORD[argv]"), REG_RSI);
+	generate_write_btc(BTC_MOV, make_constant_ddString("DWORD[argc]"), REG_EDI);
+
 	generate_trees_asm();
 	generate_write_btc(BTC_MOV, REG_EAX, make_constant_ddString("0"));
 	generate_write_btc(BTC_POP, REG_RBP, REG_NONE);
@@ -477,8 +479,22 @@ static void generate_set_dereference(struct tokenNode* node)
 {
 	statementIsEquality = true;
 	generate_split_right(node);
-	generate_split_right(node->nodes[0]->nodes[1]->nodes[1]);
-	pop_input(REG_R8);
+	if (node->nodes[0]->nodes[1]->nodes[1]->nodes[1]->value->value.cstr[0] == ':')
+	{
+		generate_split_right(node->nodes[0]->nodes[1]->nodes[1]->nodes[1]);
+		pop_input(REG_R8);
+		generate_write_btc(BTC_MOV, REG_RAX, node->nodes[0]->nodes[1]->value->value);
+		generate_write_btc(BTC_MUL, REG_R8, REG_NONE);
+		push_result(REG_RAX);
+		generate_split_left(node->nodes[0]->nodes[1]->nodes[1]->nodes[1]);
+		pop_both_sides();
+		generate_write_btc(BTC_ADD, REG_R8, REG_R9);
+	}
+	else
+	{
+		generate_split_right(node->nodes[0]->nodes[1]->nodes[1]);
+		pop_input(REG_R8);
+	}
 	pop_ref(REG_R8, ddString_to_int(node->nodes[0]->nodes[1]->value->value));
 }
 static void generate_reference(struct tokenNode* node)
@@ -500,8 +516,22 @@ static void generate_array_def(struct tokenNode* node)
 }
 static void generate_dereference(struct tokenNode* node)
 {
-	generate_split_right(node->nodes[1]->nodes[1]);
-	pop_input(REG_R8);
+	if (node->nodes[1]->nodes[1]->nodes[1]->value->value.cstr[0] == ':')
+	{
+		generate_split_right(node->nodes[1]->nodes[1]->nodes[1]);
+		pop_input(REG_R8);
+		generate_write_btc(BTC_MOV, REG_RAX, node->nodes[1]->value->value);
+		generate_write_btc(BTC_MUL, REG_R8, REG_NONE);
+		push_result(REG_RAX);
+		generate_split_left(node->nodes[1]->nodes[1]->nodes[1]);
+		pop_both_sides();
+		generate_write_btc(BTC_ADD, REG_R8, REG_R9);
+	}
+	else
+	{
+		generate_split_right(node->nodes[1]->nodes[1]);
+		pop_input(REG_R8);
+	}
 	push_ref(make_constant_ddString("r8"), ddString_to_int(node->nodes[1]->value->value));
 }
 static void generate_function_return(struct tokenNode* node)

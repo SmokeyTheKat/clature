@@ -10,8 +10,8 @@ struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left
 int parser_find_next_comma(struct token* tokens, int start, sizet len);
 
 extern bool debug;
-const sizet charKeysLength = 18;
-const char charKeys[] = { '{', '}', '=', '@', '|', '&', '=', '!', '+', '-', '*', '/', '%', '<', '>', '?', '[', '(' };
+const sizet charKeysLength = 19;
+const char charKeys[] = { '{', '}', '=', '@', '|', '&', '=', '!', ':', '+', '-', '*', '/', '%', '<', '>', '?', '[', '(' };
 //                                            ||   &&   ==   !=                                                     
 struct tokenNode
 {

@@ -134,7 +134,7 @@ static void sift_token(char chr)
 				break;
 			}
 			break;
-		case '[': case ']': case '(': case ')': case ',':
+		case '[': case ']': case '(': case ')': case ',': case ':':
 			set_token(TKN_SYNTAX, make_ddString_length(&chr, 1));
 			break;
 		case '{': case '}':
