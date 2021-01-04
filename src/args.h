@@ -40,6 +40,7 @@ ddString args_get_value(ddString name)
 	{
 		if (ddString_compare(name, cargs[i].name)) return cargs[i].value;
 	}
+	return make_constant_ddString("ERROR");
 }
 bool args_if_def(ddString name)
 {

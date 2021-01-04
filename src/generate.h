@@ -216,7 +216,6 @@ struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _tree
 	tokenTrees = parseTrees;
 	treeCount = _treeCount;
 	bitcode = make(struct bitcode, 1);
-	struct bitcode* btcHead = bitcode;
 	bitcodeHead = bitcode;
 	generate_write_btc(BTC_GLOBAL, make_constant_ddString("main"), REG_NONE);
 	generate_write_btc(BTC_LABEL, make_constant_ddString("main"), REG_NONE);
@@ -1016,6 +1015,9 @@ struct dtVariable datat_get_data(ddString name)
 	{
 		if (ddString_compare(name, datat.data[i].name)) return datat.data[i];
 	}
+	struct dtVariable errorout;
+	errorout.size = -6969;
+	return errorout;
 }
 struct dtVariable datat_add_data(ddString name, ddString value, sizet size)
 {

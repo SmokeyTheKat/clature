@@ -27,53 +27,32 @@ void print_tokentree(struct tokenNode* node)
 
 void compile_main(int agsc, char** ags)
 {
+	if (args_if_def(make_constant_ddString("-debug"))) debug = true;
 	compile_reset_color();
-
-
 	ddTimer_start();
-
 	debug = false;
-	sizet tokenCount = 0;
-	struct token* tokens;
-	struct tokenNode** parseTrees;
-	sizet treeCount = 0;
-	struct bitcode* bitcodeHead;
-
 	ddString file;
 	if (args_if_def(make_constant_ddString("__INPUT_FILE")))
 		file = read_file(args_get_value(make_constant_ddString("__INPUT_FILE")).cstr);
 	else compile_error("NO INPUT FILES\n");
 		
 	ddString fileOut = make_ddString("");
-
-
-	if (args_if_def(make_constant_ddString("-debug"))) debug = true;
 	if (!args_if_def(make_constant_ddString("--no-macros")))
 		read_macros(&file);
-	//execute_macros(&file);
-/*
-	ddPrint_nl();
-	ddPrint_ddString_nl(file);
-*/
 
-	init_lexer();
-	tokens = tokenize_file(file, &tokenCount);
-
-	if (debug) ddPrintf("TokenCount: %d\n", tokenCount);
-
-	for (sizet i = 0; i < tokenCount; i++)
+	sizet tokenCount = 0;
+	struct token* tokens = tokenize_file(file, &tokenCount);
+	if (debug)
 	{
-		tokens[i].value.cstr[tokens[i].value.length] = '\0';
-		if (debug) ddPrintf("%d: %s: %s\n", i, TKN_STRS[tokens[i].type], tokens[i].value.cstr);
+		ddPrintf("TokenCount: %d\n", tokenCount);
+		for (sizet i = 0; i < tokenCount; i++)
+			ddPrintf("%d: %s: %s\n", i, TKN_STRS[tokens[i].type], tokens[i].value.cstr);
 	}
 
-	parseTrees = parser_main(tokens, tokenCount, &treeCount);
-/*
-	for (sizet i = 0; i < treeCount; i++)
-		print_tokentree(parseTrees[i]);
-*/
+	sizet treeCount = 0;
+	struct tokenNode** parseTrees = parser_main(tokens, tokenCount, &treeCount);
 
-	bitcodeHead = generate_bitcode(parseTrees, treeCount);
+	struct bitcode* bitcodeHead = generate_bitcode(parseTrees, treeCount);
 
 	write_bitcode(bitcodeHead, &fileOut);
 
@@ -87,10 +66,7 @@ void compile_main(int agsc, char** ags)
 
 	if (debug) ddPrint_nl();
 
-	if (!args_if_def(make_constant_ddString("--silent")))
-		printf("RUNTIME: %f\n", ddTimer_stop());
-
-	raze(tokens);
+	compile_message(make_format_ddString("RUNTIME: %f", ddTimer_stop()).cstr);
 }
 
 sizet bitcode_get_length(struct bitcode* code)

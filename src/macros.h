@@ -17,14 +17,6 @@ static void set_def(ddString lhs, ddString rhs)
 	defs[defCount].lhs = lhs;
 	defs[defCount++].rhs = rhs;
 }
-static sizet get_nextline_pos(ddString* file, sizet low)
-{
-	for (sizet i = low; file->length; i++)
-	{
-		if (file->cstr[i] == '\n') return i;
-	}
-	return 0;
-}
 static ddString read_to_end(ddString* file, sizet low)
 {
 	ddString output = make_ddString("");
@@ -46,21 +38,22 @@ void execute_macros(ddString* file)
 	{
 		for (sizet j = 0; j < file->length; j++)
 		{
-			if (file->cstr[j-1] >= 'a' &&
-			    file->cstr[j-1] <= 'z' ||
-			    file->cstr[j-1] >= 'A' &&
-			    file->cstr[j-1] <= 'Z' ||
-			    file->cstr[j-1] >= '0' &&
-			    file->cstr[j-1] <= '9' ||
-			    file->cstr[j-1] == '_' ||
-			    file->cstr[j+defs[i].lhs.length] >= 'a' &&
-			    file->cstr[j+defs[i].lhs.length] <= 'z' ||
-			    file->cstr[j+defs[i].lhs.length] >= 'A' &&
-			    file->cstr[j+defs[i].lhs.length] <= 'Z' ||
-			    file->cstr[j+defs[i].lhs.length] >= '0' &&
-			    file->cstr[j+defs[i].lhs.length] <= '9' ||
-			    file->cstr[j+defs[i].lhs.length] == '_') continue;
-
+			switch (file->cstr[j-1])
+			{
+				case 'a' ... 'z':
+				case 'A' ... 'Z':
+				case '0' ... '9':
+				case '_':
+					continue;
+			}
+			switch (file->cstr[j+defs[i].lhs.length])
+			{
+				case 'a' ... 'z':
+				case 'A' ... 'Z':
+				case '0' ... '9':
+				case '_':
+					continue;
+			}
 			bool found = true;
 			for (sizet k = 0; k < defs[i].lhs.length; k++)
 			{

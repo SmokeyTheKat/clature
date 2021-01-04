@@ -1,6 +1,7 @@
 #ifndef __ddScript_system_h__
 #define __ddScript_system_h__
 
+#include "./utils.h"
 
 void system_compile_nasm(void)
 {
@@ -16,8 +17,7 @@ void system_compile_nasm(void)
 	nasmcommand.cstr[nasmcommand.length] = '\0';
 
 	system(nasmcommand.cstr);
-	if (!args_if_def(make_constant_ddString("--silent")))
-		ddPrint_ddString_nl(nasmcommand);
+	compile_message(nasmcommand.cstr);
 
 	raze_ddString(&nasmcommand);
 	raze_ddString(&output);
@@ -38,8 +38,7 @@ void system_compile_ld(void)
 	ldcommand.cstr[ldcommand.length] = '\0';
 
 	system(ldcommand.cstr);
-	if (!args_if_def(make_constant_ddString("--silent")))
-		ddPrint_ddString_nl(ldcommand);
+	compile_message(ldcommand.cstr);
 
 	raze_ddString(&ldcommand);
 	raze_ddString(&output);
@@ -53,16 +52,14 @@ void system_compile_clear(void)
 
 	ddString rmcommand = make_ddString("rm ");
 	ddString_push_back(&rmcommand, rmout);
-	if (!args_if_def(make_constant_ddString("--silent")))
-		ddPrint_ddString_nl(rmcommand);
+	compile_message(rmcommand.cstr);
 	system(rmcommand.cstr);
 
 	rmout.cstr[rmout.length-1] = 's';
 
 	remake_ddString(&rmcommand, "rm ");
 	ddString_push_back(&rmcommand, rmout);
-	if (!args_if_def(make_constant_ddString("--silent")))
-		ddPrint_ddString_nl(rmcommand);
+	compile_message(rmcommand.cstr);
 	system(rmcommand.cstr);
 
 	raze_ddString(&rmout);

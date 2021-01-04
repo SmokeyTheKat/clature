@@ -83,6 +83,7 @@ void init_lexer(void)
 
 struct token* tokenize_file(ddString _file, sizet* _tokenCount)
 {
+	init_lexer();
 	file = _file;
 	while (fileCount < _file.length)
 	{

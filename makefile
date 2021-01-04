@@ -1,5 +1,5 @@
 all:
-	gcc ./src/ddScript.c -o ./ddScript -lm
+	gcc ./src/ddScript.c -o ./ddScript -lm -Wall
 install: all
 	sudo cp ./ddScript /usr/bin/cds
 check: all
