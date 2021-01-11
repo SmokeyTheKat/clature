@@ -1,247 +1,219 @@
 #ifndef __ddScript_parser_h__
 #define __ddScript_parser_h__
 
+#include "./lexer.h"
+#include <ddcKeyboard.h>
+
 struct tokenNode;
 
-void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, sizet len);
-int parser_find_closer(struct token* tokens, sizet len, int start, char obracket, char cbracket);
-struct tokenNode** parser_main(struct token* tokens, sizet tokenCount, sizet* _treeCount);
-struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left, struct tokenNode* right, struct token* value);
-int parser_find_next_comma(struct token* tokens, int start, sizet len);
-
 extern bool debug;
-const sizet charKeysLength = 19;
-const char charKeys[] = { '{', '}', '=', '@', '|', '&', '=', '!', ':', '+', '-', '*', '/', '%', '<', '>', '?', '[', '(' };
-//                                            ||   &&   ==   !=                                                     
+
 struct tokenNode
 {
 	struct tokenNode** nodes;
 	sizet nodeCount;
 	struct token* value;
 };
-
-struct tokenNode make_tokenNode(struct tokenNode* parent, struct tokenNode* left, struct tokenNode* right, struct token* value)
+struct syntax
 {
-	struct tokenNode output;
-	output.nodes = make(struct tokenNode*, 10);
-	output.nodes[0] = nullptr;
-	output.nodes[1] = nullptr;
-	output.nodes[2] = nullptr;
-	output.nodes[3] = nullptr;
-	output.nodes[4] = nullptr;
-	output.nodes[5] = nullptr;
-	output.nodes[6] = nullptr;
-	output.nodes[7] = nullptr;
-	output.nodes[8] = nullptr;
-	output.nodes[9] = nullptr;
-	output.nodeCount = 0;
-	output.value = value;
+	int result;
+	int csum;
+	int pcsum;
+	int contains[5];
+	int len;
+};
+
+sizet syntaxCount = 22;
+
+struct syntax syntax[22] = {
+	{ G_ASSIGN, 	G_AT*G_NUM*G_ID*G_EQUL*G_SUM,	G_AT*G_NUM*G_ID*G_EQUL,	{ G_AT,		G_SUM,		G_ID, 	G_NUM, G_EQUL 	}, 5},
+	{ G_ASSIGN, 	G_ID*G_EQUL*G_SUM, 		G_ID*G_EQUL, 		{ G_ID,		G_SUM,		G_NULL, G_NULL, G_NULL 	}, 3},
+	{ G_SUM, 	G_SUM*G_PLUS*G_SUM, 		G_SUM*G_PLUS, 		{ G_SUM,	G_SUM,		G_NULL, G_NULL, G_NULL 	}, 3},
+	{ G_SUM, 	G_SUM*G_MUL*G_SUM, 		G_SUM*G_MUL, 		{ G_SUM,	G_SUM,		G_NULL, G_NULL, G_NULL 	}, 3},
+	{ G_SUM, 	G_SUM*G_DIV*G_SUM, 		G_SUM*G_DIV, 		{ G_SUM,	G_SUM,		G_NULL, G_NULL, G_NULL 	}, 3},
+	{ G_SUM, 	G_SUM*G_PLUS*G_SUM, 		G_SUM*G_PLUS, 		{ G_SUM,	G_SUM,		G_NULL, G_NULL, G_NULL 	}, 3},
+	{ G_SUM, 	G_SUM*G_MINUS*G_SUM, 		G_SUM*G_MINUS, 		{ G_SUM,	G_SUM,		G_NULL, G_NULL, G_NULL	}, 3},
+	{ G_SUM, 	G_SUM*G_MUL*G_PRODUCT,	 	G_SUM*G_MUL, 		{ G_SUM,	G_PRODUCT,	G_NULL, G_NULL, G_NULL	}, 3},
+	{ G_SUM, 	G_SUM*G_DIV*G_PRODUCT, 		G_SUM*G_DIV, 		{ G_SUM,	G_PRODUCT,	G_NULL, G_NULL, G_NULL	}, 3},
+	{ G_SUM, 	G_SUM*G_PLUS*G_PRODUCT, 	G_SUM*G_PLUS, 		{ G_SUM,	G_PRODUCT,	G_NULL, G_NULL, G_NULL	}, 3},
+	{ G_SUM, 	G_SUM*G_MINUS*G_PRODUCT, 	G_SUM*G_MINUS, 		{ G_SUM,	G_PRODUCT,	G_NULL, G_NULL, G_NULL	}, 3},
+	{ G_SUM, 	G_PRODUCT, 			G_PRODUCT, 		{ G_PRODUCT,	G_NULL,	 	G_NULL, G_NULL, G_NULL	}, 1},
+	{ G_PRODUCT, 	G_PRODUCT*G_MUL*G_VALUE, 	G_PRODUCT*G_MUL,	{ G_PRODUCT,	G_VALUE,	G_NULL, G_NULL, G_NULL	}, 3},
+	{ G_PRODUCT, 	G_PRODUCT*G_DIV*G_VALUE, 	G_PRODUCT*G_DIV,	{ G_PRODUCT,	G_VALUE,	G_NULL, G_NULL, G_NULL	}, 3},
+	{ G_PRODUCT, 	G_VALUE, 			G_VALUE,		{ G_VALUE,	G_NULL,	 	G_NULL, G_NULL, G_NULL	}, 1},
+	{ G_VALUE,	G_ID,				G_ID,			{ G_ID,		G_NULL,	 	G_NULL, G_NULL, G_NULL	}, 1},
+	{ G_VALUE,	G_NUM,				G_NUM,			{ G_NUM,	G_NULL,	 	G_NULL, G_NULL, G_NULL	}, 1},
+	{ G_SUM,	G_OP*G_SUM*G_CP,		G_OP*G_SUM,		{ G_OP,		G_SUM,		G_NULL,	G_NULL, G_NULL	}, 3},
+	{ G_SUM,	G_OP*G_SUM*G_CP,		G_CP*G_SUM,		{ G_OP,		G_SUM,		G_NULL,	G_NULL, G_NULL	}, 3},
+	{ G_SUM,	G_OS*G_SUM*G_CS,		G_OS*G_SUM,		{ G_OS,		G_SUM,		G_NULL,	G_NULL, G_NULL	}, 3},
+	{ G_SUM,	G_OS*G_SUM*G_CS,		G_CS*G_SUM,		{ G_OS,		G_SUM,		G_NULL,	G_NULL, G_NULL	}, 3},
+	{ G_SUM,	G_SUM*G_NUM*G_AT,		G_SUM*G_NUM*G_AT,	{ G_NUM,	G_SUM,		G_AT,	G_NULL, G_NULL	}, 3},
+	//{ "s", "fs.",  'f', 's', '.', "fs"},
+	////{ "s", "(s)", 's', '(', '.', "(s)"}
+};
+
+bool is_pgrammer_match(int top, int up)
+{
+	if (up == 0) return false;
+	//check for partial matches
+	for (int i = 0; i < syntaxCount; i++)
+	{
+		if (up == syntax[i].contains[0] || up == syntax[i].contains[1] || up == syntax[i].contains[2] ) return true;
+		if (up * top == syntax[i].pcsum) return true;
+	}
+	return false;
+}
+
+//void shift(
+
+struct stack
+{
+	struct tokenNode** data;
+	int top;
+};
+
+struct stack make_stack(int len)
+{
+	struct stack output;
+	output.data = make(struct tokenNode*, len);
+	output.top = -1;
+	return output;
+}
+void stack_push(struct stack* st, struct tokenNode* value)
+{
+	st->data[++(st->top)] = value;
+}
+void stack_pop_length(struct stack* st, int len)
+{
+	st->top -= len;
+}
+struct tokenNode* stack_pop(struct stack* st)
+{
+	return st->data[(st->top)--];
+}
+int stack_values(struct stack st, int n)
+{
+	int output = 1;
+	for (int i = 0; i < n; i++)
+		output *= st.data[st.top-i]->value->symbol;
+	return output;
+}
+struct tokenNode* stack_value(struct stack st)
+{
+	return st.data[st.top];
+}
+void stack_print(struct stack st)
+{
+	if (st.top == -1) return;
+	for (int i = 0; i <= st.top; i++)
+		printf("%d ", st.data[i]->value->symbol);
+}
+
+struct tokenNode* make_tokenNode(struct token* value)
+{
+	struct tokenNode* output = make(struct tokenNode, 1);
+	output->nodeCount = 0;
+	output->nodes = make(struct tokenNode*, 10);
+	output->value = value;
 	return output;
 }
 
-static inline struct tokenNode* parser_split_right(struct token* tokens, struct tokenNode* node, sizet min, sizet max, sizet len, sizet i)
+struct tokenNode* make_tokenNode_nont(int sym, char* val)
 {
-	if (i != max)
-	{
-		struct tokenNode* right = make(struct tokenNode, 1); 
-		(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-		parser(tokens, right, i+1, max, len);
-		node->nodes[1] = right;
-		return right;
-	}
-	return nullptr;
-}
-static inline struct tokenNode* parser_split_left(struct token* tokens, struct tokenNode* node, sizet min, sizet max, sizet len, sizet i)
-{
-	if (i != min)
-	{
-		struct tokenNode* left = make(struct tokenNode, 1); 
-		(*left) = make_tokenNode(node, nullptr, nullptr, nullptr);
-		parser(tokens, left, min, i, len);
-		node->nodes[0] = left;
-		return left;
-	}
-	return nullptr;
-}
-static inline void parser_bisplit(struct token* tokens, struct tokenNode* node, sizet min, sizet max, sizet len, sizet i)
-{
-	parser_split_right(tokens, node, min, max, len, i);
-	parser_split_left(tokens, node, min, max, len, i);
+	struct token* newt = make(struct token, 1);
+	newt->symbol = sym;
+	newt->value = make_constant_ddString(val);
+	return make_tokenNode(newt);
 }
 
-void parser(struct token* tokens, struct tokenNode* node, sizet min, sizet max, sizet len)
+struct tokenNode* make_tokenNode_children(struct tokenNode** children, int cc, int psymbol)
 {
-	for (sizet k = 0; k < charKeysLength; k++)
+	struct tokenNode* nparent = make_tokenNode_nont(psymbol, " ");
+	for (int i = 0; i < cc; i++) nparent->nodes[i] = children[i];
+	nparent->nodeCount = cc;
+	return nparent;
+}
+
+
+void print_tree(struct tokenNode* root, int depth)
+{
+	printf("#%d:", depth);
+	for (int i = 0; i < depth-1; i++) printf("|	");
+	printf("+-------");
+	printf("|%d: %s|\n", root->value->symbol, root->value->value.cstr);
+	for (int i = 0; i < root->nodeCount; i++)
+		print_tree(root->nodes[i], depth+1);
+}
+
+void tree_zip(struct tokenNode* node)
+{
+	for (int i = 0; i < node->nodeCount; i++)
 	{
-		for (sizet i = min; i < max; i++)
+		if (node->nodes[i]->nodeCount == 1)
 		{
-			if (tokens[i].type == TKN_KEYWORD)
+			node->nodes[i] = node->nodes[i]->nodes[0];
+		}
+		tree_zip(node->nodes[i]);
+	}
+}
+
+//#define DDEBUG 1
+
+struct tokenNode* parse_line(struct token* tokens, sizet min, sizet max, sizet len)
+{
+	tokens += min;
+	struct tokenNode** in = make(struct tokenNode*, len);
+	*in = make_tokenNode(tokens++);
+	struct tokenNode** ine = in + (max-min);
+	struct stack st = make_stack(1000);
+	st.data[-1] = make_tokenNode_nont(G_NULL, " ");
+	while (st.top == -1 || (stack_value(st)->value->symbol != G_ASSIGN))
+	{
+		struct tokenNode* up = (in != ine) ? *in : st.data[-1];
+		struct tokenNode* top = stack_value(st);
+if (debug){
+		printf("-------------------------------------------------------------------\n");
+		stack_print(st);
+		printf("	%d\n", up->value->symbol);
+		ddKey_getch_noesc();
+}
+		if (is_pgrammer_match(top->value->symbol, up->value->symbol)) //shift
+		{
+if (debug){
+			printf("^ %d\n", up->value->symbol);
+}
+			stack_push(&st, up);
+			in++;
+			*in = make_tokenNode(tokens++);
+		}
+		else  //reduce
+		{
+			for (int i = 0; i < syntaxCount; i++)
 			{
-				if (ddString_compare_cstring(tokens[i].value, "sub"))
+				if (stack_values(st, syntax[i].len) == syntax[i].csum)
 				{
-					for (sizet i = min; i < max; i++)
-					{
-						node->value = &(tokens[i]);
-						struct tokenNode* right = make(struct tokenNode, 1); 
-						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->nodes[1] = right;
-						node = node->nodes[1] ;
-					}
-					return;
-				}
-				else if (ddString_compare_cstring(tokens[i].value, "continue"))
-				{
-					node->value = &(tokens[i]);
-					return;
-				}
-				else if (ddString_compare_cstring(tokens[i].value, "format"))
-				{
-					node->value = &(tokens[i]);
-					return;
-				}
-				else if (ddString_compare_cstring(tokens[i].value, "malloc"))
-				{
-					if (k != 3) continue;
-					node->value = &(tokens[i]);
-					parser_split_right(tokens, node, min, max, len, i);
-					return;
-				}
-				node->value = &(tokens[i]);
-				parser_split_right(tokens, node, min, max, len, i);
-				return;
-			}
-			else if (k == charKeysLength-1 && tokens[i].type == TKN_LITERAL && tokens[i+1].value.cstr[0] == '(')//function call    printstr("yo")
-			{
-				tokens[i].type = TKN_FUNCTION;
-				node->value = &(tokens[i]);
-				sizet closer = parser_find_closer(tokens, len, i+1, '(', ')');
-				int cmin = i+2;
-				if (tokens[cmin].value.cstr[0] == ')') goto PARSE_FUN_CALL_SKIP_WHILE;
-				bool done = false;
-				while (!done)
-				{
-					int cmax = parser_find_next_comma(tokens, cmin, closer);
-					if (cmax == -1)
-					{
-						cmax = closer;
-						done = true;
-					}
-					struct tokenNode* next = make(struct tokenNode, 1); 
-					(*next) = make_tokenNode(node, nullptr, nullptr, nullptr);
-					parser(tokens, next, cmin, cmax, len);
-					node->nodes[node->nodeCount++] = next;
-					cmin = cmax+1;
-				}
-				goto PARSE_FUN_CALL_SKIP_WHILE_END;
-PARSE_FUN_CALL_SKIP_WHILE:
-				parser_split_right(tokens, node, closer, max, len, i);
-PARSE_FUN_CALL_SKIP_WHILE_END:
-				node->value = &(tokens[i]);
-				i++;
-				return;
-			}
-			if (tokens[i].value.cstr[0] == charKeys[k] || tokens[i].value.cstr[1] == charKeys[k])
-			{
-				if (tokens[i].type == TKN_OPERATOR)
-				{
-					if (tokens[i].value.cstr[0] == '=' && tokens[i].value.cstr[1] == '=')
-					{
-						if (k == 2) continue;
-						parser_bisplit(tokens, node, min, max, len, i);
-						node->value = &(tokens[i]);
-						return;
-					}
-					if (tokens[i].value.cstr[0] == '@' && i+2 < len && tokens[i+2].value.cstr[0] == '<')
-					{
-						struct tokenNode* right = make(struct tokenNode, 1); 
-						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->nodes[1] = right;
-						node->value = &(tokens[i]);
-						node = right;
-						i++;
-						right = make(struct tokenNode, 1); 
-						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->nodes[1] = right;
-						node->value = &(tokens[i]);
-						node = right;
-						i++;
-						right = make(struct tokenNode, 1); 
-						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->nodes[1] = right;
-						node->value = &(tokens[i]);
-						node = right;
-						i++;
-						right = make(struct tokenNode, 1); 
-						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->nodes[1] = right;
-						node->value = &(tokens[i]);
-						node = right;
-						i++;
-						if (tokens[i].value.cstr[0] != '>') compile_error(make_format_ddString("UNEXPECTED SYMBOL FOUND IN ARRAY DEFINITION!\n        SYMBOL '%c' WAS FOUND WHERE '>' WAS EXPECTED!\n", tokens[i].value.cstr[0]).cstr);
-						//int ndb = parser_find_closer(tokens, len, i, '<', '>');
-						//parser(tokens, node, i, ndb, len);
-						return;
-					}
-					if (tokens[i].value.cstr[0] == '@' && i+2 < len && tokens[i+2].value.cstr[0] == '[')
-					{
-						struct tokenNode* right = make(struct tokenNode, 1); 
-						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->nodes[1] = right;
-						node->value = &(tokens[i]);
-						node = right;
-						i++;
-						right = make(struct tokenNode, 1); 
-						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->nodes[1] = right;
-						node->value = &(tokens[i]);
-						node = right;
-						i++;
-						right = make(struct tokenNode, 1); 
-						(*right) = make_tokenNode(node, nullptr, nullptr, nullptr);
-						node->nodes[1] = right;
-						node->value = &(tokens[i]);
-						node = right;
-						i++;
-						int ndb = parser_find_closer(tokens, len, i, '[', ']');
-						parser(tokens, node, i, ndb, len);
-						return;
-					}
-					else if (tokens[i].value.cstr[0] == '?')
-					{
-						parser_split_right(tokens, node, min, max, len, i);
-						node->value = &(tokens[i]);
-						return;
-					}
-				}
-				if (tokens[i].type == TKN_SYNTAX)
-				{
-					if (tokens[i].value.cstr[0] == '(')
-					{
-						int ndb = parser_find_closer(tokens, len, i, '(', ')');
-						parser(tokens, node, i+1, ndb, len);
-						return;
-					}
-				}
-				parser_bisplit(tokens, node, min, max, len, i);
-				node->value = &(tokens[i]);
-				return;
-			}
-			if (tokens[i].type == TKN_SYNTAX)
-			{
-				if (tokens[i].value.cstr[0] == '(')
-				{
-					int ndb = parser_find_closer(tokens, max, i, '(', ')');
-					i = ndb;
-					continue;
+if (debug){
+					printf("%d <- ", syntax[i].result);
+}
+					struct tokenNode** children = make(struct tokenNode*, syntax[i].len);
+if (debug){
+					for (int j = 0; j < syntax[i].len; j++) printf("%d ", st.data[st.top-j]->value->symbol);
+					printf("\n");
+}
+					for (int j = 0; j < syntax[i].len; j++) children[j] = st.data[st.top-j];
+					stack_pop_length(&st, syntax[i].len);
+					stack_push(&st, make_tokenNode_children(children, syntax[i].len, syntax[i].result));
+					break;
 				}
 			}
 		}
 	}
-	sizet i = min;
-	if (i == max) return;
-	parser_bisplit(tokens, node, min, max, len, i);
-	node->value = &(tokens[i]);
-	return;
+	printf("\n");
+	tree_zip(stack_value(st));
+	if (1) print_tree(stack_value(st), 2);
+
+	
+	return stack_value(st);
 }
 
 struct tokenNode** parser_main(struct token* tokens, sizet tokenCount, sizet* _treeCount)
@@ -254,9 +226,7 @@ struct tokenNode** parser_main(struct token* tokens, sizet tokenCount, sizet* _t
 	while (commandPos < tokenCount)
 	{
 		if (debug) printf("c: %lld    nc: %lld\n", commandPos, nextCommandPos);
-		struct tokenNode* commandHead = make(struct tokenNode, 1);
-		(*commandHead) = make_tokenNode(nullptr, nullptr, nullptr, nullptr);
-		parser(tokens, commandHead, commandPos, nextCommandPos, tokenCount);
+		struct tokenNode* commandHead = parse_line(tokens, commandPos, nextCommandPos, tokenCount);
 		trees[treeCount++] = commandHead;
 		commandPos = nextCommandPos+1;
 		nextCommandPos = tokens_get_next_command(tokens, commandPos, tokenCount);
@@ -265,28 +235,6 @@ struct tokenNode** parser_main(struct token* tokens, sizet tokenCount, sizet* _t
 	return trees;
 }
 
-int parser_find_closer(struct token* tokens, sizet len, int start, char obracket, char cbracket)
-{
-	int i = start+1;
-	int layer = 1;
-	for (; layer != 0; i++)
-	{
-		if (tokens[i].value.cstr[0] == obracket)
-		{
-			layer++;
-		}
-		if (tokens[i].value.cstr[0] == cbracket)
-		{
-			layer--;
-		}
-	}
-	return i-1;
-}
-int parser_find_next_comma(struct token* tokens, int start, sizet len)
-{
-	int i = start;
-	for (; i < len && tokens[i].value.cstr[0] != ','; i++);
-	if (i == len) return -1;
-	return i;
-}
+
+
 #endif

@@ -14,6 +14,36 @@
 #define TKN_FUNCTION 0x05
 #define TKN_LINEBREAK 0x06
 #define TKN_STRING 0x07
+#define TKN_NONTERMINAL 0x08
+
+enum
+{
+	G_SEMI = 0,
+	G_NULL = 0,
+	G_ASSIGN = 1,
+	G_SUM,
+	G_PRODUCT,
+	G_VALUE,
+	G_ID,
+	G_NUM,
+	G_AMOD,
+	G_ILASM,
+	G_MUL = '*',
+	G_DIV = '/',
+	G_PLUS = '+',
+	G_QUESTION = '?',
+	G_COLON = ':',
+	G_MINUS = '-',
+	G_EQUL = '=',
+	G_COMMA = ',',
+	G_DOT = '.',
+	G_OP = '(',
+	G_CP = ')',
+	G_OS = '[',
+	G_CS = ']',
+	G_AT = '@',
+};
+
 
 struct token;
 
@@ -23,11 +53,12 @@ static inline bool is_number(char chr);
 static bool is_keyword(void);
 static bool is_string(void);
 static inline void set_literal(void);
-static inline void set_token(int type, ddString value);
+static inline void set_token(int type, ddString value, int symbol);
 static void handel_literal(char chr);
 static inline void goto_next_line(void);
 static bool is_unclosed_string(void);
 static bool is_last_linebreak(void);
+static bool is_ds_number(ddString str);
 static void try_tkns(int type, char leftOpc, int len, ...);
 static void sift_token(char chr);
 static ddString tokenize_until_semicolon(void);
@@ -48,6 +79,7 @@ struct token
 {
 	int type;
 	ddString value;
+	int symbol;
 };
 
 const char* const TKN_STRS[] = {
@@ -90,7 +122,7 @@ struct token* tokenize_file(ddString _file, sizet* _tokenCount)
 		get_token();
 	}
 	if (!is_last_linebreak())
-			set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
+			set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
 	(*_tokenCount) = tokenCount;
 	return tokens;
 }
@@ -119,35 +151,35 @@ static void sift_token(char chr)
 			if (inLiteral) set_literal();
 			goto_next_line();
 			if (!is_last_linebreak())
-				set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
+				set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
 			break;
 		case '\n':
 			if (!is_last_linebreak())
-				set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
+				set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
 			break;
 		case '.':
 			if (is_last_linebreak())
 			{
-				set_token(TKN_ASSEMBLY, tokenize_until_semicolon());
+				set_token(TKN_ASSEMBLY, tokenize_until_semicolon(), G_ILASM);
 				goto_next_line();
-				set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
+				set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
 				break;
 			}
 			break;
 		case '[': case ']': case '(': case ')': case ',': case ':':
-			set_token(TKN_SYNTAX, make_ddString_length(&chr, 1));
+			set_token(TKN_SYNTAX, make_ddString_length(&chr, 1), chr);
 			break;
 		case '{': case '}':
 			if (!is_last_linebreak())
-				set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
-			set_token(TKN_SYNTAX, make_ddString_length(&chr, 1));
-			set_token(TKN_LINEBREAK, make_ddString_length(";", 1));
+				set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
+			set_token(TKN_SYNTAX, make_ddString_length(&chr, 1), chr);
+			set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
 			break;
 		case '@':
-			set_token(TKN_OPERATOR, make_ddString_length("@", 1));
+			set_token(TKN_OPERATOR, make_ddString_length("@", 1), G_AT);
 			break;
 		case '?':
-			set_token(TKN_OPERATOR, make_ddString_length("?", 1));
+			set_token(TKN_OPERATOR, make_ddString_length("?", 1), G_QUESTION);
 			break;
 		case '*': case '/': case '~': case '!': case '=': case '%':
 			try_tkns(TKN_OPERATOR, chr, 1, '=');
@@ -226,16 +258,21 @@ static inline void set_literal(void)
 	inLiteral = false;
 	tokens[tokenCount].type = TKN_LITERAL;
 	tokens[tokenCount].value = literal;
+	if (is_ds_number(tokens[tokenCount].value))
+		tokens[tokenCount].symbol = G_NUM;
+	else
+		tokens[tokenCount].symbol = G_ID;
 	if (is_keyword()) tokens[tokenCount].type = TKN_KEYWORD;
 	else if (is_string()) tokens[tokenCount].type = TKN_STRING;
 	tokenCount++;
 	literal = make_ddString("");
 }
-static inline void set_token(int type, ddString value)
+static inline void set_token(int type, ddString value, int symbol)
 {
 	if (inLiteral) set_literal();
 	tokens[tokenCount].type = type;
 	tokens[tokenCount].value = value;
+	tokens[tokenCount].symbol = symbol;
 	tokenCount++;
 }
 static inline void goto_next_line(void)
@@ -278,13 +315,13 @@ static void try_tkns(int type, char leftOpc, int len, ...)
 		{
 			ddString value = make_ddString_length(&leftOpc, 2);
 			value.cstr[value.length-1] = rightOpc;
-			set_token(type, value);
+			set_token(type, value, rightOpc);
 			va_end(ap);
 			fileCount++;
 			return;
 		}
 	}
-	set_token(type, make_ddString_length(&leftOpc, 1));
+	set_token(type, make_ddString_length(&leftOpc, 1), leftOpc);
 	sift_token(chr);
 }
 static ddString tokenize_until_semicolon(void)
@@ -295,6 +332,14 @@ static ddString tokenize_until_semicolon(void)
 		ddString_push_char_back(&output, file.cstr[i]);
 	}
 	return output;
+}
+static bool is_ds_number(ddString str)
+{
+	for (int i = 0; i < str.length; i++)
+	{
+		if (!(str.cstr[i] >=48 && str.cstr[i] <= 57)) return false;
+	}
+	return true;
 }
 
 #endif

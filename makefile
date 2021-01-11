@@ -47,7 +47,12 @@ check: all
 	@echo "PASSED global.ds"
 	@echo "PASSED ALL TESTS WOW :)"
 tc: all
-	./ddScript ./test/test3.ds ./test/out
+	./ddScript ./de.ds -o ./test/out --no-clean-up
+	#nasm -f elf64 ./test/out.s -o ./test/out.o
+	#ld ./test/out.o -o ./test/out
+	./test/out
+td: all
+	./ddScript ./de.ds -o ./test/out --no-clean-up -debug
 	#nasm -f elf64 ./test/out.s -o ./test/out.o
 	#ld ./test/out.o -o ./test/out
 	./test/out

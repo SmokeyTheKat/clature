@@ -67,6 +67,7 @@ static inline void compare_not_equal_flag(void);
 static inline void compare_sides(void);
 static inline void pop_input(ddString reg);
 static inline void pop_both_sides(void);
+static inline void generate_split(struct tokenNode* node, int v);
 static inline void generate_split_left(struct tokenNode* node);
 static inline void generate_split_right(struct tokenNode* node);
 static inline void generate_bisplit(struct tokenNode* node);
@@ -101,6 +102,7 @@ static void generate_dereference(struct tokenNode* node);
 static void generate_array_def(struct tokenNode* node);
 static void generate_reference(struct tokenNode* node);
 static void generate_set_dereference(struct tokenNode* node);
+static void generate_multiply(struct tokenNode* node);
 static void define_variable(struct tokenNode* node);
 static void generate_malloc(struct tokenNode* node);
 static void generate_extern(struct tokenNode* node);
@@ -264,8 +266,65 @@ void generate_trees_asm(void)
 		generate_asm_step(cnode);
 	}
 }
+struct tokenNode* node_zip(struct tokenNode* node)
+{
+	while (node->nodes[0]->nodeCount == 1) node = node->nodes[0];
+	return node;
+}
 void generate_asm_step(struct tokenNode* node)
 {
+	node = node_zip(node);
+	ddPrintf("%d: #1: %s    #2: %s    #3: %s\n", node->value->symbol, node->nodes[0]->value->value.cstr, node->nodes[1]->value->value.cstr, node->nodes[2]->value->value.cstr);
+	// lr operation   3*2
+	if (node->nodeCount > 1)
+	{
+		switch (node->nodes[1]->value->value.cstr[0])
+		{
+			case '*':
+/*
+				if (node->value->value.cstr[1] == '=')
+					generate_times_equals(node);
+				else
+*/
+					generate_multiply(node);
+				break;
+			case '=':
+/*
+				if (node->value->value.cstr[1] == '=')
+					generate_equality(node);
+				else if (is_dereference_assignment(node))
+					generate_set_dereference(node);
+				else if (is_equals_new_assignemnt(node))
+*/
+					generate_equels_make_set_asm(node);
+/*
+				else
+					generate_equels_set_asm(node);
+*/
+				break;
+		}
+	}
+	if (node->value->type == TKN_LITERAL)
+	{
+		if (is_global(node))
+		{
+			struct dtVariable var = datat_get_data(node->value->value);
+			push_ref(var.name, var.size);
+		}
+		else
+		{
+			struct stVariable var = stackt_get_var(node->value->value);
+			if (var.size != -6969)
+			{
+				push_stack_var(var);
+			}
+			else
+			{
+				generate_write_btc(BTC_PUSH, node->value->value, REG_NONE);
+			}
+		}
+	}
+/*
 	if (node->value->type == TKN_SYNTAX || node->value->type == TKN_OPERATOR)
 	{
 		switch (node->value->value.cstr[0])
@@ -428,6 +487,7 @@ void generate_asm_step(struct tokenNode* node)
 		node->value->value.cstr[0] = '	';
 		generate_write_btc(BTC_ILA, node->value->value, REG_NONE);
 	}
+*/
 }
 
 static void generate_2reg_operation(int opc, struct tokenNode* node)
@@ -443,6 +503,17 @@ static void generate_1reg_operation(int opc, struct tokenNode* node)
 	pop_input(REG_R8);
 	pop_input(REG_RAX);
 	generate_write_btc(opc, REG_R8, REG_NONE);
+	push_result(REG_RAX);
+}
+static void generate_multiply(struct tokenNode* node)
+{
+	//ddPrintf("%s  %s  %s\n", node->nodes[0]->nodes[0]->value->value.cstr, node->nodes[1]->value->value.cstr,
+	//				node->nodes[2]->nodes[0]->nodes[0]->value->value.cstr);
+	//generate_split(node, 0);
+	//generate_split(node, 2);
+	pop_input(REG_R8);
+	pop_input(REG_RAX);
+	generate_write_btc(BTC_MUL, REG_R8, REG_NONE);
 	push_result(REG_RAX);
 }
 static void generate_global(struct tokenNode* node)
@@ -649,8 +720,9 @@ static void generate_equels_set_asm(struct tokenNode* node)//i = 2*3;
 static void generate_equels_make_set_asm(struct tokenNode* node)//@8 i = 9-3;
 {
 	statementIsEquality = true;
-	struct stVariable var = stackt_set_var(node->nodes[0]->nodes[1]->nodes[1]->value->value, ddString_to_int(node->nodes[0]->nodes[1]->value->value));
-	generate_split_right(node);
+	ddPrintf("name: %s    size: %s\n", node->nodes[2]->value->value.cstr, node->nodes[3]->value->value.cstr);
+	struct stVariable var = stackt_set_var(node->nodes[2]->value->value, ddString_to_int(node->nodes[3]->value->value));
+	//generate_split(node, 0);
 	pop_stack_var(var);
 }
 static inline void generate_equality(struct tokenNode* node)//2 == 3-1
@@ -793,6 +865,10 @@ static inline void generate_bisplit(struct tokenNode* node)
 static inline void generate_split_right(struct tokenNode* node)
 {
 	generate_asm_step(node->nodes[1]);
+}
+static inline void generate_split(struct tokenNode* node, int v)
+{
+	generate_asm_step(node->nodes[v]);
 }
 static inline void generate_split_left(struct tokenNode* node)
 {

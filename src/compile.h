@@ -27,10 +27,10 @@ void print_tokentree(struct tokenNode* node)
 
 void compile_main(int agsc, char** ags)
 {
-	if (args_if_def(make_constant_ddString("-debug"))) debug = true;
 	compile_reset_color();
 	ddTimer_start();
 	debug = false;
+	if (args_if_def(make_constant_ddString("-debug"))) debug = true;
 	ddString file;
 	if (args_if_def(make_constant_ddString("__INPUT_FILE")))
 		file = read_file(args_get_value(make_constant_ddString("__INPUT_FILE")).cstr);
