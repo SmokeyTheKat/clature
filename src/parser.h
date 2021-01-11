@@ -149,7 +149,7 @@ void tree_zip(struct tokenNode* node)
 {
 	for (int i = 0; i < node->nodeCount; i++)
 	{
-		if (node->nodes[i]->nodeCount == 1)
+		while (node->nodes[i]->nodeCount == 1)
 		{
 			node->nodes[i] = node->nodes[i]->nodes[0];
 		}

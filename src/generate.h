@@ -189,7 +189,7 @@ struct stVariable
 };
 struct stackTracker
 {
-	sizet size;
+	int size;
 	sizet top;
 	struct stVariable vars[500]; };
 struct function
@@ -273,11 +273,12 @@ struct tokenNode* node_zip(struct tokenNode* node)
 }
 void generate_asm_step(struct tokenNode* node)
 {
-	node = node_zip(node);
-	ddPrintf("%d: #1: %s    #2: %s    #3: %s\n", node->value->symbol, node->nodes[0]->value->value.cstr, node->nodes[1]->value->value.cstr, node->nodes[2]->value->value.cstr);
+	ddPrintf("root: %s\n", node->value->value.cstr);
+	//ddPrintf("#1: %s    #2: %s    #3: %s\n", node->nodes[0]->value->value.cstr, node->nodes[1]->value->value.cstr, node->nodes[2]->value->value.cstr);
 	// lr operation   3*2
 	if (node->nodeCount > 1)
 	{
+		ddPrintf("switch: %c\n", node->nodes[1]->value->value.cstr[0]);
 		switch (node->nodes[1]->value->value.cstr[0])
 		{
 			case '*':
@@ -306,6 +307,7 @@ void generate_asm_step(struct tokenNode* node)
 	}
 	if (node->value->type == TKN_LITERAL)
 	{
+/*
 		if (is_global(node))
 		{
 			struct dtVariable var = datat_get_data(node->value->value);
@@ -313,6 +315,7 @@ void generate_asm_step(struct tokenNode* node)
 		}
 		else
 		{
+*/
 			struct stVariable var = stackt_get_var(node->value->value);
 			if (var.size != -6969)
 			{
@@ -322,7 +325,9 @@ void generate_asm_step(struct tokenNode* node)
 			{
 				generate_write_btc(BTC_PUSH, node->value->value, REG_NONE);
 			}
+/*
 		}
+*/
 	}
 /*
 	if (node->value->type == TKN_SYNTAX || node->value->type == TKN_OPERATOR)
@@ -507,10 +512,10 @@ static void generate_1reg_operation(int opc, struct tokenNode* node)
 }
 static void generate_multiply(struct tokenNode* node)
 {
-	//ddPrintf("%s  %s  %s\n", node->nodes[0]->nodes[0]->value->value.cstr, node->nodes[1]->value->value.cstr,
-	//				node->nodes[2]->nodes[0]->nodes[0]->value->value.cstr);
-	//generate_split(node, 0);
-	//generate_split(node, 2);
+	ddPrintf("multiply: %s  %s  %s\n", node->nodes[0]->value->value.cstr, node->nodes[1]->value->value.cstr,
+					node->nodes[2]->value->value.cstr);
+	generate_split(node, 0);
+	generate_split(node, 2);
 	pop_input(REG_R8);
 	pop_input(REG_RAX);
 	generate_write_btc(BTC_MUL, REG_R8, REG_NONE);
@@ -720,9 +725,9 @@ static void generate_equels_set_asm(struct tokenNode* node)//i = 2*3;
 static void generate_equels_make_set_asm(struct tokenNode* node)//@8 i = 9-3;
 {
 	statementIsEquality = true;
-	ddPrintf("name: %s    size: %s\n", node->nodes[2]->value->value.cstr, node->nodes[3]->value->value.cstr);
+	ddPrintf("make_set: name: %s    size: %s\n", node->nodes[2]->value->value.cstr, node->nodes[3]->value->value.cstr);
 	struct stVariable var = stackt_set_var(node->nodes[2]->value->value, ddString_to_int(node->nodes[3]->value->value));
-	//generate_split(node, 0);
+	generate_split(node, 0);
 	pop_stack_var(var);
 }
 static inline void generate_equality(struct tokenNode* node)//2 == 3-1
@@ -1068,10 +1073,8 @@ static void push_stack_var(struct stVariable var)
 }
 struct stVariable stackt_get_var(ddString name)
 {
-	name.cstr[name.length] = '\0';
 	for (sizet i = 0; i < stackt.top; i++)
 	{
-		stackt.vars[i].name.cstr[stackt.vars[i].name.length] = '\0';
 		if (ddString_compare(name, stackt.vars[i].name))
 		{
 			return stackt.vars[i];
