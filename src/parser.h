@@ -93,6 +93,7 @@ struct tokenNode* stack_pop(struct stack* st)
 }
 int stack_values(struct stack st, int n)
 {
+	if (st.top+1 < n) return 0;
 	int output = 1;
 	for (int i = 0; i < n; i++)
 		output *= st.data[st.top-i]->value->symbol;
