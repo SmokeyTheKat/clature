@@ -18,7 +18,7 @@ void read_args(int argc, char** argv)
 	for (int i = 1; i < argc; i++)
 	{
 		ddString dsarg = make_ddString(argv[i]);
-		if (ddString_compare_cstring(dsarg, "--help"))
+		if (ddString_compare_cstring(dsarg, "--help") || ddString_compare_cstring(dsarg, "-help"))
 		{
 			ddPrint_cstring_nl("clature");
 			ddPrint_cstring_nl("usage: ccl [OPTIONS...] file");
