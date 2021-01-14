@@ -1,4 +1,4 @@
-# ddScript
+# clature
 clature is a small language with x86_64 nasm assembly code generation. The language has no types and only uses sizes.
 
 ## Build
