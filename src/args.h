@@ -18,7 +18,27 @@ void read_args(int argc, char** argv)
 	for (int i = 1; i < argc; i++)
 	{
 		ddString dsarg = make_ddString(argv[i]);
-		if (ddString_compare_cstring(dsarg, "-o"))
+		if (ddString_compare_cstring(dsarg, "--help"))
+		{
+			ddPrint_cstring_nl("clature");
+			ddPrint_cstring_nl("usage: ccl [OPTIONS...] file");
+			ddPrint_cstring_nl("options:");
+			ddPrint_cstring_nl("	-o			output elf executable file");
+			ddPrint_cstring_nl("	-s			output asm file");
+			ddPrint_cstring_nl("	--no-clean-up		lets the .s and .o files stick around");
+			ddPrint_cstring_nl("	--debug			debug logs");
+			ddPrint_cstring_nl("	--parse-tree		debug logs");
+			ddPrint_cstring_nl("	--no-stack		will not use push's and pop's and will try to use registers for variables");
+			ddPrint_cstring_nl("	--no-main		no main function");
+			ddPrint_cstring_nl("	-O0			btc generation goes directly to asm");
+			ddPrint_cstring_nl("	-O1	(DEFAULT)	stack optimizations");
+			ddPrint_cstring_nl("	-O2			optimzation level 2");
+			ddPrint_cstring_nl("	-O3			optimzation level 3");
+			ddPrint_cstring_nl("all paramaters are passed as macros to the compiler.");
+			ddPrint_cstring_nl("docs: https://ddmo.rf.gd/clature/");
+			exit(0);
+		}
+		else if (ddString_compare_cstring(dsarg, "-o"))
 		{
 			cargs[cargsCount].name = dsarg;
 			cargs[cargsCount++].value = make_ddString(argv[++i]);

@@ -34,7 +34,7 @@ void compile_main(int agsc, char** ags)
 	ddString file;
 	if (args_if_def(make_constant_ddString("__INPUT_FILE")))
 		file = read_file(args_get_value(make_constant_ddString("__INPUT_FILE")).cstr);
-	else compile_error("NO INPUT FILES\n");
+	else compile_error("NO INPUT FILES. USE \"ccl --help\" FOR MORE INFOMATION\n");
 		
 	ddString fileOut = make_ddString("");
 	if (!args_if_def(make_constant_ddString("--no-macros")))
