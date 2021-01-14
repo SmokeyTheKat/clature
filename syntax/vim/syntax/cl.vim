@@ -5,7 +5,7 @@ if !exists("main_syntax")
   if exists("b:current_syntax")
     finish
   endif
-  let main_syntax = 'ddScript'
+  let main_syntax = 'clature'
 endif
 
 runtime! ~/.vim/syntax/ds.vim
@@ -62,7 +62,7 @@ hi def link dsLangMacros		Define
 hi def link dsLangOperators		Operator
 hi def link dsLangInlineAsm		Special
 
-let b:current_syntax = "ddScript"
-if main_syntax == 'ddScript'
+let b:current_syntax = "clature"
+if main_syntax == 'clature'
 	unlet main_syntax
 endif
