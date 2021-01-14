@@ -103,6 +103,7 @@ static void generate_array_def(struct tokenNode* node);
 static void generate_reference(struct tokenNode* node);
 static void generate_set_dereference(struct tokenNode* node);
 static void generate_multiply(struct tokenNode* node);
+static void generate_divide(struct tokenNode* node);
 static void generate_plus(struct tokenNode* node);
 static void generate_minus(struct tokenNode* node);
 static void define_variable(struct tokenNode* node);
@@ -286,12 +287,16 @@ void generate_asm_step(struct tokenNode* node)
 			case '+':
 				if (node->nodes[1]->value->value.cstr[1] == '=')
 					generate_plus_equals(node);
+				else if (node->nodes[1]->value->value.cstr[1] == '+')
+					generate_plus_plus(node);
 				else
 					generate_plus(node);
 				break;
 			case '-':
 				if (node->nodes[1]->value->value.cstr[1] == '=')
 					generate_minus_equals(node);
+				else if (node->nodes[1]->value->value.cstr[1] == '-')
+					generate_minus_minus(node);
 				else
 					generate_minus(node);
 				break;
@@ -556,7 +561,7 @@ static void generate_multiply(struct tokenNode* node)
 	generate_split(node, 2);
 	pop_input(REG_R8);
 	pop_input(REG_RAX);
-	generate_write_btc(BTC_DIV, REG_R8, REG_NONE);
+	generate_write_btc(BTC_MUL, REG_R8, REG_NONE);
 	push_result(REG_RAX);
 }
 static void generate_divide(struct tokenNode* node)
@@ -567,7 +572,7 @@ static void generate_divide(struct tokenNode* node)
 	generate_split(node, 2);
 	pop_input(REG_R8);
 	pop_input(REG_RAX);
-	generate_write_btc(BTC_MUL, REG_R8, REG_NONE);
+	generate_write_btc(BTC_DIV, REG_R8, REG_NONE);
 	push_result(REG_RAX);
 }
 static void generate_global(struct tokenNode* node)
@@ -832,12 +837,6 @@ static inline void generate_minus_equals(struct tokenNode* node)
 	pop_input(REG_R9);
 	generate_write_btc(BTC_SUB, REG_R8, REG_R9);
 	push_result(REG_R9);
-	pop_stack_var(var);
-}
-static inline void generate_minus_equals(struct tokenNode* node)
-{
-	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
-	generate_2reg_operation(BTC_SUB, node);
 	pop_stack_var(var);
 }
 static inline void generate_plus_plus(struct tokenNode* node)
