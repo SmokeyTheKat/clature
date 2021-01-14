@@ -1,23 +1,23 @@
 # ddScript
-ddScript is a small language with x86_64 nasm assembly code generation. The language has no types and only uses sizes.
+clature is a small language with x86_64 nasm assembly code generation. The language has no types and only uses sizes.
 
 ## Build
 make targets
 | Target | Description |
 |-------:|-------------|
-| _(none)_ | complies to ./ddScript |
+| _(none)_ | complies to ./clature |
 | check | runs test scripts in ./test/ |
-| install | compiles to /usr/bin/cds and adds config files to /usr/share/cds/ |
-| uninstall | removes config files and file from /usr/bin |
+| install | compiles to /usr/bin/ccl and adds config files to /usr/share/ccl/ |
+| uninstall | removes config files and /usr/bin/ccl |
 
 ## Usage
 Compile to executable
 ```
-$ cds file.ds -o file
+$ ccl file.cl -o file
 ```
 Compile file to assembly
 ```
-$ cds file.ds -s file.s
+$ ccl file.cl -s file.s
 ```
 
 ## Syntax
