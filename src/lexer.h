@@ -28,6 +28,7 @@ enum
 	G_NUM,
 	G_AMOD,
 	G_ILASM,
+	G_EE,
 	G_MUL = '*',
 	G_DIV = '/',
 	G_PLUS = '+',

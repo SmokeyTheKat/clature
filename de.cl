@@ -1,2 +1,1 @@
-@8 value = 2 * 10;
-value = 2+value;
+@8 value = (2 + 3 * 4);
