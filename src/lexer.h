@@ -18,33 +18,35 @@
 
 enum
 {
-	G_SEMI = 0,
-	G_NULL = 0,
-	G_ASSIGN = 1,
-	G_SUM,
-	G_PRODUCT,
-	G_VALUE,
-	G_ID,
-	G_NUM,
-	G_AMOD,
-	G_ILASM,
-	G_EE,
-	G_MUL = '*',
-	G_DIV = '/',
-	G_PLUS = '+',
-	G_QUESTION = '?',
-	G_COLON = ':',
-	G_MINUS = '-',
-	G_EQUL = '=',
-	G_COMMA = ',',
-	G_DOT = '.',
-	G_OP = '(',
-	G_CP = ')',
-	G_OS = '[',
-	G_CS = ']',
-	G_AT = '@',
+        G_NULL = 0,
+        G_A = 1,
+        G_S,
+        G_P,
+        G_E,
+        G_Q,
+        G_V,
+        G_I,
+        G_N,
+        G_KN,
+        G_KF,
+        G_Z,
+        G_SO,
+        G_PO,
+        G_EO,
+        G_QO,
+        G_VO,
+        G_IO,
+        G_ILASM,
+        G_EQ = '=',
+        G_OBP = '(',
+        G_CBP = ')',
+        G_OBS = '[',
+        G_CBS = ']',
+        G_AT = '@',
+        G_QUESTION = '?',
+        G_COLON = ':',
+        G_SEMI = ';',
 };
-
 
 struct token;
 
@@ -182,16 +184,42 @@ static void sift_token(char chr)
 		case '?':
 			set_token(TKN_OPERATOR, make_ddString_length("?", 1), G_QUESTION);
 			break;
-		case '*': case '/': case '~': case '!': case '=': case '%':
+		case '*': case '/':
+		{
+			char cnx = read_char();
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length("=", 1), G_EQ);
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length(&chr, 1), G_PO);
+					break;
+			}
+			break;
+		}
+		case '~': case '!': case '=': case '%':
 			try_tkns(TKN_OPERATOR, chr, 1, '=');
 			break;
 		case '-':
 			//if (!is_number(read_next_char()))
 			//	handel_literal(chr);
 			//else
-				try_tkns(TKN_OPERATOR, chr, 2, '=', chr);
+		case '+':
+		{
+			char cnx = read_char();
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length("=", 1), G_EQ);
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length(&chr, 1), G_SO);
+					break;
+			}
 			break;
-		case '&': case '|': case '<': case '>': case '+':
+		}
+		case '&': case '|': case '<': case '>':
 			try_tkns(TKN_OPERATOR, chr, 2, '=', chr);
 			break;
 		case '\'':
@@ -260,9 +288,9 @@ static inline void set_literal(void)
 	tokens[tokenCount].type = TKN_LITERAL;
 	tokens[tokenCount].value = literal;
 	if (is_ds_number(tokens[tokenCount].value))
-		tokens[tokenCount].symbol = G_NUM;
+		tokens[tokenCount].symbol = G_N;
 	else
-		tokens[tokenCount].symbol = G_ID;
+		tokens[tokenCount].symbol = G_I;
 	if (is_keyword()) tokens[tokenCount].type = TKN_KEYWORD;
 	else if (is_string()) tokens[tokenCount].type = TKN_STRING;
 	tokenCount++;

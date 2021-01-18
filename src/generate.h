@@ -279,7 +279,12 @@ void generate_asm_step(struct tokenNode* node)
 	ddPrintf("root: %s\n", node->value->value.cstr);
 	//ddPrintf("#1: %s    #2: %s    #3: %s\n", node->nodes[0]->value->value.cstr, node->nodes[1]->value->value.cstr, node->nodes[2]->value->value.cstr);
 	// lr operation   3*2
-	if (node->nodeCount > 1)
+	if (node->nodeCount == 1 && node->nodes[0]->value->type == TKN_LITERAL)
+	{
+		//generate_write_btc(BTC_ILA, node->nodes[0]->value->value, REG_NONE);
+		ddPrint_ddString_nl(node->nodes[0]->value->value);
+	}
+	else if (node->nodeCount > 1)
 	{
 		ddPrintf("switch: %c\n", node->nodes[1]->value->value.cstr[0]);
 		switch (node->nodes[1]->value->value.cstr[0])
@@ -319,6 +324,7 @@ void generate_asm_step(struct tokenNode* node)
 				else if (is_dereference_assignment(node))
 					generate_set_dereference(node);
 */
+	ddPrintf("case =\n");
 				if (is_equals_new_assignemnt(node))
 					generate_equels_make_set_asm(node);
 				else
@@ -786,6 +792,7 @@ static void generate_equels_make_set_asm(struct tokenNode* node)//@8 i = 9-3;
 }
 static inline void generate_equality(struct tokenNode* node)//2 == 3-1
 {
+	ddPrintf("make not set\n");
 	generate_bisplit(node);
 	pop_both_sides();
 	compare_sides();

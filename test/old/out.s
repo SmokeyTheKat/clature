@@ -13,6 +13,12 @@ main:
 	SUB	RSP, 8;
 	MOV	QWORD[argv], RSI;
 	MOV	DWORD[argc], EDI;
+	PUSH	4;
+	PUSH	3;
+	POP	R8;
+	POP	R9;
+	ADD	R8, R9;
+	PUSH	R8;
 	POP	QWORD[RBP-8];
 	MOV	EAX, 0;
 	POP	RBP;
