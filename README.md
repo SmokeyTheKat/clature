@@ -90,7 +90,7 @@ Calling a function with no return value need an iso keyword for now.
 iso printString(str, 5);
 ```
 
-Inline assembly can be used anywhere and will not get messed around with. An assembly line is started with a '.'. Variables can be used in the assebmly.
+Inline assembly can be used anywhere and will not get messed around with. An assembly line is started with a '.'. Variables can be used in the assembly.
 ```
 sub @8 printString(@8 string, @8 length)
 {
