@@ -28,7 +28,6 @@ void print_tokentree(struct tokenNode* node)
 void compile_main(int agsc, char** ags)
 {
 	compile_reset_color();
-	ddTimer_start();
 	debug = false;
 	if (args_if_def(make_constant_ddString("-debug"))) debug = true;
 	ddString file;
@@ -41,7 +40,9 @@ void compile_main(int agsc, char** ags)
 		read_macros(&file);
 
 	sizet tokenCount = 0;
+	ddTimer_start();
 	struct token* tokens = tokenize_file(file, &tokenCount);
+	compile_message(make_format_ddString("LEXER: %f", ddTimer_stop()).cstr);
 	if (debug)
 	{
 		ddPrintf("TokenCount: %d\n", tokenCount);
@@ -50,12 +51,19 @@ void compile_main(int agsc, char** ags)
 	}
 
 	sizet treeCount = 0;
+	ddTimer_start();
 	struct tokenNode** parseTrees = parser_main(tokens, tokenCount, &treeCount);
+	compile_message(make_format_ddString("PARSER: %f", ddTimer_stop()).cstr);
 
+	ddTimer_start();
 	struct bitcode* bitcodeHead = generate_bitcode(parseTrees, treeCount);
+	compile_message(make_format_ddString("BTC GEN: %f", ddTimer_stop()).cstr);
 
+	ddTimer_start();
 	write_bitcode(bitcodeHead, &fileOut);
+	compile_message(make_format_ddString("WRITE BTC: %f", ddTimer_stop()).cstr);
 
+	ddTimer_start();
 	if (args_if_def(make_constant_ddString("-o")))
 	{
 		if (!debug)
@@ -63,6 +71,7 @@ void compile_main(int agsc, char** ags)
 		else
 			ddPrint_ddString(fileOut);
 	}
+	compile_message(make_format_ddString("OUTPUT ASM: %f", ddTimer_stop()).cstr);
 
 	if (debug) ddPrint_nl();
 

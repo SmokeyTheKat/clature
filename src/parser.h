@@ -18,53 +18,58 @@ struct syntax
 {
 	int result;
 	int csum;
+	int cnsum;
 	int pcsum;
+	int bpcsum;
 	int contains[6];
 	int len;
 };
 
 
-sizet syntaxCount = 27;
+sizet syntaxCount = 29;
 
-struct syntax syntax[27] = {
-/*A<@NI=S      */{ G_A,         G_AT*G_N*G_I*G_EQ*G_S,                  G_I*G_EQ,       { G_I,          G_S,            G_NULL, G_NULL, G_NULL, G_NULL          }, 5},
-/*A<I=S        */{ G_A,         G_I*G_EQ*G_S,                           G_I*G_EQ,       { G_I,          G_S,            G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*A<S=S        */{ G_A,         G_S*G_EQ*G_S,                           G_S*G_EQ,       { G_S,          G_S,            G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*Z<@N         */{ G_Z,         G_AT*G_N,                               G_AT*G_N,       { G_AT,         G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 2},
-/*S<S+S        */{ G_S,         G_S*G_SO*G_S,                           G_S*G_SO,       { G_S,          G_S,            G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*S<S+P        */{ G_S,         G_S*G_SO*G_P,                           G_S*G_SO,       { G_S,          G_P,            G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*S<S*S        */{ G_S,         G_S*G_PO*G_S,                           G_S*G_PO,       { G_S,          G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*S<S^S        */{ G_S,         G_S*G_EO*G_S,                           G_S*G_EO,       { G_S,          G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*Q<S==S       */{ G_Q,         G_S*G_QO*G_S,                           G_S*G_QO,       { G_S,          G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*Q<S==P       */{ G_Q,         G_S*G_QO*G_P,                           G_S*G_QO,       { G_P,          G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*S<P*S        */{ G_S,         G_P*G_PO*G_S,                           G_S*G_PO,       { G_S,          G_P,            G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*S<E*S        */{ G_S,         G_E*G_PO*G_S,                           G_S*G_EO,       { G_S,          G_E,            G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*S<Q*S        */{ G_S,         G_Q*G_PO*G_S,                           G_S*G_QO,       { G_S,          G_Q,            G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*P<P*P        */{ G_P,         G_P*G_PO*G_P,                           G_P*G_PO,       { G_P,          G_P,            G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*S<(S)        */{ G_S,         G_OBP*G_S*G_CBP,                        G_OBP*G_S,      { G_OBP,        G_S,            G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*S<(S)        */{ G_S,         G_OBP*G_S*G_CBP,                        G_CBP*G_S,      { G_OBP,        G_S,            G_NULL, G_NULL, G_NULL, G_NULL          }, 3},
-/*S<Z[S:S]     */{ G_S,         G_Z*G_OBS*G_S*G_COLON*G_S*G_CBS,        G_Z*G_OBS,      { G_Z,          G_S,            G_NULL, G_NULL, G_NULL, G_NULL          }, 6},
-/*S<Z[S:S]     */{ G_S,         G_Z*G_OBS*G_S*G_COLON*G_S*G_CBS,        G_S*G_COLON,    { G_Z,          G_S,            G_NULL, G_NULL, G_NULL, G_NULL          }, 6},
-/*S<Z[S:S]     */{ G_S,         G_Z*G_OBS*G_S*G_COLON*G_S*G_CBS,        G_S*G_CBS,      { G_Z,          G_S,            G_NULL, G_NULL, G_NULL, G_NULL          }, 6},
-/*A<IF S / KF S*/{ G_A,         G_KF*G_S,                               G_KF*G_S,       { G_KF,         G_S,            G_NULL, G_NULL, G_NULL, G_NULL          }, 2},
-/*S<P          */{ G_S,         G_P,                                    G_P,            { G_P,          G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 1},
-/*P<E          */{ G_P,         G_E,                                    G_E,            { G_E,          G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 1},
-/*E<Q          */{ G_E,         G_Q,                                    G_Q,            { G_Q,          G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 1},
-/*Q<V          */{ G_Q,         G_V,                                    G_V,            { G_V,          G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 1},
-/*V<I          */{ G_V,         G_I,                                    G_I,            { G_I,          G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 1},
-/*V<N          */{ G_V,         G_N,                                    G_N,            { G_N,          G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 1},
-/*V<ILASM      */{ G_A,         G_ILASM,                                G_ILASM,        { G_ILASM,      G_NULL,         G_NULL, G_NULL, G_NULL, G_NULL          }, 1},
+struct syntax syntax[29] = {
+/*A<S=S        */{ G_A, G_S * '=' * G_S, 				G_NULL,			G_S * '=', 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 3},
+/*S<@S[S]      */{ G_S, '@' * G_S * '[' * G_S * ']',			G_NULL,	 		G_S * '[', 	'[' + G_S + ']',{ '@', G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 5},
+/*S<@S[S:S]    */{ G_S, '@' * G_S * '[' * G_S * ':' * G_S * ']',	G_NULL,	 		G_S * '[', 	'[' + G_S + ':',{ '@', G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 7},
+/*S<@S[S:S]    */{ G_S, '@' * G_S * '[' * G_S * ':' * G_S * ']',	G_NULL,	 		G_S * '[', 	':' + G_S + ']',{ '@', G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 7},
+/*S<@NI        */{ G_S, '@' * G_N * G_I, 				G_NULL,			G_NULL, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 3},
+/*S<?I         */{ G_S, '?' * G_I,					G_NULL,			G_NULL, 	G_NULL,		{ '?', G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 2},
+/*S<S+S        */{ G_S, G_S * G_SO * G_S, 				G_NULL,			G_S * G_SO, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 3},
+/*S<Q+S        */{ G_S, G_Q * G_SO * G_S, 				G_NULL,			G_S * G_SO, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 3},
+/*S<S*P        */{ G_S, G_S * G_PO * G_P, 				G_NULL,			G_S * G_PO, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 3},
+/*P<P*P        */{ G_P, G_P * G_PO * G_P, 				G_NULL,			G_P * G_PO, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 3},
+/*S<P          */{ G_S, G_P, 						G_NULL,			G_NULL, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 1},
+/*E<E^E        */{ G_E, G_E * G_EO * G_E, 				G_NULL,			G_E * G_EO, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 3},
+/*P<E          */{ G_P, G_E,						G_NULL,			G_NULL, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 1},
+/*S<@N<S>      */{ G_S, '@' * G_N * '<' * G_S * '>',			G_NULL,			G_N*G_OBT, 	'<' + G_S + '>',{ G_OBT, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 5},
+/*E<Q          */{ G_E, G_Q, 						G_NULL,			G_NULL, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 1},
+/*Q<Q==Q       */{ G_Q, G_Q * G_QO * G_Q, 				G_NULL,			G_Q * G_QO, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 3},
+/*Q<Q==S       */{ G_Q, G_Q * G_QO * G_S, 				G_NULL,			G_Q * G_QO, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 3},
+/*Q<V          */{ G_Q, G_V, 						G_NULL,			G_NULL, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 1},
+/*V<I          */{ G_V, G_I, 						G_NULL,			G_NULL, 	G_NULL,		{ G_I, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 1},
+/*V<N          */{ G_V, G_N, 						G_NULL,			G_NULL, 	G_NULL,		{ G_N, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 1},
+/*A<IF(S)      */{ G_A, G_KW_IF * '(' * G_S * ')',			G_NULL,	 		G_NULL, 	'(' + G_S+ ')',	{ G_KW_IF, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 4},
+/*A<SUB@NIFP   */{ G_A, G_KW_SUB * '@' * G_N * G_I * G_FP,		G_NULL,	 		G_NULL, 	'(' +G_FP+ ')',	{ G_KW_SUB, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 5},
+/*FP<(FP)      */{ G_FP, '(' * G_FP * ')', 				G_NULL,			G_NULL, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 3},
+/*FP<FPS',     */{ G_FP, G_NULL, 					G_FP * G_S * ',',	G_NULL, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 2},
+/*FP<S',       */{ G_FP, G_NULL, 					G_S * ',',		G_NULL, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 1},
+/*S<(S)        */{ G_S, '(' * G_S * ')', 				G_NULL,			G_NULL, 	'(' + G_S+ ')',	{ '(', G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 3},
+/*FP<S)        */{ G_FP, G_S * ')', 					G_NULL,			G_NULL, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 2},
+/*S<IFP        */{ G_S, G_I*G_FP, 					G_NULL,			G_NULL, 	G_NULL,		{ G_I, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 2},
+/*A<S NULL     */{ G_A, G_NULL, 					G_S * G_NULL,		G_NULL, 	G_NULL,		{ G_NULL, G_NULL, G_NULL, G_NULL, G_NULL, G_NULL }, 1},
 };
 
 
-bool is_pgrammer_match(int top, int up)
+bool is_pgrammer_match(int top, int up, int back)
 {
-	if (up == 0) return false;
+	if (up == G_NULL) return false;
 	//check for partial matches
 	for (int i = 0; i < syntaxCount; i++)
 	{
-		if (up == syntax[i].contains[0] || up == syntax[i].contains[1] || up == syntax[i].contains[2] ) return true;
-		if (up * top == syntax[i].pcsum) return true;
+		if (up == syntax[i].contains[0] || up == syntax[i].contains[1] || up == syntax[i].contains[2] ) { if(debug)ddPrintf("Fmatch on r%d\n", i); return true; };
+		if (up * top == syntax[i].pcsum) { if(debug)ddPrintf("Pmatch on r%d\n", i); return true; };
+		if (back + top + up == syntax[i].bpcsum) { if(debug)ddPrintf("BPmatch on r%d\n", i); return true; };
 	}
 	return false;
 }
@@ -107,6 +112,11 @@ int stack_values(struct stack st, int n)
 struct tokenNode* stack_value(struct stack st)
 {
 	return st.data[st.top];
+}
+struct tokenNode* stack_prev_value(struct stack st)
+{
+	if (st.top == -1) return st.data[-1];
+	return st.data[st.top-1];
 }
 void stack_print(struct stack st)
 {
@@ -172,6 +182,7 @@ void tree_zip(struct tokenNode* node)
 struct tokenNode* parse_line(struct token* tokens, sizet min, sizet max, sizet len)
 {
 	tokens += min;
+	if (tokens->type == TKN_ASSEMBLY || tokens->value.cstr[0] == '{' || tokens->value.cstr[0] == '}') return make_tokenNode(tokens);
 	struct tokenNode** in = make(struct tokenNode*, len);
 	*in = make_tokenNode(tokens++);
 	struct tokenNode** ine = in + (max-min);
@@ -181,17 +192,9 @@ struct tokenNode* parse_line(struct token* tokens, sizet min, sizet max, sizet l
 	{
 		struct tokenNode* up = (in != ine) ? *in : st.data[-1];
 		struct tokenNode* top = stack_value(st);
-if (debug){
-		printf("-------------------------------------------------------------------\n");
-		stack_print(st);
-		printf("	%d\n", up->value->symbol);
-		ddKey_getch_noesc();
-}
-		if (is_pgrammer_match(top->value->symbol, up->value->symbol)) //shift
+		struct tokenNode* back = stack_prev_value(st);
+		if (is_pgrammer_match(top->value->symbol, up->value->symbol, back->value->symbol)) //shift
 		{
-if (debug){
-			printf("^ %d\n", up->value->symbol);
-}
 			stack_push(&st, up);
 			in++;
 			*in = make_tokenNode(tokens++);
@@ -202,25 +205,30 @@ if (debug){
 			{
 				if (stack_values(st, syntax[i].len) == syntax[i].csum)
 				{
-if (debug){
-					printf("%d <- ", syntax[i].result);
-}
 					struct tokenNode** children = make(struct tokenNode*, syntax[i].len);
-if (debug){
-					for (int j = 0; j < syntax[i].len; j++) printf("%d ", st.data[st.top-j]->value->symbol);
-					printf("\n");
-}
 					for (int j = 0; j < syntax[i].len; j++) children[j] = st.data[st.top-j];
 					stack_pop_length(&st, syntax[i].len);
 					stack_push(&st, make_tokenNode_children(children, syntax[i].len, syntax[i].result));
 					break;
 				}
+				else if (stack_values(st, syntax[i].len) * up->value->symbol == syntax[i].cnsum)
+				{
+					stack_push(&st, up);
+					in++;
+					*in = make_tokenNode(tokens++);
+
+					struct tokenNode** children = make(struct tokenNode*, syntax[i].len+1);
+					for (int j = 0; j < syntax[i].len+1; j++) children[j] = st.data[st.top-j];
+					stack_pop_length(&st, syntax[i].len+1);
+					stack_push(&st, make_tokenNode_children(children, syntax[i].len+1, syntax[i].result));
+					break;
+				}
 			}
 		}
 	}
-	printf("\n");
+	if (debug) printf("\n");
 	tree_zip(stack_value(st));
-	if (1) print_tree(stack_value(st), 2);
+	if (debug) print_tree(stack_value(st), 2);
 	return stack_value(st);
 }
 

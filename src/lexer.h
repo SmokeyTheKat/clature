@@ -18,9 +18,9 @@
 
 enum
 {
-        G_NULL = 0,
-        G_A = 1,
-        G_S,
+        G_NULL = -1,
+        G_A = 2,
+        G_S = 295,
         G_P,
         G_E,
         G_Q,
@@ -30,30 +30,51 @@ enum
         G_KN,
         G_KF,
         G_Z,
+        G_F,
+        G_FP,
+        G_CP,
         G_SO,
         G_PO,
         G_EO,
         G_QO,
         G_VO,
         G_IO,
+        G_PB,
+        G_PP,
+        G_MM,
         G_ILASM,
+	G_KW_IF,
+	G_KW_WHILE,
+	G_KW_FOR,
+	G_KW_SUB,
+	G_KW_FUN,
+	G_KW_RETURN,
+	G_KW_ISO,
+	G_KW_GLOBAL,
+	G_KW_CONTINUE,
+	G_KW_MALLOC,
+	G_KW_EXTERN,
+	G_KW_FORMAT,
         G_EQ = '=',
         G_OBP = '(',
         G_CBP = ')',
         G_OBS = '[',
         G_CBS = ']',
+        G_OBT = '<',
+        G_CBT = '>',
         G_AT = '@',
         G_QUESTION = '?',
         G_COLON = ':',
         G_SEMI = ';',
+        G_COMMA = ',',
 };
 
 struct token;
 
-static inline char read_char(void);
-static inline char read_next_char(void);
+static inline char next(void);
+static inline char peek(int rpos);
 static inline bool is_number(char chr);
-static bool is_keyword(void);
+static int get_keyword_symbol(void);
 static bool is_string(void);
 static inline void set_literal(void);
 static inline void set_token(int type, ddString value, int symbol);
@@ -71,6 +92,7 @@ void get_token(void);
 
 static ddString file;
 static ddString literal;
+static bool inBT = false;
 static bool inLiteral = false;
 static bool inString = false;
 static sizet fileCount = 0;
@@ -106,7 +128,7 @@ void init_lexer(void)
 	keywords[2] = make_constant_ddString("for");
 	keywords[3] = make_constant_ddString("sub");
 	keywords[4] = make_constant_ddString("fun");
-	keywords[5] = make_constant_ddString("struct");
+	keywords[5] = make_constant_ddString("format");
 	keywords[6] = make_constant_ddString("return");
 	keywords[7] = make_constant_ddString("iso");
 	keywords[8] = make_constant_ddString("global");
@@ -132,7 +154,7 @@ struct token* tokenize_file(ddString _file, sizet* _tokenCount)
 
 void get_token(void)
 {
-	char chr = read_char();
+	char chr = next();
 	sift_token(chr);
 }
 
@@ -184,54 +206,245 @@ static void sift_token(char chr)
 		case '?':
 			set_token(TKN_OPERATOR, make_ddString_length("?", 1), G_QUESTION);
 			break;
-		case '*': case '/':
+		case '*':
 		{
-			char cnx = read_char();
+			char cnx = next();
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length("=", 1), G_EQ);
+					set_token(TKN_OPERATOR, make_ddString_length("*=", 2), G_EQ);
+					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length(&chr, 1), G_PO);
+					set_token(TKN_OPERATOR, make_ddString_length("*", 1), G_PO);
 					break;
 			}
 			break;
 		}
-		case '~': case '!': case '=': case '%':
-			try_tkns(TKN_OPERATOR, chr, 1, '=');
+		case '/':
+		{
+			char cnx = next();
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length("/=", 1), G_EQ);
+					next();
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length("/", 1), G_PO);
+					break;
+			}
 			break;
+		}
+		case '=':
+		{
+			char cnx = next();
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length("==", 2), G_QO);
+					next();
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length(&chr, 1), G_EQ);
+					break;
+			}
+			break;
+		}
+		case '~':
+		{
+			char cnx = peek(0);
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length("~=", 2), G_EQ);
+					next();
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length("~", 1), G_EO);
+					break;
+			}
+			break;
+		}
+		case '!':
+		{
+			char cnx = peek(0);
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length("!=", 2), G_EQ);
+					next();
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length("+", 1), '!');
+					break;
+			}
+			break;
+		}
+		case '%':
+		{
+			char cnx = peek(0);
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length("%=", 2), G_EQ);
+					next();
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length("%", 1), G_EO);
+					break;
+			}
+			break;
+		}
 		case '-':
-			//if (!is_number(read_next_char()))
+		{
+			//if (!is_number( peek(0)))
 			//	handel_literal(chr);
 			//else
-		case '+':
-		{
-			char cnx = read_char();
+			char cnx = peek(0);
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length("=", 1), G_EQ);
+					set_token(TKN_OPERATOR, make_ddString_length("-=", 2), G_EQ);
+					next();
+					break;
+				case '-':
+					set_token(TKN_OPERATOR, make_ddString_length("--", 2), G_MM);
+					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length(&chr, 1), G_SO);
+					set_token(TKN_OPERATOR, make_ddString_length("-", 1), G_SO);
 					break;
 			}
 			break;
 		}
-		case '&': case '|': case '<': case '>':
-			try_tkns(TKN_OPERATOR, chr, 2, '=', chr);
+		case '+':
+		{
+			char cnx = peek(0);
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length("+=", 2), G_EQ);
+					next();
+					break;
+				case '+':
+					set_token(TKN_OPERATOR, make_ddString_length("++", 2), G_PP);
+					next();
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length("+", 1), G_SO);
+					break;
+			}
 			break;
+		}
+		case '&':
+		{
+			char cnx = peek(0);
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length("&=", 2), G_EQ);
+					next();
+					break;
+				case '&':
+					set_token(TKN_OPERATOR, make_ddString_length("&&", 2), G_QO);
+					next();
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length("&", 1), G_EO);
+					break;
+			}
+			break;
+		}
+		case '|':
+		{
+			char cnx = peek(0);
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length("|=", 2), G_EQ);
+					next();
+					break;
+				case '|':
+					set_token(TKN_OPERATOR, make_ddString_length("||", 2), G_QO);
+					next();
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length("|", 1), G_EO);
+					break;
+			}
+			break;
+		}
+		case '<':
+		{
+			if (tokens[tokenCount-1].value.cstr[0] == '@')
+			{
+				set_token(TKN_OPERATOR, make_ddString_length("<", 1), G_OBT);
+				inBT = true;
+				break;
+			}
+			char cnx = peek(0);
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length("<=", 2), G_EQ);
+					next();
+					break;
+				case '<':
+					if (peek(1) == '<')
+					{
+						set_token(TKN_OPERATOR, make_ddString_length("<<<", 3), G_EO);
+						next();
+					}
+					else set_token(TKN_OPERATOR, make_ddString_length("<<", 2), G_EO);
+					next();
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length("<", 1), G_QO);
+					break;
+			}
+			break;
+		}
+		case '>':
+		{
+			if (inBT)
+			{
+				set_token(TKN_OPERATOR, make_ddString_length(">", 1), G_CBT);
+				inBT = false;
+				break;
+			}
+			char cnx = peek(0);
+			switch (cnx)
+			{
+				case '=':
+					set_token(TKN_OPERATOR, make_ddString_length(">=", 2), G_EQ);
+					next();
+					break;
+				case '>':
+					if (peek(1) == '>')
+					{
+						set_token(TKN_OPERATOR, make_ddString_length(">>>", 3), G_EO);
+						next();
+					}
+					else set_token(TKN_OPERATOR, make_ddString_length(">>", 2), G_EO);
+					next();
+					break;
+				default:
+					set_token(TKN_OPERATOR, make_ddString_length(">", 1), G_QO);
+					break;
+			}
+			break;
+		}
 		case '\'':
 			handel_literal(chr);
-			chr = read_char();
+			chr = next();
 			handel_literal(chr);
 			if (chr == '\\')
 			{
-				chr = read_char();
+				chr = next();
 				handel_literal(chr);
 			}
-			chr = read_char();
+			chr = next();
 			if (chr != '\'') compile_error("UNCLOSED CHARACTER LITERAL\n");
 			handel_literal(chr);
 			break;
@@ -250,25 +463,74 @@ static void sift_token(char chr)
 	}
 }
 
-static inline char read_char(void)
+static inline char next(void)
 {
 	return (fileCount < file.length) ? file.cstr[fileCount++] : 0;
 	//return file.cstr[fileCount++];
 }
-static inline char read_next_char(void)
+static inline char peek(int rpos)
 {
-	return file.cstr[fileCount];
+	return file.cstr[fileCount+rpos];
 }
 static inline bool is_number(char chr)
 {
 	return (chr >= 48 && chr < 58);
 }
-static bool is_keyword(void)
+static int get_keyword_symbol(void)
 {
-	for (int i = 0; i < 13; i++)
-		if (ddString_compare(tokens[tokenCount].value, keywords[i]))
-			return true;
-	return false;
+	if (ddString_compare(tokens[tokenCount].value, keywords[0]))
+	{
+		return G_KW_IF;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[1]))
+	{
+		return G_KW_WHILE;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[2]))
+	{
+		return G_KW_FOR;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[3]))
+	{
+		return G_KW_SUB;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[4]))
+	{
+		return G_KW_FUN;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[5]))
+	{
+		return G_KW_FORMAT;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[6]))
+	{
+		return G_KW_RETURN;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[7]))
+	{
+		return G_KW_ISO;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[8]))
+	{
+		return G_KW_GLOBAL;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[9]))
+	{
+		return G_KW_CONTINUE;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[10]))
+	{
+		return G_KW_MALLOC;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[11]))
+	{
+		return G_KW_EXTERN;
+	}
+	if (ddString_compare(tokens[tokenCount].value, keywords[12]))
+	{
+		return G_KW_FORMAT;
+	}
+	return -1;
 }
 static bool is_string(void)
 {
@@ -291,7 +553,9 @@ static inline void set_literal(void)
 		tokens[tokenCount].symbol = G_N;
 	else
 		tokens[tokenCount].symbol = G_I;
-	if (is_keyword()) tokens[tokenCount].type = TKN_KEYWORD;
+	int kwsymbol;
+	if ((kwsymbol = get_keyword_symbol()) != -1) { tokens[tokenCount].type = TKN_KEYWORD; 
+						       tokens[tokenCount].symbol = kwsymbol; }
 	else if (is_string()) tokens[tokenCount].type = TKN_STRING;
 	tokenCount++;
 	literal = make_ddString("");
@@ -307,7 +571,7 @@ static inline void set_token(int type, ddString value, int symbol)
 static inline void goto_next_line(void)
 {
 	char chr;
-	while ((chr = read_char()) != '\n' && chr != 0);
+	while ((chr = next()) != '\n' && chr != 0);
 }
 sizet tokens_get_command_count(struct token* tokens, sizet tokenCount)
 {
@@ -334,7 +598,7 @@ static bool is_last_linebreak(void)
 }
 static void try_tkns(int type, char leftOpc, int len, ...)
 {
-	char chr = read_char();
+	char chr = next();
 	va_list ap;
 	va_start(ap, len);
 	for (int i = 0; i < len; i++)

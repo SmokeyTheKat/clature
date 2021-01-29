@@ -3,48 +3,12 @@ all:
 install: all
 	sudo cp ./clature /usr/bin/ccl
 check: all
-	@./clature test/variable.cl	-o test/out --silent
+	@./clature ./test/var.cl	-o test/out --silent
 	@./test/out
-	@echo "PASSED variable.cl"
-	@./clature test/operators.cl	-o test/out --silent
+	@echo "PASSED var.cl"
+	@./clature ./test/asm.cl	-o test/out --silent
 	@./test/out
-	@echo "PASSED operators.cl"
-	@./clature test/if.cl		-o test/out --silent
-	@./test/out
-	@echo "PASSED if.cl"
-	@./clature test/while.cl	-o test/out --silent
-	@./test/out
-	@echo "PASSED while.cl"
-	@./clature test/function.cl	-o test/out --silent
-	@./test/out
-	@echo "PASSED function.cl"
-	@./clature test/string.cl	-o test/out --silent
-	@./test/out
-	@echo "PASSED string.cl"
-	@./clature test/deref.cl	-o test/out --silent
-	@./test/out
-	@echo "PASSED deref.cl"
-	@./clature test/ref.cl		-o test/out --silent
-	@./test/out
-	@echo "PASSED ref.cl"
-	@./clature test/macros.cl	-o test/out --silent
-	@./test/out
-	@echo "PASSED macros.cl"
-	@./clature test/arr.cl		-o test/out --silent
-	@./test/out
-	@echo "PASSED arr.cl"
-	@./clature test/malloc.cl	-o test/out --silent
-	@./test/out
-	@echo "PASSED malloc.cl"
-	@./clature test/scopes.cl	-o test/out --silent
-	@./test/out
-	@echo "PASSED scopes.cl"
-	@./clature test/include.cl	-o test/out --silent
-	@./test/out
-	@echo "PASSED include.cl"
-	@./clature test/global.cl	-o test/out --silent
-	@./test/out
-	@echo "PASSED global.cl"
+	@echo "PASSED asm.cl"
 	@echo "PASSED ALL TESTS WOW :)"
 tc: all
 	./clature ./de.cl -o ./test/out --no-clean-up
