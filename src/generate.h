@@ -277,7 +277,12 @@ struct tokenNode* node_zip(struct tokenNode* node)
 void generate_asm_step(struct tokenNode* node)
 {
 	// lr operation   3*2
-	if (node->nodeCount == 1 && node->nodes[0]->value->type == TKN_LITERAL)
+	if (node->nodeCount == 1 && node->nodes[0]->value->type == TKN_ASSEMBLY)
+	{
+		node->nodes[0]->value->value.cstr[0] = '	';
+		generate_write_btc(BTC_ILA, node->nodes[0]->value->value, REG_NONE);
+	}
+	else if (node->nodeCount == 1 && node->nodes[0]->value->type == TKN_LITERAL)
 	{
 		//generate_write_btc(BTC_ILA, node->nodes[0]->value->value, REG_NONE);
 		ddPrint_ddString_nl(node->nodes[0]->value->value);
@@ -384,11 +389,6 @@ void generate_asm_step(struct tokenNode* node)
 /*
 		}
 */
-	}
-	else if (node->value->type == TKN_ASSEMBLY)
-	{
-		node->value->value.cstr[0] = '	';
-		generate_write_btc(BTC_ILA, node->value->value, REG_NONE);
 	}
 /*
 	if (node->value->type == TKN_SYNTAX || node->value->type == TKN_OPERATOR)

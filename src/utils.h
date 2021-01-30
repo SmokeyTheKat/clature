@@ -6,22 +6,78 @@
 #include <ddcPrint.h>
 #include "./args.h"
 
-#define CNT_NUMBER        0x01
-#define CNT_STRING        0x02
-#define CNT_FUNCTION      0x03
-#define CNT_DEREF         0x04
-#define CNT_ADD           0x05
-#define CNT_SUB           0x06
-#define CNT_MUL           0x07
-#define CNT_DIV           0x08
+#define TKN_LITERAL 0x00
+#define TKN_KEYWORD 0x01
+#define TKN_OPERATOR 0x02
+#define TKN_SYNTAX 0x03
+#define TKN_ASSEMBLY 0x04
+#define TKN_FUNCTION 0x05
+#define TKN_LINEBREAK 0x06
+#define TKN_STRING 0x07
+#define TKN_NONTERMINAL 0x08
 
+void compile_reset_color(void);
 void compile_message(const char* message);
 void compile_warning(const char* warning);
 void compile_error(const char* error);
-sizet parse_get_line_count(ddString file);
-ddString left_split(ddString str, int ptr);
-ddString right_split(ddString str, int ptr);
-struct compileNode* make_compileNode(struct compileNode* parent, int type);
+
+struct token
+{
+	int type;
+	ddString value;
+	int symbol;
+};
+
+struct tokenNode
+{
+	struct tokenNode** nodes;
+	sizet nodeCount;
+	struct token* value;
+};
+struct action
+{
+	int(*action)(int);
+	int value;
+};
+struct syntax
+{
+	int result;
+	int length;
+};
+
+
+enum
+{
+        G_PP,
+        G_PO,
+        G_QO,
+        G_EO,
+        G_MM,
+	G_KW_IF,
+	G_KW_WHILE,
+	G_KW_FOR,
+	G_KW_SUB,
+	G_KW_FUN,
+	G_KW_RETURN,
+	G_KW_ISO,
+	G_KW_GLOBAL,
+	G_KW_CONTINUE,
+	G_KW_MALLOC,
+	G_KW_EXTERN,
+	G_KW_FORMAT,
+        G_COMMA = ',',
+};
+
+const char* const TKN_STRS[] = {
+	"LITERAL",
+	"KEYWORD",
+	"OPERATOR",
+	"SYNTAX",
+	"ASSEMBLY",
+	"FUNCTION",
+	"LINEBREAK",
+	"STRING"
+};
 
 void compile_reset_color(void)
 {
@@ -35,8 +91,11 @@ void compile_message(const char* message)
 }
 void compile_warning(const char* warning)
 {
-	ddPrint_cstring("[\x1b[38;2;255;255;0mWARNING\x1b[38;2;255;255;255m] ");
-	ddPrint_cstring_nl(warning);
+	if (!args_if_def(make_constant_ddString("--silent")))
+	{
+		ddPrint_cstring("[\x1b[38;2;255;255;0mWARNING\x1b[38;2;255;255;255m] ");
+		ddPrint_cstring_nl(warning);
+	}
 }
 void compile_error(const char* error)
 {

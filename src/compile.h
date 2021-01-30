@@ -16,15 +16,6 @@ struct bitcode* functionCode;
 extern bool debug;
 extern struct stackTracker stackt;
 
-void print_tokentree(struct tokenNode* node)
-{
-	if (node == nullptr) return;
-	if (node->value == nullptr) return;
-	ddPrintf("TREE VALUE: %s\n", node->value->value.cstr);
-	if (node->nodes[1] != nullptr) print_tokentree(node->nodes[1]);
-	if (node->nodes[0] != nullptr) print_tokentree(node->nodes[0]);
-}
-
 void compile_main(int agsc, char** ags)
 {
 	compile_reset_color();
@@ -41,7 +32,7 @@ void compile_main(int agsc, char** ags)
 
 	sizet tokenCount = 0;
 	ddTimer_start();
-	struct token* tokens = tokenize_file(file, &tokenCount);
+	struct token* tokens = lexer_main(file, &tokenCount);
 	compile_message(make_format_ddString("LEXER: %f", ddTimer_stop()).cstr);
 	if (debug)
 	{
