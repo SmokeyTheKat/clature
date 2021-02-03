@@ -340,27 +340,32 @@ void generate_asm_step(struct tokenNode* node)
 				break;
 ///////////////////////////////////////////////////
 			case '<':
-				if (node->value->value.cstr[1] == '=')
+				if (node->nodes[1]->value->value.cstr[1] == '=')
 					generate_lessthan_equals(node);
-				else if (node->value->value.cstr[1] == '<')
+				else if (node->nodes[1]->value->value.cstr[1] == '<')
 					;//generate_lessthan_lessthan(node);
 				else
 					generate_lessthan(node);
 				break;
 			case '>':
-				if (node->value->value.cstr[1] == '=')
+				if (node->nodes[1]->value->value.cstr[1] == '=')
 					generate_greaterthan_equals(node);
-				else if (node->value->value.cstr[1] == '<')
+				else if (node->nodes[1]->value->value.cstr[1] == '<')
 					;//generate_greaterthan_lessthan(node);
 				else
 					generate_greaterthan(node);
 				break;
+			case '!':
+				ddPrintf("^*&^*(^*(^*&(^*(&^(\n");
+				if (node->nodes[1]->value->value.cstr[1] == '=')
+					generate_inequality(node);
+				break;
 			case '&':
-				if (node->value->value.cstr[1] == '&')
+				if (node->nodes[1]->value->value.cstr[1] == '&')
 					generate_logic_and(node);
 				break;
 			case '|':
-				if (node->value->value.cstr[1] == '|')
+				if (node->nodes[1]->value->value.cstr[1] == '|')
 					generate_logic_or(node);
 				break;
 ///////////////////////////////////////////////////
@@ -935,8 +940,8 @@ static void generate_equels_make_set_asm(struct tokenNode* node)//@8 i = 9-3;
 }
 static inline void generate_equality(struct tokenNode* node)//2 == 3-1
 {
-	generate_split(node, 0);
 	generate_split(node, 2);
+	generate_split(node, 0);
 	pop_both_sides();
 	compare_sides();
 	compare_equal_flag();
@@ -944,7 +949,9 @@ static inline void generate_equality(struct tokenNode* node)//2 == 3-1
 }
 static inline void generate_inequality(struct tokenNode* node)//2 != 3
 {
-	generate_bisplit(node);
+	ddPrintf("!!!!!!!!!!!!!!!!!!!!!!1\n");
+	generate_split(node, 2);
+	generate_split(node, 0);
 	pop_both_sides();
 	compare_sides();
 	compare_not_equal_flag();
@@ -970,8 +977,8 @@ static inline void generate_divide_equals(struct tokenNode* node)
 static inline void generate_plus_equals(struct tokenNode* node)
 {
 	struct stVariable var = stackt_get_var(node->nodes[2]->value->value);
-	generate_split(node, 0);
 	generate_split(node, 2);
+	generate_split(node, 0);
 	pop_input(REG_R8);
 	pop_input(REG_R9);
 	generate_write_btc(BTC_ADD, REG_R8, REG_R9);
@@ -981,8 +988,8 @@ static inline void generate_plus_equals(struct tokenNode* node)
 static inline void generate_minus_equals(struct tokenNode* node)
 {
 	struct stVariable var = stackt_get_var(node->nodes[2]->value->value);
-	generate_split(node, 0);
 	generate_split(node, 2);
+	generate_split(node, 0);
 	pop_input(REG_R8);
 	pop_input(REG_R9);
 	generate_write_btc(BTC_SUB, REG_R8, REG_R9);
@@ -1009,8 +1016,8 @@ static inline void generate_minus_minus(struct tokenNode* node)
 }
 static inline void generate_lessthan_equals(struct tokenNode* node)
 {
-	generate_split(node, 0);
 	generate_split(node, 2);
+	generate_split(node, 0);
 	pop_both_sides();
 	compare_sides();
 	compare_lessthan_equal_flag();
@@ -1018,8 +1025,8 @@ static inline void generate_lessthan_equals(struct tokenNode* node)
 }
 static inline void generate_lessthan(struct tokenNode* node)
 {
-	generate_split(node, 0);
 	generate_split(node, 2);
+	generate_split(node, 0);
 	pop_both_sides();
 	compare_sides();
 	compare_lessthan_flag();
@@ -1027,8 +1034,8 @@ static inline void generate_lessthan(struct tokenNode* node)
 }
 static inline void generate_greaterthan_equals(struct tokenNode* node)
 {
-	generate_split(node, 0);
 	generate_split(node, 2);
+	generate_split(node, 0);
 	pop_both_sides();
 	compare_sides();
 	compare_greaterthan_equal_flag();
@@ -1036,8 +1043,8 @@ static inline void generate_greaterthan_equals(struct tokenNode* node)
 }
 static inline void generate_greaterthan(struct tokenNode* node)
 {
-	generate_split(node, 0);
 	generate_split(node, 2);
+	generate_split(node, 0);
 	pop_both_sides();
 	compare_sides();
 	compare_greaterthan_flag();
@@ -1045,11 +1052,13 @@ static inline void generate_greaterthan(struct tokenNode* node)
 }
 static inline void generate_mod_operator(struct tokenNode* node)
 {
-	generate_split(node, 0);
+	ddPrintf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
 	generate_split(node, 2);
+	generate_split(node, 0);
 	generate_write_btc(BTC_XOR, REG_RAX, REG_RAX);
 	generate_write_btc(BTC_XOR, REG_RDX, REG_RDX);
-	pop_both_sides();
+	generate_write_btc(BTC_POP, REG_R8, REG_NONE);
+	generate_write_btc(BTC_POP, REG_RAX, REG_NONE);
 	generate_write_btc(BTC_DIV, REG_R8, REG_NONE);
 	generate_write_btc(BTC_MOV, REG_R8, REG_RDX);
 	generate_write_btc(BTC_XOR, REG_RAX, REG_RAX);
@@ -1058,8 +1067,8 @@ static inline void generate_mod_operator(struct tokenNode* node)
 }
 static inline void generate_logic_and(struct tokenNode* node)
 {
-	generate_split(node, 0);
 	generate_split(node, 2);
+	generate_split(node, 0);
 	pop_both_sides();
 	generate_write_btc(BTC_CMP, REG_R8, make_constant_ddString("0"));
 	generate_write_btc(BTC_JE, make_format_ddString(".OP%d", optrCount), REG_NONE);
@@ -1073,8 +1082,8 @@ static inline void generate_logic_and(struct tokenNode* node)
 }
 static inline void generate_logic_or(struct tokenNode* node)
 {
-	generate_split(node, 0);
 	generate_split(node, 2);
+	generate_split(node, 0);
 	pop_both_sides();
 	generate_write_btc(BTC_CMP, REG_R8, make_constant_ddString("0"));
 	generate_write_btc(BTC_JNE, make_format_ddString(".OP%d", optrCount), REG_NONE);

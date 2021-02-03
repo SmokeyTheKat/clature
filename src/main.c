@@ -5,10 +5,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define MAX_OFILE_SIZE 100000000
-#define MAX_TOKEN_SIZE 100000000
-#define MAX_TREE_SIZE  1000000
+#define MAX_OFILE_SIZE 10000
+#define MAX_TOKEN_SIZE 100000
+#define MAX_TREE_SIZE  10000
 
+#include "./qalloc.h"
 #include "./args.h"
 #include "./utils.h"
 #include "./lexer.h"
@@ -25,7 +26,7 @@ bool debug;
 
 int main(int argc, char** argv)
 {
-	init_qalloc(15000000000);
+	init_qalloc(15000000);
 	read_args(argc, argv);
 	compile_main(argc, argv);
 	if (args_if_def(make_constant_ddString("-o")))

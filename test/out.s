@@ -6,12 +6,90 @@ argc:
 _69_str0:
 	DW	"hello",0;
 section .text;
+pnum:
+	PUSH	RBP;
+	MOV	RBP, RSP;
+	SUB	RSP, 0;
+	PUSH	48;
+	PUSH	QWORD[RBP--16];
+	POP	R8;
+	POP	R9;
+	ADD	R8, R9;
+	PUSH	R8;
+	POP	QWORD[RBP--16];
+	mov	rax, 1;
+	mov	rdi, 1;
+	add	rbp, 16;
+	mov	rsi, rbp;
+	sub	rbp, 16;
+	mov	rdx, 1;
+	syscall;
+.SC03:
+	ADD	RSP, 0;
+	POP	RBP;
+	RET;
+pstr:
+	PUSH	RBP;
+	MOV	RBP, RSP;
+	SUB	RSP, 8;
+	PUSH	QWORD[RBP--16];
+	CALL	strlen;
+	ADD	RSP, 8;
+	PUSH	R8;
+	POP	QWORD[RBP-8];
+	mov	rax, 1;
+	mov	rdi, 1;
+	mov	rsi, [rbp+16];
+	mov	rdx, [rbp-8];
+	syscall;
+.SC02:
+	ADD	RSP, 8;
+	POP	RBP;
+	RET;
+strlen:
+	PUSH	RBP;
+	MOV	RBP, RSP;
+	SUB	RSP, 8;
+	PUSH	0;
+	POP	QWORD[RBP-8];
+.WL13:
+	PUSH	1;
+	PUSH	QWORD[RBP-8];
+	POP	R8;
+	POP	R9;
+	ADD	R8, R9;
+	PUSH	R8;
+	POP	QWORD[RBP-8];
+.SC13:
+	PUSH	QWORD[RBP-8];
+	PUSH	QWORD[RBP--16];
+	POP	R8;
+	POP	R9;
+	ADD	R8, R9;
+	PUSH	R8;
+	POP	R8;
+	MOVSX	RAX, BYTE[R8];
+	PUSH	RAX;
+	PUSH	0;
+	POP	R8;
+	POP	R9;
+	CMP	R9, R8;
+	SETNE	AL;
+	MOVZX	R8, AL;
+	PUSH	R8;
+	POP	R8;
+	CMP	R8, 1;
+	JE	.WL13;
+.SC01:
+	ADD	RSP, 8;
+	POP	RBP;
+	RET;
 nts:
 	PUSH	RBP;
 	MOV	RBP, RSP;
 	SUB	RSP, 24;
-	PUSH	0;
 	PUSH	QWORD[RBP--32];
+	PUSH	0;
 	POP	R8;
 	POP	R9;
 	CMP	R9, R8;
@@ -20,7 +98,7 @@ nts:
 	PUSH	R8;
 	POP	R8;
 	CMP	R8, 0;
-	JE	.SC11;
+	JE	.SC10;
 	PUSH	48;
 	PUSH	QWORD[RBP--24];
 	POP	R8;
@@ -36,30 +114,30 @@ nts:
 	POP	R8;
 	POP	RAX;
 	MOV	BYTE[R8], AL;
+.SC10:
+	PUSH	0;
+	POP	QWORD[RBP-8];
+.WL11:
+	PUSH	48;
+	PUSH	QWORD[RBP-8];
+	PUSH	QWORD[RBP--24];
+	POP	R8;
+	POP	R9;
+	ADD	R8, R9;
+	PUSH	R8;
+	POP	R8;
+	POP	RAX;
+	MOV	BYTE[R8], AL;
+	PUSH	1;
+	PUSH	QWORD[RBP-8];
+	POP	R8;
+	POP	R9;
+	ADD	R8, R9;
+	PUSH	R8;
+	POP	QWORD[RBP-8];
 .SC11:
-	PUSH	0;
-	POP	QWORD[RBP-8];
-.WL12:
-	PUSH	48;
 	PUSH	QWORD[RBP-8];
-	PUSH	QWORD[RBP--24];
-	POP	R8;
-	POP	R9;
-	ADD	R8, R9;
-	PUSH	R8;
-	POP	R8;
-	POP	RAX;
-	MOV	BYTE[R8], AL;
-	PUSH	1;
-	PUSH	QWORD[RBP-8];
-	POP	R8;
-	POP	R9;
-	ADD	R8, R9;
-	PUSH	R8;
-	POP	QWORD[RBP-8];
-.SC12:
 	PUSH	QWORD[RBP--16];
-	PUSH	QWORD[RBP-8];
 	POP	R8;
 	POP	R9;
 	CMP	R9, R8;
@@ -68,7 +146,7 @@ nts:
 	PUSH	R8;
 	POP	R8;
 	CMP	R8, 1;
-	JE	.WL12;
+	JE	.WL11;
 	PUSH	0;
 	PUSH	1;
 	PUSH	QWORD[RBP--16];
@@ -93,13 +171,13 @@ nts:
 	POP	QWORD[RBP-16];
 	PUSH	0;
 	POP	QWORD[RBP-24];
-.WL13:
-	PUSH	10;
+.WL12:
 	PUSH	QWORD[RBP--32];
+	PUSH	10;
 	XOR	RAX, RAX;
 	XOR	RDX, RDX;
 	POP	R8;
-	POP	R9;
+	POP	RAX;
 	DIV	R8;
 	MOV	R8, RDX;
 	XOR	RAX, RAX;
@@ -112,7 +190,6 @@ nts:
 	POP	RAX;
 	DIV	R8;
 	PUSH	RAX;
-	POP	QWORD[RBP--32];
 	PUSH	QWORD[RBP-24];
 	PUSH	48;
 	POP	R8;
@@ -135,56 +212,13 @@ nts:
 	SUB	R8, R9;
 	PUSH	R8;
 	POP	QWORD[RBP-16];
-.SC13:
+.SC12:
 	PUSH	QWORD[RBP--32];
 	POP	R8;
 	CMP	R8, 1;
-	JE	.WL13;
-.SC02:
-	ADD	RSP, 24;
-	POP	RBP;
-	RET;
-pstr:
-	PUSH	RBP;
-	MOV	RBP, RSP;
-	SUB	RSP, 8;
-	PUSH	QWORD[RBP--16];
-	CALL	strlen;
-	ADD	RSP, 8;
-	PUSH	R8;
-	POP	QWORD[RBP-8];
-	mov	rax, 1;
-	mov	rdi, 1;
-	mov	rsi, [rbp+16];
-	mov	rdx, [rbp-8];
-	syscall;
-.SC01:
-	ADD	RSP, 8;
-	POP	RBP;
-	RET;
-strlen:
-	PUSH	RBP;
-	MOV	RBP, RSP;
-	SUB	RSP, 1;
-	PUSH	0;
-	POP	RAX;
-	MOV	BYTE[RBP-1], AL;
-.WL10:
-	PUSH	1;
-	MOVSX	RAX, BYTE[RBP-1];
-	PUSH	RAX;
-	POP	R8;
-	POP	R9;
-	ADD	R8, R9;
-	PUSH	R8;
-	POP	RAX;
-	MOV	BYTE[RBP-1], AL;
-.SC10:
-	POP	R8;
-	CMP	R8, 1;
-	JE	.WL10;
+	JE	.WL12;
 .SC00:
-	ADD	RSP, 1;
+	ADD	RSP, 24;
 	POP	RBP;
 	RET;
 global main

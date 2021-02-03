@@ -5,9 +5,9 @@
 
 #define qmake(t,s) ((t*)(qalloc(s*sizeof(t))))
 
-sizet maxSize = 0;
-void* qtop;
-void* qbot;
+static sizet maxSize = 0;
+static void* qtop;
+static void* qbot;
 
 void init_qalloc(sizet _maxSize)
 {

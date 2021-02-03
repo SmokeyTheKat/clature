@@ -176,7 +176,7 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length("!=", 2), G_EQ);
+					set_token(TKN_OPERATOR, make_ddString_length("!=", 2), G_QO);
 					next();
 					break;
 				default:
