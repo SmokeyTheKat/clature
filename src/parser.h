@@ -75,8 +75,15 @@ G_S -> G_AT G_N G_OBS G_S G_CBS
 G_FP -> G_S G_COMMA G_S
 G_FP -> G_FP G_COMMA G_S
 G_FP -> G_OBP G_FP G_CBP
+G_S -> G_I G_DOT G_I
+G_S -> G_S G_DOT G_I
+G_S -> G_KW_NAMESPACE G_I
+G_S -> G_KW_FORMAT G_AT G_N G_I
+G_S -> G_KW_FORMAT G_I
 G_S -> G_KW_SUB G_AT G_N G_I G_FP
+G_S -> G_KW_SUB G_AT G_N G_I G_OBP G_S G_CBP
 G_S -> G_I G_FP
+G_S -> G_I G_OBP G_S G_CBP
 G_S -> G_AT G_N G_OBS G_S G_COLON G_S G_CBS
 G_S -> G_KW_IF G_S
 G_S -> G_KW_WHILE G_S
@@ -94,6 +101,9 @@ G_E -> G_E G_EO G_E
 G_E -> G_E G_QO G_E
 G_Q -> G_Q G_QO G_Q
 G_S -> G_QUEST G_I
+G_S -> G_QUEST G_I
+G_S -> G_I G_PP
+G_S -> G_I G_MM
 G_S -> G_P
 G_P -> G_E
 G_E -> G_Q
@@ -400,7 +410,7 @@ void print_tree(struct tokenNode* root, int depth)
 struct tokenNode** parser_main(struct token* tokens, sizet tokenCount, sizet* _treeCount)
 {
 	treeCount = 0;
-	trees = qmake(struct tokenNode*, 10000000);
+	trees = qmake(struct tokenNode*, MAX_TREE_SIZE);
 	stream = tokens;
 	streamEnd = tokens+tokenCount;
 	push(0);
