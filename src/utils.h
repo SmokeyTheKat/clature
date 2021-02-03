@@ -1,5 +1,5 @@
-#ifndef __ddScript_utils_h__
-#define __ddScript_utils_h__
+#ifndef __clature_utils_h__
+#define __clature_utils_h__
 
 #include <ddcDef.h>
 #include <ddcString.h>
@@ -16,10 +16,20 @@
 #define TKN_STRING 0x07
 #define TKN_NONTERMINAL 0x08
 
+typedef char byte;
+
+void init_compiler(void);
 void compile_reset_color(void);
 void compile_message(const char* message);
 void compile_warning(const char* warning);
 void compile_error(const char* error);
+
+ddString keywords[14];
+
+struct token;
+struct tokenNode;
+struct action;
+struct syntax;
 
 struct token
 {
@@ -48,24 +58,8 @@ struct syntax
 
 enum
 {
-        G_PP,
-        G_PO,
-        G_QO,
-        G_EO,
-        G_MM,
-	G_KW_IF,
-	G_KW_WHILE,
-	G_KW_FOR,
-	G_KW_SUB,
-	G_KW_FUN,
-	G_KW_RETURN,
-	G_KW_ISO,
-	G_KW_GLOBAL,
-	G_KW_CONTINUE,
-	G_KW_MALLOC,
-	G_KW_EXTERN,
-	G_KW_FORMAT,
-        G_COMMA = ',',
+        G_KW_FUN,
+        G_KW_ISO,
 };
 
 const char* const TKN_STRS[] = {
@@ -100,7 +94,25 @@ void compile_warning(const char* warning)
 void compile_error(const char* error)
 {
 	ddPrintf("[\x1b[38;2;255;0;0mERROR\x1b[38;2;255;255;255m] %s", error);
-	exit(0);
+	exit(1);
+}
+
+void init_compiler(void)
+{
+	keywords[0] = make_constant_ddString("if");
+	keywords[1] = make_constant_ddString("while");
+	keywords[2] = make_constant_ddString("for");
+	keywords[3] = make_constant_ddString("sub");
+	keywords[4] = make_constant_ddString("fun");
+	keywords[5] = make_constant_ddString("format");
+	keywords[6] = make_constant_ddString("return");
+	keywords[7] = make_constant_ddString("iso");
+	keywords[8] = make_constant_ddString("global");
+	keywords[9] = make_constant_ddString("continue");
+	keywords[10] = make_constant_ddString("malloc");
+	keywords[11] = make_constant_ddString("extern");
+	keywords[12] = make_constant_ddString("format");
+	keywords[13] = make_constant_ddString("else");
 }
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef __ddScript_lexer_h__
-#define __ddScript_lexer_h__ 
+#ifndef __clature_lexer_h__
+#define __clature_lexer_h__ 
 #include <ddcString.h>
 #include <ddcPrint.h>
 #include <stdarg.h>
@@ -7,61 +7,41 @@
 #include "./utils.h"
 #include "./parser.h"
 
-void init_lexer(void);
-struct token* lexer_main(ddString _file, sizet* tokenCount);
+struct token* lexer_main(ddString _file, sizet* _tokenCount);
+static void tokenize(char chr);
 static inline char next(void);
 static inline char peek(int rpos);
 static inline void skip(char cend);
 static int get_keyword_symbol(ddString value);
 static inline void reset_literal(void);
 static inline void set_token(int type, ddString value, int symbol);
-struct token* oset_token(int type, ddString value, int symbol);
-static bool is_last_linebreak(void);
-static void tokenize(char chr);
 
-static ddString file;
+static char* fileStream;
+static char* fileStreamEnd;
+static struct token* tokenStream;
+static sizet tokenPos;
 static ddString literal;
-static bool inBT = false;
-static sizet fileCount = 0;
-static sizet tokenCount = 0;
-static sizet otokenCount = 0;
-static struct token* tokens;
-ddString keywords[13];
+static bool inBT;// in syntax '@8<10>' when stream is at '<' set true so '>' is known to be closer for array def
 
-void init_lexer(void)
-{
-	literal = make_ddString("");
-	
-	tokens = make(struct token, 10000000);
-
-	keywords[0] = make_constant_ddString("if");
-	keywords[1] = make_constant_ddString("while");
-	keywords[2] = make_constant_ddString("for");
-	keywords[3] = make_constant_ddString("sub");
-	keywords[4] = make_constant_ddString("fun");
-	keywords[5] = make_constant_ddString("format");
-	keywords[6] = make_constant_ddString("return");
-	keywords[7] = make_constant_ddString("iso");
-	keywords[8] = make_constant_ddString("global");
-	keywords[9] = make_constant_ddString("continue");
-	keywords[10] = make_constant_ddString("malloc");
-	keywords[11] = make_constant_ddString("extern");
-	keywords[12] = make_constant_ddString("format");
-}
+#define is_last_linebreak() (tokenStream[tokenPos-1].type == TKN_LINEBREAK)
 
 struct token* lexer_main(ddString _file, sizet* _tokenCount)
 {
-	init_lexer();
-	file = _file;
-	while (fileCount < _file.length)
+	ddPrintf("hrerere\n");
+	tokenStream = qmake(struct token, MAX_TOKEN_SIZE);
+	literal = make_ddString("");
+	inBT = false;
+	tokenPos = 0;
+	fileStream = _file.cstr;
+	fileStreamEnd = fileStream + _file.length;
+	while (fileStream <= fileStreamEnd)
 	{
-		char chr = next();
-		tokenize(chr);
+		tokenize(next());
 	}
 	if (!is_last_linebreak())
-			set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
-	(*_tokenCount) = tokenCount;
-	return tokens;
+		set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
+	(*_tokenCount) =  tokenPos;
+	return tokenStream;
 }
 
 static void tokenize(char chr)
@@ -89,7 +69,7 @@ static void tokenize(char chr)
 				} while ((chr = next()) != '\n' && chr != ';');
 				set_token(TKN_ASSEMBLY, literal, G_ILASM);
 				reset_literal();
-				skip('\n');
+				if (chr != '\n') skip('\n');
 				set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
 				break;
 			}
@@ -112,10 +92,16 @@ static void tokenize(char chr)
 		case ':':
 			set_token(TKN_SYNTAX, make_ddString_length(":", 1), G_COLON);
 			break;
-		case '{': case '}':
+		case '{':
 			if (!is_last_linebreak())
 				set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
-			set_token(TKN_SYNTAX, make_ddString_length(&chr, 1), chr);
+			set_token(TKN_SYNTAX, make_ddString_length("{", 1), G_OBU);
+			set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
+			break;
+		case '}':
+			if (!is_last_linebreak())
+				set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
+			set_token(TKN_SYNTAX, make_ddString_length("}", 1), G_CBU);
 			set_token(TKN_LINEBREAK, make_ddString_length(";", 1), G_SEMI);
 			break;
 		case '@':
@@ -292,7 +278,7 @@ static void tokenize(char chr)
 		}
 		case '<':
 		{
-			if (tokens[tokenCount-2].value.cstr[0] == '@')
+			if (tokenStream[tokenPos-2].value.cstr[0] == '@')
 			{
 				set_token(TKN_OPERATOR, make_ddString_length("<", 1), G_OBT);
 				inBT = true;
@@ -369,21 +355,20 @@ static void tokenize(char chr)
 			do
 			{
 				ddString_push_char_back(&literal, chr);
-			} while ((chr = next()) != '`');
+			} while ((chr = next()) != '"');
 			ddString_push_char_back(&literal, chr);
 			set_token(TKN_STRING, literal, G_I);
-			tokenize(chr);
+			reset_literal();
 		} break;
 		case '`':
 		{
 			do
 			{
 				ddString_push_char_back(&literal, chr);
-			} while ((chr = next()) != '"');
+			} while ((chr = next()) != '`');
 			ddString_push_char_back(&literal, chr);
 			set_token(TKN_STRING, literal, G_I);
 			reset_literal();
-			tokenize(chr);
 		} break;
 		case '0' ... '9':
 		{
@@ -421,22 +406,34 @@ static void tokenize(char chr)
 
 static inline char next(void)
 {
-	return (fileCount < file.length) ? file.cstr[fileCount++] : 0;
+	return *(fileStream++);
 }
+
 static inline char peek(int rpos)
 {
-	return file.cstr[fileCount+rpos];
+	return *(fileStream+rpos);
 }
+
 static inline void skip(char cend)
 {
 	char chr;
 	while ((chr = next()) != cend && chr != 0);
 }
+
+static inline void set_token(int type, ddString value, int symbol)
+{
+	tokenStream[tokenPos].type = type;
+	tokenStream[tokenPos].value = value;
+	tokenStream[tokenPos].symbol = symbol;
+	tokenPos++;
+}
+
 static inline void reset_literal(void)
 {
 	literal = make_ddString_length(" ", 25);
 	literal.length = 0;
 }
+
 static int get_keyword_symbol(ddString value)
 {
 	if (ddString_compare(value, keywords[0]))
@@ -465,26 +462,9 @@ static int get_keyword_symbol(ddString value)
 		return G_KW_EXTERN;
 	else if (ddString_compare(value, keywords[12]))
 		return G_KW_FORMAT;
+	else if (ddString_compare(value, keywords[13]))
+		return G_KW_ELSE;
 	else return -1;
-}
-struct token* oset_token(int type, ddString value, int symbol)
-{
-	tokens[otokenCount].type = type;
-	tokens[otokenCount].value = value;
-	tokens[otokenCount].symbol = symbol;
-	return &(tokens[otokenCount++]);
-}
-static inline void set_token(int type, ddString value, int symbol)
-{
-	tokens[tokenCount].type = type;
-	tokens[tokenCount].value = value;
-	tokens[tokenCount].symbol = symbol;
-	tokenCount++;
-	otokenCount++;
-}
-static bool is_last_linebreak(void)
-{
-	return (tokens[tokenCount-1].type == TKN_LINEBREAK);
 }
 
 #endif

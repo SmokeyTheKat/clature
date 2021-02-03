@@ -1,5 +1,5 @@
-#ifndef __ddScript_system_h__
-#define __ddScript_system_h__
+#ifndef __clature_system_h__
+#define __clature_system_h__
 
 #include "./utils.h"
 

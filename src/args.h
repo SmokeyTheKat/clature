@@ -1,6 +1,7 @@
-#ifndef __ddScript_args_h__
-#define __ddScript_args_h__
+#ifndef __clature_args_h__
+#define __clature_args_h__
 
+#include "./qalloc.h"
 #include <ddcPrint.h>
 
 struct compilerArgs
@@ -14,7 +15,7 @@ sizet cargsCount = 0;
 
 void read_args(int argc, char** argv)
 {
-	cargs = make(struct compilerArgs, 1000);
+	cargs = qmake(struct compilerArgs, 1000);
 	for (int i = 1; i < argc; i++)
 	{
 		ddString dsarg = make_ddString(argv[i]);

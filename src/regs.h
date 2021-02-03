@@ -1,5 +1,5 @@
-#ifndef __ddScript_regs_h__
-#define __ddScript_regs_h__
+#ifndef __clature_regs_h__
+#define __clature_regs_h__
 
 ddString REG_RAX;
 ddString REG_RCX;

@@ -1,5 +1,5 @@
-#ifndef __ddScript_macros_h__
-#define __ddScript_macros_h__
+#ifndef __clature_macros_h__
+#define __clature_macros_h__
 
 #include "./file.h"
 

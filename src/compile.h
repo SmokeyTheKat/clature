@@ -1,11 +1,12 @@
-#ifndef __ddScript_compile_h__
-#define __ddScript_compile_h__
+#ifndef __clature_compile_h__
+#define __clature_compile_h__
 
 #include <ddcTime.h>
 
 #include "./generate.h"
 #include "./lexer.h"
 #include "./macros.h"
+#include "./qalloc.h"
 #include "regs.h"
 
 struct bitcode* generate_bitcode(struct tokenNode** tokenTrees, sizet treeCount);
@@ -30,6 +31,8 @@ void compile_main(int agsc, char** ags)
 	if (!args_if_def(make_constant_ddString("--no-macros")))
 		read_macros(&file);
 
+	init_compiler();
+
 	sizet tokenCount = 0;
 	ddTimer_start();
 	struct token* tokens = lexer_main(file, &tokenCount);
@@ -47,7 +50,9 @@ void compile_main(int agsc, char** ags)
 	compile_message(make_format_ddString("PARSER: %f", ddTimer_stop()).cstr);
 
 	ddTimer_start();
-	struct bitcode* bitcodeHead = generate_bitcode(parseTrees, treeCount);
+	inFunction = false;
+	init_regs();
+	struct bitcode* bitcodeHead = generate_bitcode_main(parseTrees, treeCount);
 	compile_message(make_format_ddString("BTC GEN: %f", ddTimer_stop()).cstr);
 
 	ddTimer_start();
@@ -69,6 +74,7 @@ void compile_main(int agsc, char** ags)
 	compile_message(make_format_ddString("RUNTIME: %f", ddTimer_stop()).cstr);
 }
 
+/*
 sizet bitcode_get_length(struct bitcode* code)
 {
 	sizet output = 0;
@@ -79,17 +85,7 @@ sizet bitcode_get_length(struct bitcode* code)
 	}
 	return output;
 }
-
-struct bitcode* generate_bitcode(struct tokenNode** tokenTrees, sizet treeCount)
-{
-	inFunction = false;
-	init_regs();
-
-	struct bitcode* bitcode = generate_bitcode_main(tokenTrees, treeCount);
-
-	//stackSizeNode->rhs = make_ddString_from_int(stackt.size);
-	return bitcode;
-}
+*/
 
 void write_bitcode(struct bitcode* code, ddString* outp)
 {
@@ -136,8 +132,8 @@ void write_bitcode(struct bitcode* code, ddString* outp)
 	ddString ed = make_constant_ddString(";\n");
 	ddString nl = make_constant_ddString("\n");
 	ddString gb = make_constant_ddString("global ");
-	outp->cstr = make(char, 1000000000);
-	outp->capacity = 1000000000;
+	outp->cstr = qmake(char, MAX_OFILE_SIZE);
+	outp->capacity = MAX_OFILE_SIZE;
 	while (code->next!= nullptr)
 	{
 		switch (code->opc)

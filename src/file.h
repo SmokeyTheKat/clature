@@ -1,5 +1,5 @@
-#ifndef __ddScript_file_h__
-#define __ddScript_file_h__
+#ifndef __clature_file_h__
+#define __clature_file_h__
 
 void write_file(const char* path, ddString content)
 {
