@@ -3,8 +3,8 @@ argv:
 	DQ	0;
 argc:
 	DD	0;
-_69_str0:
-	DW	"hello",0;
+var:
+	DQ	0;
 section .text;
 pnum:
 	PUSH	RBP;
@@ -24,7 +24,7 @@ pnum:
 	sub	rbp, 16;
 	mov	rdx, 1;
 	syscall;
-.SC03:
+.SC02:
 	ADD	RSP, 0;
 	POP	RBP;
 	RET;
@@ -42,7 +42,7 @@ pstr:
 	mov	rsi, [rbp+16];
 	mov	rdx, [rbp-8];
 	syscall;
-.SC02:
+.SC01:
 	ADD	RSP, 8;
 	POP	RBP;
 	RET;
@@ -52,7 +52,7 @@ strlen:
 	SUB	RSP, 8;
 	PUSH	0;
 	POP	QWORD[RBP-8];
-.WL13:
+.WL10:
 	PUSH	1;
 	PUSH	QWORD[RBP-8];
 	POP	R8;
@@ -60,7 +60,7 @@ strlen:
 	ADD	R8, R9;
 	PUSH	R8;
 	POP	QWORD[RBP-8];
-.SC13:
+.SC10:
 	PUSH	QWORD[RBP-8];
 	PUSH	QWORD[RBP--16];
 	POP	R8;
@@ -79,146 +79,12 @@ strlen:
 	PUSH	R8;
 	POP	R8;
 	CMP	R8, 1;
-	JE	.WL13;
-.SC01:
-	ADD	RSP, 8;
-	POP	RBP;
-	RET;
-nts:
-	PUSH	RBP;
-	MOV	RBP, RSP;
-	SUB	RSP, 24;
-	PUSH	QWORD[RBP--32];
-	PUSH	0;
-	POP	R8;
-	POP	R9;
-	CMP	R9, R8;
-	SETE	AL;
-	MOVZX	R8, AL;
-	PUSH	R8;
-	POP	R8;
-	CMP	R8, 0;
-	JE	.SC10;
-	PUSH	48;
-	PUSH	QWORD[RBP--24];
-	POP	R8;
-	POP	RAX;
-	MOV	BYTE[R8], AL;
-	PUSH	0;
-	PUSH	1;
-	PUSH	QWORD[RBP--24];
-	POP	R8;
-	POP	R9;
-	ADD	R8, R9;
-	PUSH	R8;
-	POP	R8;
-	POP	RAX;
-	MOV	BYTE[R8], AL;
-.SC10:
-	PUSH	0;
-	POP	QWORD[RBP-8];
-.WL11:
-	PUSH	48;
-	PUSH	QWORD[RBP-8];
-	PUSH	QWORD[RBP--24];
-	POP	R8;
-	POP	R9;
-	ADD	R8, R9;
-	PUSH	R8;
-	POP	R8;
-	POP	RAX;
-	MOV	BYTE[R8], AL;
-	PUSH	1;
+	JE	.WL10;
 	PUSH	QWORD[RBP-8];
 	POP	R8;
-	POP	R9;
-	ADD	R8, R9;
-	PUSH	R8;
-	POP	QWORD[RBP-8];
-.SC11:
-	PUSH	QWORD[RBP-8];
-	PUSH	QWORD[RBP--16];
-	POP	R8;
-	POP	R9;
-	CMP	R9, R8;
-	SETL	AL;
-	MOVZX	R8, AL;
-	PUSH	R8;
-	POP	R8;
-	CMP	R8, 1;
-	JE	.WL11;
-	PUSH	0;
-	PUSH	1;
-	PUSH	QWORD[RBP--16];
-	POP	R8;
-	POP	R9;
-	SUB	R8, R9;
-	PUSH	R8;
-	PUSH	QWORD[RBP--24];
-	POP	R8;
-	POP	R9;
-	ADD	R8, R9;
-	PUSH	R8;
-	POP	R8;
-	POP	RAX;
-	MOV	BYTE[R8], AL;
-	PUSH	2;
-	PUSH	QWORD[RBP--16];
-	POP	R8;
-	POP	R9;
-	SUB	R8, R9;
-	PUSH	R8;
-	POP	QWORD[RBP-16];
-	PUSH	0;
-	POP	QWORD[RBP-24];
-.WL12:
-	PUSH	QWORD[RBP--32];
-	PUSH	10;
-	XOR	RAX, RAX;
-	XOR	RDX, RDX;
-	POP	R8;
-	POP	RAX;
-	DIV	R8;
-	MOV	R8, RDX;
-	XOR	RAX, RAX;
-	XOR	RDX, RDX;
-	PUSH	R8;
-	POP	QWORD[RBP-24];
-	PUSH	10;
-	PUSH	QWORD[RBP--32];
-	POP	R8;
-	POP	RAX;
-	DIV	R8;
-	PUSH	RAX;
-	PUSH	QWORD[RBP-24];
-	PUSH	48;
-	POP	R8;
-	POP	R9;
-	ADD	R8, R9;
-	PUSH	R8;
-	PUSH	QWORD[RBP-16];
-	PUSH	QWORD[RBP--24];
-	POP	R8;
-	POP	R9;
-	ADD	R8, R9;
-	PUSH	R8;
-	POP	R8;
-	POP	RAX;
-	MOV	BYTE[R8], AL;
-	PUSH	1;
-	PUSH	QWORD[RBP-16];
-	POP	R8;
-	POP	R9;
-	SUB	R8, R9;
-	PUSH	R8;
-	POP	QWORD[RBP-16];
-.SC12:
-	PUSH	QWORD[RBP--32];
-	POP	R8;
-	CMP	R8, 1;
-	JE	.WL12;
+	JMP	.SC00;
 .SC00:
-	ADD	RSP, 24;
+	ADD	RSP, 8;
 	POP	RBP;
 	RET;
 global main
@@ -227,14 +93,15 @@ main:
 	EXTERN	free;
 	PUSH	RBP;
 	MOV	RBP, RSP;
-	SUB	RSP, 8;
+	SUB	RSP, 0;
 	MOV	QWORD[argv], RSI;
 	MOV	DWORD[argc], EDI;
-	PUSH	_69_str0;
-	POP	QWORD[RBP-8];
-	PUSH	QWORD[RBP-8];
-	CALL	pstr;
-	ADD	RSP, 8;
+	EXTERN	printf;
+	PUSH	5;
+	POP	QWORD[var];
+	PUSH	QWORD[var];
+	CALL	pnum;
+	ADD	RSP, 0;
 	MOV	EAX, 0;
 	POP	RBP;
 	MOV	RAX, 60;
