@@ -12,7 +12,7 @@ sub @8 numToString(@8 value, @8 string, @8 length)
 		@1[string+i] = '0';
 		i++;
 	}
-	@1[string+(length-1)] = 0;
+	@1[string:length-1] = 0;
 	@8 pos = length-2;
 	@8 x = 0;
 	while value
@@ -65,40 +65,40 @@ sub @8 printChar(@8 chr)
 @8 istr = "          ";
 @8 istrlen = 9;
 @8 inum = 369;
-iso numToString(inum, istr, istrlen);
-iso ddPrint_cstring(istr);
+numToString(inum, istr, istrlen);
+ddPrint_cstring(istr);
 ;while inum < 15
 ;{
-;	iso numToString(inum, istr, istrlen);
-;	iso ddPrint_cstring(istr);
+;	numToString(inum, istr, istrlen);
+;	ddPrint_cstring(istr);
 ;	inum++;
-;	iso printChar(endl);
+;	printChar(endl);
 ;}
 
 @8 value = 2 == 1 && 5 == 4+1 || 2 == 1*2;
-;iso printNum(value);
+;printNum(value);
 
 @8 text_length = "the length is: ";
 
-iso printChar(endl);
-iso printChar(endl);
+printChar(endl);
+printChar(endl);
 
 
 @8 hello = "hello";
 @8 chello = hello;
-iso ddPrint_cstring(chello);
+ddPrint_cstring(chello);
 
-iso printChar(endl);
+printChar(endl);
 
 @8 helloLen = getLength(hello);
-iso ddPrint_cstring(text_length);
-iso printNum(helloLen);
+ddPrint_cstring(text_length);
+printNum(helloLen);
 
-iso printChar(endl);
+printChar(endl);
 
 @8 str = "yo bro what is going on yo";
-iso ddPrint_cstring(str);
-iso printChar(endl);
+ddPrint_cstring(str);
+printChar(endl);
 @1 chr = 0;
 @8 i = 0;
 while @1[str+i] != 0
@@ -108,4 +108,4 @@ while @1[str+i] != 0
 	i++;
 }
 @8 empty = 4;
-iso printChar(endl);
+printChar(endl);

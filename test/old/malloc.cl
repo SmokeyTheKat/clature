@@ -18,23 +18,23 @@ sub @8 expect(@8 a, @8 b)
 {
 	if a != b
 	{
-		iso pstr(`\x1b[38;2;255;0;0mFAILED\n`);
-		iso exit(1);
+		pstr(`\x1b[38;2;255;0;0mFAILED\n`);
+		exit(1);
 	}
-	iso pstr(`\x1b[38;2;0;255;0mPASSED\n`);
+	pstr(`\x1b[38;2;0;255;0mPASSED\n`);
 }
 
 .extern	exit;
 
 @8 length = 20;
-@8 ptr = malloc@8<length>;
+@8 ptr = @8<20>;
 
 @8 i = 0;
 while i < length
 {
-	@8[ptr+(i*8)] = i*8;
+	@8[ptr:i] = i*8;
 	i++
 }
 
-iso expect((@8[ptr+16]), 16);
+expect((@8[ptr+16]), 16);
 

@@ -56,6 +56,7 @@ static inline bool is_equals_new_assignemnt(struct tokenNode* node);
 static inline bool is_dereference(struct tokenNode* node);
 static inline bool is_dereference_assignment(struct tokenNode* node);
 static inline bool is_array_def(struct tokenNode* node);
+static inline bool is_array_def_var(struct tokenNode* node);
 static inline bool is_global(struct tokenNode* node);
 static bool is_size_operatable(int size);
 static void push_stack_var(struct stVariable var);
@@ -93,6 +94,7 @@ static inline struct bitcode* generate_write_function_headder(ddString name);// 
 static inline void generate_write_function_footer(void);
 static void generate_if_statement(struct tokenNode* node);
 static void generate_while_statement(struct tokenNode* node);
+static void generate_for_statement(struct tokenNode* node);
 static void generate_continue(struct tokenNode* node);
 static void generate_sub_statement(struct tokenNode* node);
 static void generate_equels_make_set_asm(struct tokenNode* node);//@8 i = 9-3;
@@ -103,6 +105,7 @@ static void generate_function_call(struct tokenNode* node);
 static void generate_function_return(struct tokenNode* node);
 static void generate_dereference(struct tokenNode* node);
 static void generate_array_def(struct tokenNode* node);
+static void generate_array_def_var(struct tokenNode* node);
 static void generate_reference(struct tokenNode* node);
 static void generate_set_dereference(struct tokenNode* node);
 static void generate_multiply(struct tokenNode* node);
@@ -306,8 +309,6 @@ void generate_asm_step(struct tokenNode* node)
 			case '+':
 				if (node->nodes[1]->value->value.cstr[1] == '=')
 					generate_plus_equals(node);
-				else if (node->nodes[1]->value->value.cstr[1] == '+')
-					generate_plus_plus(node);
 				else
 					generate_plus(node);
 				break;
@@ -347,7 +348,9 @@ void generate_asm_step(struct tokenNode* node)
 					generate_lessthan(node);
 				break;
 			case '>':
-				if (node->nodes[1]->value->value.cstr[1] == '=')
+				if (is_array_def_var(node))
+					generate_array_def_var(node);
+				else if (node->nodes[1]->value->value.cstr[1] == '=')
 					generate_greaterthan_equals(node);
 				else if (node->nodes[1]->value->value.cstr[1] == '<')
 					;//generate_greaterthan_lessthan(node);
@@ -390,6 +393,14 @@ void generate_asm_step(struct tokenNode* node)
 						if (is_array_def(node))
 							generate_array_def(node);
 						break;
+					case '+':
+						if (node->nodes[0]->value->value.cstr[1] == '+')
+							generate_plus_plus(node);
+						break;
+					case '-':
+						if (node->nodes[0]->value->value.cstr[1] == '-')
+							generate_minus_minus(node);
+						break;
 					default:
 						if (node->nodes[1]->value->symbol == G_KW_IF)
 						{
@@ -418,6 +429,10 @@ void generate_asm_step(struct tokenNode* node)
 				else if (node->nodeCount == 2 && node->nodes[1]->value->symbol == G_KW_RETURN)
 				{
 					generate_function_return(node);
+				}
+				else if (node->nodeCount == 2 && node->nodes[1]->value->symbol == G_KW_FOR)
+				{
+					generate_for_statement(node);
 				}
 				else if (node->nodeCount == 2 && node->nodes[1]->value->symbol == G_KW_WHILE)
 				{
@@ -471,170 +486,6 @@ void generate_asm_step(struct tokenNode* node)
 			}
 		}
 	}
-/*
-	if (node->value->type == TKN_SYNTAX || node->value->type == TKN_OPERATOR)
-	{
-		switch (node->value->value.cstr[0])
-		{
-			case ',': break;
-			case '[':
-				break;
-			case '{':
-				scopeStack[scopeStackPos++] = stackt.top;
-				scope++;
-				break;
-			case '}':
-				stackt.top = scopeStack[--scopeStackPos];
-				scope--;
-				generate_write_btc(BTC_LABEL, make_format_ddString(".SC%d%d", scope, scopeCounts[scope]), REG_NONE);
-				scopeCounts[scope]++;
-				break;
-			case '=':
-				if (node->value->value.cstr[1] == '=')
-					generate_equality(node);
-				else if (is_dereference_assignment(node))
-					generate_set_dereference(node);
-				else if (is_equals_new_assignemnt(node))
-					generate_equels_make_set_asm(node);
-				else
-					generate_equels_set_asm(node);
-				break;
-			case '!':
-				if (node->value->value.cstr[1] == '=')
-					generate_inequality(node);
-				break;
-			case '@':
-				if (is_dereference(node))
-					generate_dereference(node);
-				if (is_array_def(node))
-					generate_array_def(node);
-				else
-					define_variable(node);
-				break;
-			case '?':
-				generate_reference(node);
-				break;
-			case '*':
-				if (node->value->value.cstr[1] == '=')
-					generate_times_equals(node);
-				else
-					generate_1reg_operation(BTC_MUL, node);
-				break;
-			case '/':
-				if (node->value->value.cstr[1] == '=')
-					generate_divide_equals(node);
-				else
-					generate_1reg_operation(BTC_DIV, node);
-				break;
-			case '+':
-				if (node->value->value.cstr[1] == '=')
-					generate_plus_equals(node);
-				else if (node->value->value.cstr[1] == '+')
-					generate_plus_plus(node);
-				else
-					generate_2reg_operation(BTC_ADD, node);
-				break;
-			case '-':
-				if (node->value->value.cstr[1] == '=')
-					generate_minus_equals(node);
-				else if (node->value->value.cstr[1] == '-')
-					generate_minus_minus(node);
-				else
-					generate_2reg_operation(BTC_SUB, node);
-				break;
-			case '<':
-				if (node->value->value.cstr[1] == '=')
-					generate_lessthan_equals(node);
-				else if (node->value->value.cstr[1] == '<')
-					;//generate_lessthan_lessthan(node);
-				else
-					generate_lessthan(node);
-				break;
-			case '>':
-				if (node->value->value.cstr[1] == '=')
-					generate_greaterthan_equals(node);
-				else if (node->value->value.cstr[1] == '<')
-					;//generate_greaterthan_lessthan(node);
-				else
-					generate_greaterthan(node);
-				break;
-			case '%':
-				if (node->value->value.cstr[1] == '=')
-					;//generate_mod_equals(node);
-				else
-					generate_mod_operator(node);
-				break;
-			case '&':
-				if (node->value->value.cstr[1] == '&')
-					generate_logic_and(node);
-				break;
-			case '|':
-				if (node->value->value.cstr[1] == '|')
-					generate_logic_or(node);
-				break;
-			default:
-				compile_error(make_format_ddString("UNDEFINED OPERATOR/SYNTAX/SYMBOL \"%s\"\n", node->value->value.cstr).cstr);
-		}
-	}
-	else if (node->value->type == TKN_LITERAL)
-	{
-		if (is_global(node))
-		{
-			struct dtVariable var = datat_get_data(node->value->value);
-			push_ref(var.name, var.size);
-		}
-		else
-		{
-			struct stVariable var = stackt_get_var(node->value->value);
-			if (var.size != -6969)
-			{
-				push_stack_var(var);
-			}
-			else
-			{
-				generate_write_btc(BTC_PUSH, node->value->value, REG_NONE);
-			}
-		}
-	}
-	else if (node->value->type == TKN_STRING)
-	{
-		push_data_var(datat_add_string(node->value->value));
-	}
-	else if (node->value->type == TKN_KEYWORD)
-	{
-		if (ddString_compare_cstring(node->value->value, "if"))
-			generate_if_statement(node);
-		else if (ddString_compare_cstring(node->value->value, "while"))
-			generate_while_statement(node);
-		else if (ddString_compare_cstring(node->value->value, "sub"))
-			generate_sub_statement(node);
-		else if (ddString_compare_cstring(node->value->value, "iso"))
-			generate_function_call(node->nodes[1]);
-		else if (ddString_compare_cstring(node->value->value, "return"))
-			generate_function_return(node);
-		else if (ddString_compare_cstring(node->value->value, "continue"))
-			generate_continue(node);
-		else if (ddString_compare_cstring(node->value->value, "malloc"))
-			generate_malloc(node);
-		else if (ddString_compare_cstring(node->value->value, "extern"))
-			generate_extern(node);
-		else if (ddString_compare_cstring(node->value->value, "format"))
-			generate_format(node);
-		else if (ddString_compare_cstring(node->value->value, "global"))
-			generate_global(node);
-	}
-	else if (node->value->type == TKN_FUNCTION)
-	{
-		generate_function_call(node);
-		if (statementIsEquality)
-			push_result(REG_R8);
-	}
-	else if (node->value->type == TKN_ASSEMBLY)
-	{
-		node->value->value.cstr[0] = '	';
-		generate_write_btc(BTC_ILA, node->value->value, REG_NONE);
-	}
-*/
 }
 
 static void generate_2reg_operation(int opc, struct tokenNode* node)
@@ -681,12 +532,16 @@ static void generate_multiply(struct tokenNode* node)
 }
 static void generate_divide(struct tokenNode* node)
 {
-	generate_split(node, 0);
 	generate_split(node, 2);
+	generate_split(node, 0);
+	generate_write_btc(BTC_XOR, REG_RAX, REG_RAX);
+	generate_write_btc(BTC_XOR, REG_RDX, REG_RDX);
 	pop_input(REG_R8);
 	pop_input(REG_RAX);
 	generate_write_btc(BTC_DIV, REG_R8, REG_NONE);
 	push_result(REG_RAX);
+	generate_write_btc(BTC_XOR, REG_RAX, REG_RAX);
+	generate_write_btc(BTC_XOR, REG_RDX, REG_RDX);
 }
 static void generate_global(struct tokenNode* node)
 {
@@ -748,6 +603,19 @@ static void generate_reference(struct tokenNode* node)
 	generate_write_btc(BTC_MOV, REG_R8, REG_RBP);
 	generate_write_btc(BTC_SUB, REG_R8, make_ddString_from_int(var.spos));
 	push_result(REG_R8);
+}
+static void generate_array_def_var(struct tokenNode* node)
+{
+	struct stVariable var = stackt_set_var(node->nodes[0]->value->value, 8);
+
+	sizet typesize = ddString_to_int(node->nodes[4]->value->value);
+	sizet length = ddString_to_int(node->nodes[2]->value->value);
+	sizet size = typesize*length;
+	stackt.size += size;
+	generate_write_btc(BTC_MOV, REG_R8, REG_RBP);
+	generate_write_btc(BTC_SUB, REG_R8, make_ddString_from_int(stackt.size));
+	push_result(REG_R8);
+	pop_stack_var(var);
 }
 static void generate_array_def(struct tokenNode* node)
 {
@@ -869,6 +737,28 @@ static void generate_continue(struct tokenNode* node)
 {
 	generate_write_btc(BTC_JMP, make_format_ddString(".SC%d%d", scope-1, scopeCounts[scope]), REG_NONE);
 }
+static void generate_for_statement(struct tokenNode* node)
+{
+	sizet stotop = stackt.top;
+	generate_split(node->nodes[0], 4);
+	generate_write_btc(BTC_LABEL, make_format_ddString(".WL%d%d", scope, scopeCounts[scope]), REG_NONE);
+	sizet tscope = scope;
+	cnode = next_tree();
+	generate_asm_step(cnode);
+	while (scope != tscope)
+	{
+		cnode = next_tree();
+		generate_asm_step(cnode);
+	}
+	generate_split(node->nodes[0], 0);
+	statementIsEquality = true;
+	generate_split(node->nodes[0], 2);
+	pop_input(REG_R8);
+	generate_write_btc(BTC_CMP, REG_R8, make_constant_ddString("1"));
+	generate_write_btc(BTC_JE, make_format_ddString(".WL%d%d", scope, scopeCounts[scope]-1), REG_NONE);
+	statementIsEquality = false;
+	stackt.top = stotop;
+}
 static void generate_while_statement(struct tokenNode* node)
 {
 	generate_write_btc(BTC_LABEL, make_format_ddString(".WL%d%d", scope, scopeCounts[scope]), REG_NONE);
@@ -880,33 +770,39 @@ static void generate_while_statement(struct tokenNode* node)
 		cnode = next_tree();
 		generate_asm_step(cnode);
 	}
+	statementIsEquality = true;
 	generate_split(node, 0);
 	pop_input(REG_R8);
 	generate_write_btc(BTC_CMP, REG_R8, make_constant_ddString("1"));
 	generate_write_btc(BTC_JE, make_format_ddString(".WL%d%d", scope, scopeCounts[scope]-1), REG_NONE);
+	statementIsEquality = false;
 }
 static void generate_if_statement(struct tokenNode* node)
 {
+	statementIsEquality = true;
 	generate_split(node, 0);
 	pop_input(REG_R8);
 	generate_write_btc(BTC_CMP, REG_R8, make_constant_ddString("0"));
 	generate_write_btc(BTC_JE, make_format_ddString(".SC%d%d", scope, scopeCounts[scope]), REG_NONE);
 	bool iselse = false;
 	sizet tscope = scope;
-	do
+	statementIsEquality = false;
+	cnode = next_tree();
+	generate_asm_step(cnode);
+	while (scope != tscope)
 	{
 		cnode = next_tree();
 		if (cnode->nodeCount == 1 && cnode->nodes[0]->value->value.cstr[0] == '}')
 		{
 			struct tokenNode* nextTree = peek_tree();
-			if (nextTree->nodeCount == 1 && nextTree->nodes[0]->value->symbol == G_KW_ELSE)
+			if (nextTree && nextTree->nodeCount == 1 && nextTree->nodes[0]->value->symbol == G_KW_ELSE)
 			{
 				iselse = true;
 				generate_write_btc(BTC_JMP, make_format_ddString(".SC%d%d", scope-1, scopeCounts[scope-1]+1), REG_NONE);
 			}
 		}
 		generate_asm_step(cnode);
-	} while (scope != tscope);
+	}
 	if (iselse)
 	{
 		next_tree();
@@ -1000,21 +896,29 @@ static inline void generate_minus_equals(struct tokenNode* node)
 }
 static inline void generate_plus_plus(struct tokenNode* node)
 {
-	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
-	generate_split_left(node);
+	struct stVariable var = stackt_get_var(node->nodes[1]->value->value);
+	generate_split(node, 1);
 	pop_input(REG_R8);
+	if (statementIsEquality)
+		generate_write_btc(BTC_MOV, REG_R9, REG_R8);
 	generate_write_btc(BTC_INC, REG_R8, REG_NONE);
 	push_result(REG_R8);
 	pop_stack_var(var);
+	if (statementIsEquality)
+		push_result(REG_R9);
 }
 static inline void generate_minus_minus(struct tokenNode* node)
 {
-	struct stVariable var = stackt_get_var(node->nodes[0]->value->value);
-	generate_split_left(node);
+	struct stVariable var = stackt_get_var(node->nodes[1]->value->value);
+	generate_split(node, 1);
 	pop_input(REG_R8);
+	if (statementIsEquality)
+		generate_write_btc(BTC_MOV, REG_R9, REG_R8);
 	generate_write_btc(BTC_DEC, REG_R8, REG_NONE);
 	push_result(REG_R8);
 	pop_stack_var(var);
+	if (statementIsEquality)
+		push_result(REG_R9);
 }
 static inline void generate_lessthan_equals(struct tokenNode* node)
 {
@@ -1186,6 +1090,7 @@ void generate_write_btc(int opc, ddString lhs, ddString rhs)
 }
 static void pop_stack_var(struct stVariable var)
 {
+	ddPrintf("line: %d\n", treePosition);
 	switch (var.size)
 	{
 		case 1:
@@ -1212,7 +1117,7 @@ static void pop_stack_var(struct stVariable var)
 			break;
 		}
 		default:
-			compile_error("UNDEFINED VARIABLE (POP)\n");
+			compile_error(make_format_ddString("UNDEFINED VARIABLE (POP) ON LINE %d\n", treePosition+1).cstr);
 	}
 }
 static void pop_ref(ddString value, sizet size)
@@ -1243,7 +1148,7 @@ static void pop_ref(ddString value, sizet size)
 			break;
 		}
 		default:
-			compile_error("HOW THE FUCK DID THIS HAPPEN (POP)\n");
+			compile_error(make_format_ddString("HOW THE FUCK DID THIS HAPPEN (POP) ON LINE %d\n", treePosition+1).cstr);
 	}
 }
 static void push_ref(ddString value, sizet size)
@@ -1274,7 +1179,7 @@ static void push_ref(ddString value, sizet size)
 			break;
 		}
 		default:
-			compile_error("HOW THE FUCK DID THIS HAPPEN (PUSH)\n");
+			compile_error(make_format_ddString("HOW THE FUCK DID THIS HAPPEN (PUSH) ON LINE %d\n").cstr);
 	}
 }
 static void push_stack_var(struct stVariable var)
@@ -1421,6 +1326,10 @@ struct dtVariable datat_add_string(ddString value)
 void push_data_var(struct dtVariable var)
 {
 	generate_write_btc(BTC_PUSH, var.name, REG_NONE);
+}
+static inline bool is_array_def_var(struct tokenNode* node)
+{
+	return (node->nodeCount == 6 && node->nodes[1]->value->value.cstr[0] == '>' && node->nodes[3]->value->value.cstr[0] == '<' && node->nodes[5]->value->value.cstr[0] == '@');
 }
 static inline bool is_array_def(struct tokenNode* node)
 {

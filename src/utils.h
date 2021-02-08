@@ -115,4 +115,35 @@ void init_compiler(void)
 	keywords[13] = make_constant_ddString("else");
 }
 
+ddString make_ddString_length_f(const char* _c, ddsize _l)
+{
+	ddString _o;
+	_o.status = DOS_ACTIVE;
+	_o.aDelete = DOD_MANUAL;
+	_o.type = DDSTRING_CONSTANT;
+
+	_o.length = _l;
+	_o.capacity = _l;
+
+	_o.cstr = _c;
+
+	return _o;
+}
+
+ddString make_ddString_length_fa(const char* _c, ddsize _l)
+{
+	ddString _o;
+	_o.status = DOS_ACTIVE;
+	_o.aDelete = DOD_MANUAL;
+	_o.type = DDSTRING_DYNAMIC;
+
+	_o.length = _l;
+	_o.capacity = _l + __BYINC;
+
+	_o.cstr = qmake(char, _o.capacity);
+	cstring_copy(_o.cstr, _c, _o.length);
+	ddString_close(_o);
+	return _o;
+}
+
 #endif
