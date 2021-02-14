@@ -417,7 +417,6 @@ struct tokenNode** parser_main(struct token* tokens, sizet tokenCount, sizet* _t
 	stream = tokens;
 	streamEnd = tokens+tokenCount;
 	push(0);
-	printf("start\n");
 	int i = 1;
 	while (1)
 	{

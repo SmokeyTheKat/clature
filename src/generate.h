@@ -1090,7 +1090,6 @@ void generate_write_btc(int opc, ddString lhs, ddString rhs)
 }
 static void pop_stack_var(struct stVariable var)
 {
-	ddPrintf("line: %d\n", treePosition);
 	switch (var.size)
 	{
 		case 1:

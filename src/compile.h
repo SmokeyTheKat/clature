@@ -23,13 +23,17 @@ void compile_main(int agsc, char** ags)
 	debug = false;
 	if (args_if_def(make_constant_ddString("-debug"))) debug = true;
 	ddString file;
+	ddTimer_start();
 	if (args_if_def(make_constant_ddString("__INPUT_FILE")))
 		file = read_file(args_get_value(make_constant_ddString("__INPUT_FILE")).cstr);
 	else compile_error("NO INPUT FILES. USE \"ccl --help\" FOR MORE INFOMATION\n");
+	compile_message(make_format_ddString("READ FILE: %f", ddTimer_stop()).cstr);
 		
 	ddString fileOut = make_ddString("");
+	ddTimer_start();
 	if (!args_if_def(make_constant_ddString("--no-macros")))
 		read_macros(&file);
+	compile_message(make_format_ddString("MACROS: %f", ddTimer_stop()).cstr);
 
 	init_compiler();
 
@@ -49,9 +53,9 @@ void compile_main(int agsc, char** ags)
 	struct tokenNode** parseTrees = parser_main(tokens, tokenCount, &treeCount);
 	compile_message(make_format_ddString("PARSER: %f", ddTimer_stop()).cstr);
 
-	ddTimer_start();
 	inFunction = false;
 	init_regs();
+	ddTimer_start();
 	struct bitcode* bitcodeHead = generate_bitcode_main(parseTrees, treeCount);
 	compile_message(make_format_ddString("BTC GEN: %f", ddTimer_stop()).cstr);
 
@@ -70,8 +74,6 @@ void compile_main(int agsc, char** ags)
 	compile_message(make_format_ddString("OUTPUT ASM: %f", ddTimer_stop()).cstr);
 
 	if (debug) ddPrint_nl();
-
-	compile_message(make_format_ddString("RUNTIME: %f", ddTimer_stop()).cstr);
 }
 
 /*
