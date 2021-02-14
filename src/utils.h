@@ -140,7 +140,7 @@ ddString make_ddString_length_fa(const char* _c, ddsize _l)
 	_o.length = _l;
 	_o.capacity = _l + __BYINC;
 
-	_o.cstr = qmake(char, _o.capacity);
+	_o.cstr = make(char, _o.capacity);
 	cstring_copy(_o.cstr, _c, _o.length);
 	ddString_close(_o);
 	return _o;

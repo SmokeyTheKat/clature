@@ -26,7 +26,6 @@ bool debug;
 
 int main(int argc, char** argv)
 {
-	init_qalloc(15000000);
 	read_args(argc, argv);
 	compile_main(argc, argv);
 	if (args_if_def(make_constant_ddString("-o")))

@@ -4,11 +4,11 @@ argv:
 argc:
 	DD	0;
 _69_str0:
-	DW	`\x1b[38;2;255;255;0mYO\n`,0;
+	DB	`\x1b[38;2;255;255;0mYO\n`,0;
 _69_str1:
-	DW	`\n`,0;
+	DB	`\n`,0;
 _69_str2:
-	DW	`\n`,0;
+	DB	`\n`,0;
 section .text;
 pnum:
 	PUSH	RBP;

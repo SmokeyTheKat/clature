@@ -132,7 +132,7 @@ void write_bitcode(struct bitcode* code, ddString* outp)
 	ddString ed = make_constant_ddString(";\n");
 	ddString nl = make_constant_ddString("\n");
 	ddString gb = make_constant_ddString("global ");
-	outp->cstr = qmake(char, MAX_OFILE_SIZE);
+	outp->cstr = make(char, MAX_OFILE_SIZE);
 	outp->capacity = MAX_OFILE_SIZE;
 	while (code->next!= nullptr)
 	{

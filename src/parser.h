@@ -26,16 +26,16 @@ void print_tree(struct tokenNode* root, int depth);
 
 struct tokenNode* make_tokenNode(struct token* value)
 {
-	struct tokenNode* output = qmake(struct tokenNode, 1);
+	struct tokenNode* output = make(struct tokenNode, 1);
 	output->nodeCount = 0;
-	output->nodes = qmake(struct tokenNode*, 20);
+	output->nodes = make(struct tokenNode*, 20);
 	output->value = value;
 	return output;
 }
 
 struct tokenNode* make_tokenNode_nont(int sym, char* val)
 {
-	struct token* newt = qmake(struct token, 1);
+	struct token* newt = make(struct token, 1);
 	newt->symbol = sym;
 	newt->value = make_constant_ddString(val);
 	return make_tokenNode(newt);
@@ -277,7 +277,7 @@ static int reduce(int v)
 	//if(debug)ddPrintf("REDUCE %d\n", v);
 	pop(grammar[v].length);
 
-	struct tokenNode** children = qmake(struct tokenNode*, grammar[v].length);
+	struct tokenNode** children = make(struct tokenNode*, grammar[v].length);
 	for (int i = 0; i < grammar[v].length; i++) children[i] = tstack[tpos-i];
 	tpos -= grammar[v].length;
 	tstack[++tpos] = make_tokenNode_children(children, grammar[v].length, grammar[v].result);
@@ -413,7 +413,7 @@ void print_tree(struct tokenNode* root, int depth)
 struct tokenNode** parser_main(struct token* tokens, sizet tokenCount, sizet* _treeCount)
 {
 	treeCount = 0;
-	trees = qmake(struct tokenNode*, MAX_TREE_SIZE);
+	trees = make(struct tokenNode*, MAX_TREE_SIZE);
 	stream = tokens;
 	streamEnd = tokens+tokenCount;
 	push(0);

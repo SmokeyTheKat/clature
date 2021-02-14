@@ -15,7 +15,7 @@ sizet cargsCount = 0;
 
 void read_args(int argc, char** argv)
 {
-	cargs = qmake(struct compilerArgs, 1000);
+	cargs = make(struct compilerArgs, 1000);
 	for (int i = 1; i < argc; i++)
 	{
 		ddString dsarg = make_ddString(argv[i]);

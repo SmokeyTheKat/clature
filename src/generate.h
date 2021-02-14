@@ -229,7 +229,7 @@ struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _tree
  	for (sizet i = 0; i < MAX_SCOPES; i++) scopeStack[i] = 0;
 	tokenTrees = parseTrees;
 	treeCount = _treeCount;
-	bitcode = qmake(struct bitcode, 1);
+	bitcode = make(struct bitcode, 1);
 	bitcodeHead = bitcode;
 	generate_write_btc(BTC_GLOBAL, make_constant_ddString("main"), REG_NONE);
 	generate_write_btc(BTC_LABEL, make_constant_ddString("main"), REG_NONE);
@@ -254,7 +254,7 @@ struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _tree
 	bitcodeMoveStack->rhs = make_ddString_from_int(stackt.size);
 	
 	struct bitcode* temp = bitcode;
-	struct bitcode* datacode = qmake(struct bitcode, 1);
+	struct bitcode* datacode = make(struct bitcode, 1);
 	bitcode = datacode;
 	generate_write_btc(BTC_ILA, make_constant_ddString("section .data"), REG_NONE);
 	for (sizet i = 0; i < datat.top; i++)
@@ -701,7 +701,7 @@ static bool is_size_operatable(int size)
 static void generate_sub_statement(struct tokenNode* node)
 {
 	struct bitcode* temp = bitcode;
-	struct bitcode* functionCodeHead= qmake(struct bitcode, 1);
+	struct bitcode* functionCodeHead= make(struct bitcode, 1);
 	bitcode = functionCodeHead;
 	struct bitcode* btcMoveStack = generate_write_function_headder(node->nodes[1]->value->value);
 	fstackt.size = 0;
@@ -1083,7 +1083,7 @@ void generate_write_btc(int opc, ddString lhs, ddString rhs)
 	bitcode->opc = opc;
 	bitcode->lhs = lhs;
 	bitcode->rhs = rhs;
-	struct bitcode* nbtc = qmake(struct bitcode, 1);
+	struct bitcode* nbtc = make(struct bitcode, 1);
 	bitcode->next = nbtc;
 	bitcode->next->prev = bitcode;
 	bitcode = bitcode->next;
@@ -1320,7 +1320,7 @@ struct dtVariable datat_add_string(ddString value)
 	ddString_push_cstring_back(&(datat.data[datat.top].data), ",0");
 	datat.data[datat.top].data.cstr[datat.data[datat.top].data.length] = '\0';
 	datat.data[datat.top].name = make_format_ddString("_69_str%d", stringCount++);
-	datat.data[datat.top].defineSize = make_constant_ddString("DW");
+	datat.data[datat.top].defineSize = make_constant_ddString("DB");
 	return datat.data[datat.top++];
 }
 void push_data_var(struct dtVariable var)

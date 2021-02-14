@@ -28,7 +28,7 @@ static bool inBT;// in syntax '@8<10>' when stream is at '<' set true so '>' is 
 struct token* lexer_main(ddString _file, sizet* _tokenCount)
 {
 	ddPrintf("hrerere\n");
-	tokenStream = qmake(struct token, MAX_TOKEN_SIZE);
+	tokenStream = make(struct token, MAX_TOKEN_SIZE);
 	literal = make_ddString("");
 	inBT = false;
 	tokenPos = 0;
