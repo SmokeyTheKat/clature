@@ -1,6 +1,6 @@
-#include <ddcDef.h>
-#include <ddcString.h>
-#include <ddcTime.h>
+#include "./ddcLib/ddcDef.h"
+#include "./ddcLib/ddcString.h"
+#include "./ddcLib/ddcTime.h"
 
 #include <stdio.h>
 #include <unistd.h>

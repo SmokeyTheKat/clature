@@ -1,7 +1,7 @@
 #ifndef __clature_qalloc_h__
 #define __clature_qalloc_h__
 
-#include <ddcDef.h>
+#include "./ddcLib/ddcDef.h"
 
 #define qmake(t,s) ((t*)(qalloc(s*sizeof(t))))
 

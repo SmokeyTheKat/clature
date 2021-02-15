@@ -1,7 +1,7 @@
 #ifndef __clature_compile_h__
 #define __clature_compile_h__
 
-#include <ddcTime.h>
+#include "./ddcLib/ddcTime.h"
 
 #include "./generate.h"
 #include "./lexer.h"
@@ -69,7 +69,10 @@ void compile_main(int agsc, char** ags)
 		if (!debug)
 			write_file(args_get_value(make_constant_ddString("-o")).cstr, fileOut);
 		else
-			ddPrint_ddString(fileOut);
+		{
+			ddPrint_cstring(fileOut.cstr);
+			ddPrint_nl();
+		}
 	}
 	compile_message(make_format_ddString("OUTPUT ASM: %f", ddTimer_stop()).cstr);
 

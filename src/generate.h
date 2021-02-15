@@ -294,7 +294,8 @@ void generate_asm_step(struct tokenNode* node)
 	else if (node->nodeCount == 1 && node->nodes[0]->value->type == TKN_LITERAL)
 	{
 		//generate_write_btc(BTC_ILA, node->nodes[0]->value->value, REG_NONE);
-		ddPrint_ddString_nl(node->nodes[0]->value->value);
+		ddPrint_cstring(node->nodes[0]->value->value.cstr);
+		ddPrint_nl();
 	}
 	else if (node->nodeCount > 1)
 	{

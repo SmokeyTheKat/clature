@@ -1,9 +1,9 @@
 #ifndef __clature_utils_h__
 #define __clature_utils_h__
 
-#include <ddcDef.h>
-#include <ddcString.h>
-#include <ddcPrint.h>
+#include "./ddcLib/ddcDef.h"
+#include "./ddcLib/ddcString.h"
+#include "./ddcLib/ddcPrint.h"
 #include "./args.h"
 
 #define TKN_LITERAL 0x00
@@ -81,14 +81,18 @@ void compile_message(const char* message)
 {
 	compile_reset_color();
 	if (!args_if_def(make_constant_ddString("--silent")))
-		ddPrint_cstring_nl(message);
+	{
+		ddPrint_cstring(message);
+		ddPrint_nl();
+	}
 }
 void compile_warning(const char* warning)
 {
 	if (!args_if_def(make_constant_ddString("--silent")))
 	{
 		ddPrint_cstring("[\x1b[38;2;255;255;0mWARNING\x1b[38;2;255;255;255m] ");
-		ddPrint_cstring_nl(warning);
+		ddPrint_cstring(warning);
+		ddPrint_nl();
 	}
 }
 void compile_error(const char* error)
@@ -125,7 +129,7 @@ ddString make_ddString_length_f(const char* _c, ddsize _l)
 	_o.length = _l;
 	_o.capacity = _l;
 
-	_o.cstr = _c;
+	_o.cstr = (char*)_c;
 
 	return _o;
 }

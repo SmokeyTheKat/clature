@@ -2,7 +2,7 @@
 #define __clature_args_h__
 
 #include "./qalloc.h"
-#include <ddcPrint.h>
+#include "./ddcLib/ddcPrint.h"
 
 struct compilerArgs
 {
@@ -21,22 +21,22 @@ void read_args(int argc, char** argv)
 		ddString dsarg = make_ddString(argv[i]);
 		if (ddString_compare_cstring(dsarg, "--help") || ddString_compare_cstring(dsarg, "-help"))
 		{
-			ddPrint_cstring_nl("clature");
-			ddPrint_cstring_nl("usage: ccl [OPTIONS...] file");
-			ddPrint_cstring_nl("options:");
-			ddPrint_cstring_nl("	-o			output elf executable file");
-			ddPrint_cstring_nl("	-s			output asm file");
-			ddPrint_cstring_nl("	--no-clean-up		lets the .s and .o files stick around");
-			ddPrint_cstring_nl("	--debug			debug logs");
-			ddPrint_cstring_nl("	--parse-tree		debug logs");
-			ddPrint_cstring_nl("	--no-stack		will not use push's and pop's and will try to use registers for variables");
-			ddPrint_cstring_nl("	--no-main		no main function");
-			ddPrint_cstring_nl("	-O0			btc generation goes directly to asm");
-			ddPrint_cstring_nl("	-O1	(DEFAULT)	stack optimizations");
-			ddPrint_cstring_nl("	-O2			optimzation level 2");
-			ddPrint_cstring_nl("	-O3			optimzation level 3");
-			ddPrint_cstring_nl("all paramaters are passed as macros to the compiler.");
-			ddPrint_cstring_nl("docs: https://ddmo.rf.gd/clature/");
+			ddPrint_cstring("clature\n");
+			ddPrint_cstring("usage: ccl [OPTIONS...] file\n");
+			ddPrint_cstring("options:\n");
+			ddPrint_cstring("	-o			output elf executable file\n");
+			ddPrint_cstring("	-s			output asm file\n");
+			ddPrint_cstring("	--no-clean-up		lets the .s and .o files stick around\n");
+			ddPrint_cstring("	--debug			debug logs\n");
+			ddPrint_cstring("	--parse-tree		debug logs\n");
+			ddPrint_cstring("	--no-stack		will not use push's and pop's and will try to use registers for variables\n");
+			ddPrint_cstring("	--no-main		no main function\n");
+			ddPrint_cstring("	-O0			btc generation goes directly to asm\n");
+			ddPrint_cstring("	-O1	(DEFAULT)	stack optimizations\n");
+			ddPrint_cstring("	-O2			optimzation level 2\n");
+			ddPrint_cstring("	-O3			optimzation level 3\n");
+			ddPrint_cstring("all paramaters are passed as macros to the compiler.\n");
+			ddPrint_cstring("docs: https://ddmo.rf.gd/clature/\n");
 			exit(0);
 		}
 		else if (ddString_compare_cstring(dsarg, "-o"))

@@ -4,7 +4,7 @@
 #include "./lexer.h"
 #include "./utils.h"
 #include "./qalloc.h"
-#include <ddcKeyboard.h>
+#include "./ddcLib/ddcKeyboard.h"
 
 struct tokenNode;
 

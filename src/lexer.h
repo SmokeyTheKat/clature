@@ -1,7 +1,8 @@
 #ifndef __clature_lexer_h__
 #define __clature_lexer_h__ 
-#include <ddcString.h>
-#include <ddcPrint.h>
+
+#include "./ddcLib/ddcString.h"
+#include "./ddcLib/ddcPrint.h"
 #include <stdarg.h>
 
 #include "./utils.h"
