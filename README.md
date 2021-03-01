@@ -84,10 +84,15 @@ sub @8 multiply(@8 a, @8b)
 }
 ```
 
-Calling a function with no return value need an iso keyword for now.
+Calling a function is like anything else. If you input the wrong sizes, there will be no error and the data will be formatted into the size of the variables. If you do not put enough inputs, the rmaining will be null. You can put more inputs then requested, and in the function you can use them like C's va_args using the function fargs_set(var_ptr, size) and fargs_get(size)
 ```
+sub @8 funfun(@8 a, @4 b)
+{
+  pstr(fargs_get(8))
+}
 @8 str = "hello";
-iso printString(str, 5);
+funfun(10, 20, str, 30, 40); valid
+funfun(); valid
 ```
 
 Inline assembly can be used anywhere and will not get messed around with. An assembly line is started with a '.'. Variables can be used in the assembly.
