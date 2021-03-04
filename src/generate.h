@@ -58,13 +58,20 @@ sizet scopeCounts[MAX_SCOPES];
 sizet scopeStackPos = 0;
 sizet scopeStack[MAX_SCOPES];
 
+enum
+{
+	TAC_ID,
+	TAC_REG,
+	TAC_NUM,
+	TAC_TMP,
+};
 
 struct tac_value
 {
 	union
 	{
 		ddString reg;
-		ddString str;
+		ddString id;
 		long num;
 		int tmp;
 	} val;
@@ -86,15 +93,23 @@ struct bitcode
 	struct bitcode* prev;
 };
 
-struct tac_value generate_tac(struct tac* tc, int* tcpos, struct tokenNode* node)
+struct tac_value generate_tac(struct tac* tc, int* tcpos, int tmp, struct tokenNode* node)
 {
-	tc[*tcpos].opatr = node->nodes[1]->value->symbol;
-	tc[*tcpos].lhs = generate_tac(tc, tcpos+1, node->nodes[1]);
-	tc[*tcpos].rhs = generate_tac(tc, tcpos+1, node->nodes[1]);
-	struct tac_value output;
-	output.val.num = 0;
-	output.type = 0;
-	return output;
+	if (node->nodeCount == 3)
+	{
+		tc[*tcpos].opatr = node->nodes[1]->value->symbol;
+		if (node->nodes[1]->value->symbol == G_EQ)
+		{
+			tc[*tcpos].set.type = TAC_ID;
+			tc[*tcpos].set.val.id = node->nodes[0]->value->value;
+		}
+		else
+		{
+			tc[*tcpos].set.type = TAC_TMP;
+			tc[*tcpos].set.val.tmp = tmp;
+		}
+		if (node->nodes[0]
+	}
 }
 
 struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _treeCount)
@@ -102,10 +117,8 @@ struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _tree
 	struct tac tc[200];
 	int tcptr = 0;
 
-	generate_tac(tc, &tcptr, *parseTrees);
+	generate_tac(tc, &tcptr, 0, *parseTrees);
 
-	ddPrintf("%d - %d\n", tc[0].lhs.val.num, tc[0].rhs.val.num);
-	
 	return bitcodeHead;
 }
 
