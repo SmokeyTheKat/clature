@@ -3,6 +3,7 @@
 
 #include "./regs.h"
 #include "./qalloc.h"
+#include "./data.h"
 
 #define BTC_PUSH	0x00
 #define BTC_POP		0x01
@@ -51,6 +52,7 @@ static struct tokenNode* cnode;
 static struct bitcode* bitcode;
 static struct bitcode* bitcodeHead;
 
+
 #define MAX_SCOPES 40
 
 sizet scope = 0;
@@ -64,6 +66,7 @@ enum
 	TAC_REG,
 	TAC_NUM,
 	TAC_TMP,
+	TAC_NONE,
 };
 
 struct tac_value
@@ -71,9 +74,10 @@ struct tac_value
 	union
 	{
 		ddString reg;
-		ddString id;
-		long num;
+		struct stVariable* id;
+		ddString num;
 		int tmp;
+		int none;
 	} val;
 	int type;
 };
@@ -93,31 +97,209 @@ struct bitcode
 	struct bitcode* prev;
 };
 
-struct tac_value generate_tac(struct tac* tc, int* tcpos, int tmp, struct tokenNode* node)
+enum
 {
-	if (node->nodeCount == 3)
+	STMT_VALUE,
+	STMT_LR_OPATR,
+	STMT_MODIFYER,
+	STMT_ASSIGN_AT,
+	STMT_DEREF,
+	STMT_DEREF_COLON,
+};
+
+struct tac_value tac_number(ddString num)
+{
+	struct tac_value output;
+	output.type = TAC_NUM;
+	output.val.num = num;
+	return output;
+}
+struct tac_value tac_temp(int tmp)
+{
+	struct tac_value output;
+	output.type = TAC_TMP;
+	output.val.tmp = tmp;
+	return output;
+}
+struct tac_value tac_none(void)
+{
+	struct tac_value output;
+	output.type = TAC_NONE;
+	output.val.none = 0;
+	return output;
+}
+
+int identify(struct tokenNode* node)
+{
+	switch (node->nodeCount)
 	{
-		tc[*tcpos].opatr = node->nodes[1]->value->symbol;
-		if (node->nodes[1]->value->symbol == G_EQ)
+		case 0:
 		{
-			tc[*tcpos].set.type = TAC_ID;
-			tc[*tcpos].set.val.id = node->nodes[0]->value->value;
-		}
-		else
+			return  STMT_VALUE;
+		} break;
+		case 2:
 		{
-			tc[*tcpos].set.type = TAC_TMP;
-			tc[*tcpos].set.val.tmp = tmp;
-		}
-		if (node->nodes[0]
+			return  STMT_MODIFYER;
+		} break;
+		case 3:
+		{
+			if (node->nodes[2]->value->type == TKN_AT &&
+			    node->nodes[1]->value->type == TKN_NUMBER)
+				return STMT_ASSIGN_AT;
+			return STMT_LR_OPATR;
+		} break;
+		case 5:
+		{
+			if (node->nodes[4]->value->type == TKN_AT &&
+			    node->nodes[3]->value->type == TKN_NUMBER)
+				return STMT_DEREF;
+		} break;
+		case 7:
+		{
+			if (node->nodes[6]->value->type == TKN_AT &&
+			    node->nodes[5]->value->type == TKN_NUMBER &&
+			    node->nodes[2]->value->type == TKN_COLON)
+				return STMT_DEREF_COLON;
+		} break;
+	}
+}
+
+struct tac_value generate_tac(struct tac* tc, int* tcpos, int* tmp, struct tokenNode* node)
+{
+	int otmp = *tmp;
+	struct tac_value output;
+	int statement_type = identify(node);
+	switch (statement_type)
+	{
+		case STMT_VALUE:
+		{
+			if (node->value->type == TKN_ID)
+			{
+				output.type = TAC_ID;
+				output.val.id = stackt_get_var(node->value->value);
+			}
+			else if (node->value->type == TKN_NUMBER)
+			{
+				output.type = TAC_NUM;
+				output.val.num = node->value->value;
+			}
+			return output;
+		} break;
+		case STMT_ASSIGN_AT:
+		{
+			output.type = TAC_ID;
+			struct stVariable* var = stackt_set_var(node->nodes[0]->value->value,
+					ddString_to_int(node->nodes[1]->value->value));
+			output.val.id = var;
+			return output;
+			
+		} break;
+		case STMT_DEREF:
+		{
+			(*tcpos)++;
+			int stcpos = *tcpos;
+			tc[stcpos].opatr = OPATR_DEREF + ddString_to_int(node->nodes[3]->value->value);
+			tc[stcpos].set.type = TAC_TMP;
+			tc[stcpos].set.val.tmp = (*tmp)++;
+			tc[stcpos].lhs = generate_tac(tc, tcpos, tmp, node->nodes[1]);
+			tc[stcpos].rhs = tac_none();
+		} break;
+		case STMT_DEREF_COLON:
+		{
+			(*tcpos)++;
+			int stcpos = *tcpos;
+			tc[stcpos].opatr = OPATR_DEREF + ddString_to_int(node->nodes[5]->value->value);
+			tc[stcpos].set.type = TAC_TMP;
+			tc[stcpos].set.val.tmp = (*tmp)++;
+			tc[stcpos].lhs = tac_temp((*tmp));
+			tc[stcpos].rhs = tac_none();
+
+			(*tcpos)++;
+			stcpos++;
+			tc[stcpos].opatr = TKN_ADD;
+			tc[stcpos].set.type = TAC_TMP;
+			tc[stcpos].set.val.tmp = (*tmp)++;
+			tc[stcpos].lhs = tac_temp((*tmp));
+			tc[stcpos].rhs = generate_tac(tc, tcpos, tmp, node->nodes[3]);
+
+			(*tcpos)++;
+			stcpos++;
+			tc[stcpos].opatr = TKN_MUL;
+			tc[stcpos].set.type = TAC_TMP;
+			tc[stcpos].set.val.tmp = (*tmp)++;
+			tc[stcpos].lhs = tac_number(node->nodes[5]->value->value);
+			tc[stcpos].rhs = generate_tac(tc, tcpos, tmp, node->nodes[1]);
+		} break;
+		case STMT_LR_OPATR:
+		{
+			(*tcpos)++;
+			int stcpos = *tcpos;
+			tc[stcpos].opatr = node->nodes[1]->value->type;
+			tc[stcpos].set.type = TAC_TMP;
+			tc[stcpos].set.val.tmp = (*tmp)++;
+			tc[stcpos].lhs = generate_tac(tc, tcpos, tmp, node->nodes[0]);
+			tc[stcpos].rhs = generate_tac(tc, tcpos, tmp, node->nodes[2]);
+		} break;
+		case STMT_MODIFYER:
+		{
+			(*tcpos)++;
+			int stcpos = *tcpos;
+			tc[stcpos].opatr = node->nodes[1]->value->type;
+			tc[stcpos].set.type = TAC_TMP;
+			tc[stcpos].set.val.tmp = (*tmp)++;
+			tc[stcpos].lhs = generate_tac(tc, tcpos, tmp, node->nodes[0]);
+			tc[stcpos].rhs = tac_none();
+		} break;
+	}
+	(*tmp)++;
+	output.type = TAC_TMP;
+	output.val.tmp = otmp;
+	return output;
+}
+
+void tac_print(struct tac_value tv)
+{
+	switch (tv.type)
+	{
+		case TAC_ID:
+		{
+			ddPrintf("!%s", tv.val.id->name.cstr);
+		} break;
+		case TAC_NUM:
+		{
+			ddPrintf("#%s", tv.val.num.cstr);
+		} break;
+		case TAC_TMP:
+		{
+			ddPrintf("T%d", tv.val.tmp);
+		} break;
 	}
 }
 
 struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _treeCount)
 {
-	struct tac tc[200];
-	int tcptr = 0;
+	for (int i = 0; i < _treeCount; i++)
+	{
+		struct tac tc[200];
+		int tcptr = -1;
+		int tmp = 0;
 
-	generate_tac(tc, &tcptr, 0, *parseTrees);
+		generate_tac(tc, &tcptr, &tmp, parseTrees[i]);
+
+		tcptr++;
+
+		ddPrintf("%d    -      \n", tcptr);
+
+		for (int i = 0; i < tcptr; i++)
+		{
+			tac_print(tc[i].set);
+			ddPrintf(" = ");
+			tac_print(tc[i].lhs);
+			ddPrintf(" %s ", tkn_strs[tc[i].opatr]);
+			tac_print(tc[i].rhs);
+			ddPrint_nl();
+		}
+	}
 
 	return bitcodeHead;
 }
