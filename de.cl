@@ -59,7 +59,7 @@ sub @8 pnum(@8 num)
 }
 for @8 i = 0, i < 10, i++
 {
-	pstr(`\x1b[38;2;255;255;0mYO\n`);
+	pstr(`\x1b[38;2;255;0;255mYO\n`);
 }
 @1<10> array;
 @23 st;
@@ -75,3 +75,16 @@ if 1 == 1
 	pstr(`\n`);
 } 
 @8 none = 1  + 3 - 2;
+
+pstr(`\n`);
+
+@20 a;
+@8[?a] = 2;
+@20 b = a;
+@8 z = @8[?b];
+nts(z, str, 10);
+pstr(str);
+
+pstr(`\n`);
+
+

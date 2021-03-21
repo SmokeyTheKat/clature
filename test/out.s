@@ -4,10 +4,14 @@ argv:
 argc:
 	DD	0;
 _69_str0:
-	DB	`\x1b[38;2;255;255;0mYO\n`,0;
+	DB	`\x1b[38;2;255;0;255mYO\n`,0;
 _69_str1:
 	DB	`\n`,0;
 _69_str2:
+	DB	`\n`,0;
+_69_str3:
+	DB	`\n`,0;
+_69_str4:
 	DB	`\n`,0;
 section .text;
 pnum:
@@ -295,7 +299,7 @@ main:
 	EXTERN	free;
 	PUSH	RBP;
 	MOV	RBP, RSP;
-	SUB	RSP, 91;
+	SUB	RSP, 139;
 	MOV	QWORD[argv], RSI;
 	MOV	DWORD[argc], EDI;
 	PUSH	0;
@@ -377,6 +381,40 @@ main:
 	ADD	R8, R9;
 	PUSH	R8;
 	POP	QWORD[RBP-91];
+	PUSH	_69_str3;
+	CALL	pstr;
+	ADD	RSP, 0;
+	PUSH	2;
+	MOV	R8, RBP;
+	SUB	R8, 111;
+	PUSH	R8;
+	POP	R8;
+	POP	QWORD[R8];
+	PUSH	QWORD[RBP-131];
+	PUSH	QWORD[RBP-123];
+	MOV	EAX, DWORD[RBP-115];
+	PUSH	RAX;
+	POP	RAX;
+	MOV	DWORD[RBP-131+0], EAX;
+	POP	QWORD[RBP-131+4];
+	POP	QWORD[RBP-131+12];
+	MOV	R8, RBP;
+	SUB	R8, 131;
+	PUSH	R8;
+	POP	R8;
+	PUSH	QWORD[R8];
+	POP	QWORD[RBP-139];
+	PUSH	QWORD[RBP-139];
+	PUSH	QWORD[RBP-57];
+	PUSH	10;
+	CALL	nts;
+	ADD	RSP, 24;
+	PUSH	QWORD[RBP-57];
+	CALL	pstr;
+	ADD	RSP, 8;
+	PUSH	_69_str4;
+	CALL	pstr;
+	ADD	RSP, 0;
 	MOV	EAX, 0;
 	POP	RBP;
 	MOV	RAX, 60;

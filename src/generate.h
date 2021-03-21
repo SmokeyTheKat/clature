@@ -130,6 +130,8 @@ struct dtVariable datat_get_data(ddString name);
 void push_data_var(struct dtVariable var);
 static void push_ref(ddString value, sizet size);
 static void pop_ref(ddString value, sizet size);
+static void pop_nsize(ddString value, sizet size);
+static void push_nsize(ddString value, sizet size);
 static void push_param_nsize(struct stVariable var);
 
 static sizet treePosition = 0;
@@ -1117,7 +1119,7 @@ static void pop_stack_var(struct stVariable var)
 			break;
 		}
 		default:
-			compile_error(make_format_ddString("UNDEFINED VARIABLE (POP) ON LINE %d\n", treePosition+1).cstr);
+			pop_nsize(make_format_ddString("RBP-%d", var.spos), var.size);
 	}
 }
 static void pop_ref(ddString value, sizet size)
@@ -1148,7 +1150,7 @@ static void pop_ref(ddString value, sizet size)
 			break;
 		}
 		default:
-			compile_error(make_format_ddString("HOW THE FUCK DID THIS HAPPEN (POP) ON LINE %d\n", treePosition+1).cstr);
+			pop_nsize(value, size);
 	}
 }
 static void push_ref(ddString value, sizet size)
@@ -1179,7 +1181,7 @@ static void push_ref(ddString value, sizet size)
 			break;
 		}
 		default:
-			compile_error(make_format_ddString("HOW THE FUCK DID THIS HAPPEN (PUSH) ON LINE %d\n").cstr);
+			push_nsize(value, size);
 	}
 }
 static void push_stack_var(struct stVariable var)
@@ -1243,6 +1245,100 @@ struct stVariable stackt_set_var(ddString name, sizet size)
 	stackt.vars[stackt.top-1].spos = stackt.size;
 	return stackt.vars[stackt.top-1];
 }
+static void pop_nsize(ddString value, sizet size)
+{
+	int remain = size;
+	int done = 0;
+	int com[100] = {0};
+	int cpos = 0;
+	while (remain != 0)
+	{
+		if (remain >= 8)
+		{
+			com[cpos++] = 8;
+			remain -= 8;
+		}
+		else if (remain >= 4)
+		{
+			com[cpos++] = 4;
+			remain -= 4;
+		}
+		else if (remain >= 2)
+		{
+			com[cpos++] = 2;
+			remain -= 2;
+		}
+		else if (remain >= 1)
+		{
+			com[cpos++] = 1;
+			remain -= 1;
+		}
+
+	}
+	cpos--;
+	while (cpos >= 0)
+	{
+		if (com[cpos] == 8)
+		{
+			generate_write_btc(BTC_POP, make_format_ddString("QWORD[%s+%d]", value.cstr, done), REG_NONE);
+			done += 8;
+		}
+		else if (com[cpos] == 4)
+		{
+			pop_input(REG_RAX);
+			generate_write_btc(BTC_MOV, make_format_ddString("DWORD[%s+%d]", value.cstr, done), REG_EAX);
+			done += 4;
+		}
+		else if (com[cpos] == 2)
+		{
+			pop_input(REG_RAX);
+			generate_write_btc(BTC_MOV, make_format_ddString("WORD[%s+%d]", value.cstr, done), REG_AX);
+			done += 2;
+		}
+		else if (com[cpos] == 1)
+		{
+			pop_input(REG_RAX);
+			generate_write_btc(BTC_MOV, make_format_ddString("BYTE[%s+%d]", value.cstr, done), REG_AL);
+			done += 1;
+		}
+		cpos--;
+	}
+}
+static void push_nsize(ddString value, sizet size)
+{
+	int remain = size;
+	int done = 0;
+	while (remain != 0)
+	{
+		if (remain >= 8)
+		{
+			generate_write_btc(BTC_PUSH, make_format_ddString("QWORD[%s+%d]", value.cstr, size-done), REG_NONE);
+			remain -= 8;
+			done += 8;
+		}
+		else if (remain >= 4)
+		{
+			generate_write_btc(BTC_MOV, REG_EAX, make_format_ddString("DWORD[%s+%d]", value.cstr, size-done));
+			push_result(REG_RAX);
+			remain -= 4;
+			done += 4;
+		}
+		else if (remain >= 2)
+		{
+			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("WORD[%s+%d]", value.cstr, size-done));
+			push_result(REG_RAX);
+			remain -= 2;
+			done += 2;
+		}
+		else if (remain >= 1)
+		{
+			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("BYTE[%s+%d]", value.cstr, size-done));
+			push_result(REG_RAX);
+			remain -= 1;
+			done += 1;
+		}
+	}
+}
 static void push_param_nsize(struct stVariable var)
 {
 	int remain = var.size;
@@ -1251,27 +1347,27 @@ static void push_param_nsize(struct stVariable var)
 	{
 		if (remain >= 8)
 		{
-			generate_write_btc(BTC_PUSH, make_format_ddString("QWORD[RBP-%d]", var.spos-done), REG_NONE);
+			generate_write_btc(BTC_PUSH, make_format_ddString("QWORD[RBP-%d]", var.spos+(var.size-done)), REG_NONE);
 			remain -= 8;
 			done += 8;
 		}
 		else if (remain >= 4)
 		{
-			generate_write_btc(BTC_MOV, REG_EAX, make_format_ddString("DWORD[RBP-%d]", var.spos-done));
+			generate_write_btc(BTC_MOV, REG_EAX, make_format_ddString("DWORD[RBP-%d]", var.spos+(var.size-done)));
 			push_result(REG_RAX);
 			remain -= 4;
 			done += 4;
 		}
 		else if (remain >= 2)
 		{
-			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("WORD[RBP-%d]", var.spos-done));
+			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("WORD[RBP-%d]", var.spos+(var.size-done)));
 			push_result(REG_RAX);
 			remain -= 2;
 			done += 2;
 		}
 		else if (remain >= 1)
 		{
-			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("BYTE[RBP-%d]", var.spos-done));
+			generate_write_btc(BTC_MOVSX, REG_RAX, make_format_ddString("BYTE[RBP-%d]", var.spos+(var.size-done)));
 			push_result(REG_RAX);
 			remain -= 1;
 			done += 1;
