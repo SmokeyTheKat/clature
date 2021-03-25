@@ -11,7 +11,7 @@ check: all
 	@echo "PASSED asm.cl"
 	@echo "PASSED ALL TESTS WOW :)"
 tc: all
-	./clature ./de.cl -o ./test/out --no-clean-up
+	./clature ./de.cl -o ./test/out --no-clean-up -debug
 	#nasm -f elf64 ./test/out.s -o ./test/out.o
 	#ld ./test/out.o -o ./test/out
 	./test/out

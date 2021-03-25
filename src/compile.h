@@ -44,8 +44,8 @@ void compile_main(int agsc, char** ags)
 	if (debug)
 	{
 		ddPrintf("TokenCount: %d\n", tokenCount);
-		for (sizet i = 0; i < tokenCount; i++)
-			ddPrintf("%d: %s: %s\n", i, TKN_STRS[tokens[i].type], tokens[i].value.cstr);
+		//for (sizet i = 0; i < tokenCount; i++)
+		//	ddPrintf("%d: %s: %s\n", i, TKN_STRS[tokens[i].type], tokens[i].value.cstr);
 	}
 
 	sizet treeCount = 0;
@@ -94,6 +94,7 @@ sizet bitcode_get_length(struct bitcode* code)
 
 void write_bitcode(struct bitcode* code, ddString* outp)
 {
+/*
 	ddString btcstrs[] = {
 		make_constant_ddString("PUSH"),
 		make_constant_ddString("POP"),
@@ -181,6 +182,7 @@ void write_bitcode(struct bitcode* code, ddString* outp)
 wcont:
 		code = code->next;
 	}
+*/
 }
 
 #endif

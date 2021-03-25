@@ -6,15 +6,127 @@
 #include "./ddcLib/ddcPrint.h"
 #include "./args.h"
 
-#define TKN_LITERAL 0x00
-#define TKN_KEYWORD 0x01
-#define TKN_OPERATOR 0x02
-#define TKN_SYNTAX 0x03
-#define TKN_ASSEMBLY 0x04
-#define TKN_FUNCTION 0x05
-#define TKN_LINEBREAK 0x06
-#define TKN_STRING 0x07
-#define TKN_NONTERMINAL 0x08
+enum
+{
+	OPATR_DEREF=200,
+	OPATR_BDEREF=201,
+	OPATR_WDEREF=202,
+	OPATR_DDEREF=204,
+	OPATR_QDEREF=208,
+};
+enum
+{
+	TKN_SEMI,
+	TKN_COLON,
+	TKN_OBU,
+	TKN_CBU,
+	TKN_ASM,
+	TKN_OBS,
+	TKN_CBS,
+	TKN_OBP,
+	TKN_CBP,
+	TKN_COMMA,
+	TKN_AT,
+	TKN_QUEST,
+	TKN_MUL_EQUALS,
+	TKN_MUL,
+	TKN_DIV_EQUALS,
+	TKN_DIV,
+	TKN_EQUALS_EQUALS,
+	TKN_EQUALS,
+	TKN_B_NOT_EQUALS,
+	TKN_B_NOT,
+	TKN_NOT_EQUALS,
+	TKN_NOT,
+	TKN_MOD_EQUALS,
+	TKN_MOD,
+	TKN_SUB_EQUALS,
+	TKN_SUB_SUB,
+	TKN_SUB,
+	TKN_ADD_EQUALS,
+	TKN_ADD_ADD,
+	TKN_ADD,
+	TKN_B_AND_EQUALS,
+	TKN_L_AND,
+	TKN_B_AND,
+	TKN_B_OR_EQUALS,
+	TKN_L_OR,
+	TKN_B_OR,
+	TKN_OBT,
+	TKN_LESS_THAN_EQUALS,
+	TKN_TSHL,
+	TKN_SHIFT_LEFT,
+	TKN_LESS_THAN,
+	TKN_CBT,
+	TKN_GREATER_THAN_EQUALS,
+	TKN_TSHR,
+	TKN_SHIFT_RIGHT,
+	TKN_GREATER_THAN,
+	TKN_CHAR_LITERAL,
+	TKN_STRING,
+	TKN_NUMBER,
+	TKN_KEYWORD,
+	TKN_ID,
+};
+
+const char* tkn_strs[400] = {
+	[TKN_SEMI]=";",
+	[TKN_COLON]=":",
+	[TKN_OBU]="{",
+	[TKN_CBU]="}",
+	[TKN_ASM]=".asm",
+	[TKN_OBS]="[",
+	[TKN_CBS]="]",
+	[TKN_OBP]="(",
+	[TKN_CBP]=")",
+	[TKN_COMMA]=",",
+	[TKN_AT]="@",
+	[TKN_QUEST]="?",
+	[TKN_MUL_EQUALS]="*=",
+	[TKN_MUL]="*",
+	[TKN_DIV_EQUALS]="/=",
+	[TKN_DIV]="/",
+	[TKN_EQUALS_EQUALS]="==",
+	[TKN_EQUALS]="=",
+	[TKN_B_NOT_EQUALS]="~=",
+	[TKN_B_NOT]="~",
+	[TKN_NOT_EQUALS]="!=",
+	[TKN_NOT]="!",
+	[TKN_MOD_EQUALS]="%=",
+	[TKN_MOD]="%",
+	[TKN_SUB_EQUALS]="-=",
+	[TKN_SUB_SUB]="--",
+	[TKN_SUB]="-",
+	[TKN_ADD_EQUALS]="+=",
+	[TKN_ADD_ADD]="++",
+	[TKN_ADD]="+",
+	[TKN_B_AND_EQUALS]="&=",
+	[TKN_L_AND]="&&",
+	[TKN_B_AND]="&",
+	[TKN_B_OR_EQUALS]="|=",
+	[TKN_L_OR]="||",
+	[TKN_B_OR]="|",
+	[TKN_OBT]="<",
+	[TKN_LESS_THAN_EQUALS]="<=",
+	[TKN_TSHL]="<<<",
+	[TKN_SHIFT_LEFT]="<<",
+	[TKN_LESS_THAN]="<",
+	[TKN_CBT]=">",
+	[TKN_GREATER_THAN_EQUALS]=">=",
+	[TKN_TSHR]=">>>",
+	[TKN_SHIFT_RIGHT]=">>",
+	[TKN_GREATER_THAN]=">",
+	[TKN_CHAR_LITERAL]="'x'",
+	[TKN_STRING]="\"xxx\"",
+	[TKN_NUMBER]="#x",
+	[TKN_KEYWORD]="KEY",
+	[TKN_ID]="ID",
+	[OPATR_DEREF]="@0",
+	[OPATR_BDEREF]="@1",
+	[OPATR_WDEREF]="@2",
+	[OPATR_DDEREF]="@4",
+	[OPATR_QDEREF]="@8",
+};
 
 typedef char byte;
 
@@ -151,3 +263,5 @@ ddString make_ddString_length_fa(const char* _c, ddsize _l)
 }
 
 #endif
+
+

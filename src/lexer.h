@@ -24,7 +24,7 @@ static sizet tokenPos;
 static ddString literal;
 static bool inBT;// in syntax '@8<10>' when stream is at '<' set true so '>' is known to be closer for array def
 
-#define is_last_linebreak() (tokenStream[tokenPos-1].type == TKN_LINEBREAK)
+#define is_last_linebreak() (tokenStream[tokenPos-1].type == TKN_SEMI)
 
 struct token* lexer_main(ddString _file, sizet* _tokenCount)
 {
@@ -39,7 +39,7 @@ struct token* lexer_main(ddString _file, sizet* _tokenCount)
 		tokenize(next());
 	}
 	if (!is_last_linebreak())
-		set_token(TKN_LINEBREAK, make_ddString_length_f(";", 1), G_SEMI);
+		set_token(TKN_SEMI, make_ddString_length_f(";", 1), G_SEMI);
 	(*_tokenCount) =  tokenPos;
 	return tokenStream;
 }
@@ -53,11 +53,11 @@ static void tokenize(char chr)
 		case ';':
 			skip('\n');
 			if (!is_last_linebreak())
-				set_token(TKN_LINEBREAK, make_ddString_length_f(";", 1), G_SEMI);
+				set_token(TKN_SEMI, make_ddString_length_f(";", 1), G_SEMI);
 			break;
 		case '\n':
 			if (!is_last_linebreak())
-				set_token(TKN_LINEBREAK, make_ddString_length_f(";", 1), G_SEMI);
+				set_token(TKN_SEMI, make_ddString_length_f(";", 1), G_SEMI);
 			break;
 		case '.':
 		{
@@ -67,48 +67,48 @@ static void tokenize(char chr)
 				{
 					ddString_push_char_back(&literal, chr);
 				} while ((chr = next()) != '\n' && chr != ';');
-				set_token(TKN_ASSEMBLY, literal, G_ILASM);
+				set_token(TKN_ASM, literal, G_ILASM);
 				reset_literal();
 				if (chr != '\n') skip('\n');
-				set_token(TKN_LINEBREAK, make_ddString_length_f(";", 1), G_SEMI);
+				set_token(TKN_SEMI, make_ddString_length_f(";", 1), G_SEMI);
 				break;
 			}
 		} break;
 		case '[':
-			set_token(TKN_SYNTAX, make_ddString_length_f("[", 1), G_OBS);
+			set_token(TKN_OBS, make_ddString_length_f("[", 1), G_OBS);
 			break;
 		case ']':
-			set_token(TKN_SYNTAX, make_ddString_length_f("]", 1), G_CBS);
+			set_token(TKN_CBS, make_ddString_length_f("]", 1), G_CBS);
 			break;
 		case '(':
-			set_token(TKN_SYNTAX, make_ddString_length_f("(", 1), G_OBP);
+			set_token(TKN_OBP, make_ddString_length_f("(", 1), G_OBP);
 			break;
 		case ')':
-			set_token(TKN_SYNTAX, make_ddString_length_f(")", 1), G_CBP);
+			set_token(TKN_CBP, make_ddString_length_f(")", 1), G_CBP);
 			break;
 		case ',':
-			set_token(TKN_SYNTAX, make_ddString_length_f(",", 1), G_COMMA);
+			set_token(TKN_COMMA, make_ddString_length_f(",", 1), G_COMMA);
 			break;
 		case ':':
-			set_token(TKN_SYNTAX, make_ddString_length_f(":", 1), G_COLON);
+			set_token(TKN_COLON, make_ddString_length_f(":", 1), G_COLON);
 			break;
 		case '{':
 			if (!is_last_linebreak())
-				set_token(TKN_LINEBREAK, make_ddString_length_f(";", 1), G_SEMI);
-			set_token(TKN_SYNTAX, make_ddString_length_f("{", 1), G_OBU);
-			set_token(TKN_LINEBREAK, make_ddString_length_f(";", 1), G_SEMI);
+				set_token(TKN_SEMI, make_ddString_length_f(";", 1), G_SEMI);
+			set_token(TKN_OBU, make_ddString_length_f("{", 1), G_OBU);
+			set_token(TKN_SEMI, make_ddString_length_f(";", 1), G_SEMI);
 			break;
 		case '}':
 			if (!is_last_linebreak())
-				set_token(TKN_LINEBREAK, make_ddString_length_f(";", 1), G_SEMI);
-			set_token(TKN_SYNTAX, make_ddString_length_f("}", 1), G_CBU);
-			set_token(TKN_LINEBREAK, make_ddString_length_f(";", 1), G_SEMI);
+				set_token(TKN_SEMI, make_ddString_length_f(";", 1), G_SEMI);
+			set_token(TKN_CBU, make_ddString_length_f("}", 1), G_CBU);
+			set_token(TKN_SEMI, make_ddString_length_f(";", 1), G_SEMI);
 			break;
 		case '@':
-			set_token(TKN_OPERATOR, make_ddString_length_f("@", 1), G_AT);
+			set_token(TKN_AT, make_ddString_length_f("@", 1), G_AT);
 			break;
 		case '?':
-			set_token(TKN_OPERATOR, make_ddString_length_f("?", 1), G_QUEST);
+			set_token(TKN_QUEST, make_ddString_length_f("?", 1), G_QUEST);
 			break;
 		case '*':
 		{
@@ -116,11 +116,11 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f("*=", 2), G_EQ);
+					set_token(TKN_MUL_EQUALS, make_ddString_length_f("*=", 2), G_EQ);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f("*", 1), G_PO);
+					set_token(TKN_MUL, make_ddString_length_f("*", 1), G_PO);
 					break;
 			}
 			break;
@@ -131,11 +131,11 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f("/=", 1), G_EQ);
+					set_token(TKN_DIV_EQUALS, make_ddString_length_f("/=", 1), G_EQ);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f("/", 1), G_PO);
+					set_token(TKN_DIV, make_ddString_length_f("/", 1), G_PO);
 					break;
 			}
 			break;
@@ -146,11 +146,11 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f("==", 2), G_QO);
+					set_token(TKN_EQUALS_EQUALS, make_ddString_length_f("==", 2), G_QO);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f("=", 1), G_EQ);
+					set_token(TKN_EQUALS, make_ddString_length_f("=", 1), G_EQ);
 					break;
 			}
 			break;
@@ -161,11 +161,11 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f("~=", 2), G_EQ);
+					set_token(TKN_B_NOT_EQUALS, make_ddString_length_f("~=", 2), G_EQ);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f("~", 1), G_EO);
+					set_token(TKN_B_NOT, make_ddString_length_f("~", 1), G_EO);
 					break;
 			}
 			break;
@@ -176,11 +176,11 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f("!=", 2), G_QO);
+					set_token(TKN_NOT_EQUALS, make_ddString_length_f("!=", 2), G_QO);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f("!", 1), '!');
+					set_token(TKN_NOT, make_ddString_length_f("!", 1), '!');
 					break;
 			}
 			break;
@@ -191,11 +191,11 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f("%=", 2), G_EQ);
+					set_token(TKN_MOD_EQUALS, make_ddString_length_f("%=", 2), G_EQ);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f("%", 1), G_EO);
+					set_token(TKN_MOD, make_ddString_length_f("%", 1), G_EO);
 					break;
 			}
 			break;
@@ -206,15 +206,15 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f("-=", 2), G_EQ);
+					set_token(TKN_SUB_EQUALS, make_ddString_length_f("-=", 2), G_EQ);
 					next();
 					break;
 				case '-':
-					set_token(TKN_OPERATOR, make_ddString_length_f("--", 2), G_MM);
+					set_token(TKN_SUB_SUB, make_ddString_length_f("--", 2), G_MM);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f("-", 1), G_SO);
+					set_token(TKN_SUB, make_ddString_length_f("-", 1), G_SO);
 					break;
 			}
 			break;
@@ -225,15 +225,15 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f("+=", 2), G_EQ);
+					set_token(TKN_ADD_EQUALS, make_ddString_length_f("+=", 2), G_EQ);
 					next();
 					break;
 				case '+':
-					set_token(TKN_OPERATOR, make_ddString_length_f("++", 2), G_PP);
+					set_token(TKN_ADD_ADD, make_ddString_length_f("++", 2), G_PP);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f("+", 1), G_SO);
+					set_token(TKN_ADD, make_ddString_length_f("+", 1), G_SO);
 					break;
 			}
 			break;
@@ -244,15 +244,15 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f("&=", 2), G_EQ);
+					set_token(TKN_B_AND_EQUALS, make_ddString_length_f("&=", 2), G_EQ);
 					next();
 					break;
 				case '&':
-					set_token(TKN_OPERATOR, make_ddString_length_f("&&", 2), G_QO);
+					set_token(TKN_L_AND, make_ddString_length_f("&&", 2), G_QO);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f("&", 1), G_EO);
+					set_token(TKN_B_AND, make_ddString_length_f("&", 1), G_EO);
 					break;
 			}
 			break;
@@ -263,15 +263,15 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f("|=", 2), G_EQ);
+					set_token(TKN_B_OR_EQUALS, make_ddString_length_f("|=", 2), G_EQ);
 					next();
 					break;
 				case '|':
-					set_token(TKN_OPERATOR, make_ddString_length_f("||", 2), G_QO);
+					set_token(TKN_L_OR, make_ddString_length_f("||", 2), G_QO);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f("|", 1), G_EO);
+					set_token(TKN_B_OR, make_ddString_length_f("|", 1), G_EO);
 					break;
 			}
 			break;
@@ -280,7 +280,7 @@ static void tokenize(char chr)
 		{
 			if (tokenStream[tokenPos-2].value.cstr[0] == '@')
 			{
-				set_token(TKN_OPERATOR, make_ddString_length_f("<", 1), G_OBT);
+				set_token(TKN_OBT, make_ddString_length_f("<", 1), G_OBT);
 				inBT = true;
 				break;
 			}
@@ -288,20 +288,20 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f("<=", 2), G_EQ);
+					set_token(TKN_LESS_THAN_EQUALS, make_ddString_length_f("<=", 2), G_EQ);
 					next();
 					break;
 				case '<':
 					if (peek(1) == '<')
 					{
-						set_token(TKN_OPERATOR, make_ddString_length_f("<<<", 3), G_EO);
+						set_token(TKN_TSHL, make_ddString_length_f("<<<", 3), G_EO);
 						next();
 					}
-					else set_token(TKN_OPERATOR, make_ddString_length_f("<<", 2), G_EO);
+					else set_token(TKN_SHIFT_LEFT, make_ddString_length_f("<<", 2), G_EO);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f("<", 1), G_QO);
+					set_token(TKN_LESS_THAN, make_ddString_length_f("<", 1), G_QO);
 					break;
 			}
 			break;
@@ -310,7 +310,7 @@ static void tokenize(char chr)
 		{
 			if (inBT)
 			{
-				set_token(TKN_OPERATOR, make_ddString_length_f(">", 1), G_CBT);
+				set_token(TKN_CBT, make_ddString_length_f(">", 1), G_CBT);
 				inBT = false;
 				break;
 			}
@@ -318,20 +318,20 @@ static void tokenize(char chr)
 			switch (cnx)
 			{
 				case '=':
-					set_token(TKN_OPERATOR, make_ddString_length_f(">=", 2), G_EQ);
+					set_token(TKN_GREATER_THAN_EQUALS, make_ddString_length_f(">=", 2), G_EQ);
 					next();
 					break;
 				case '>':
 					if (peek(1) == '>')
 					{
-						set_token(TKN_OPERATOR, make_ddString_length_f(">>>", 3), G_EO);
+						set_token(TKN_TSHR, make_ddString_length_f(">>>", 3), G_EO);
 						next();
 					}
-					else set_token(TKN_OPERATOR, make_ddString_length_f(">>", 2), G_EO);
+					else set_token(TKN_SHIFT_RIGHT, make_ddString_length_f(">>", 2), G_EO);
 					next();
 					break;
 				default:
-					set_token(TKN_OPERATOR, make_ddString_length_f(">", 1), G_QO);
+					set_token(TKN_GREATER_THAN, make_ddString_length_f(">", 1), G_QO);
 					break;
 			}
 			break;
@@ -349,7 +349,7 @@ static void tokenize(char chr)
 			chr = next();
 			if (chr != '\'') compile_error("UNCLOSED CHARACTER LITERAL\n");
 			ddString_push_char_back(&literal, chr);
-			set_token(TKN_LITERAL, literal, G_I);
+			set_token(TKN_CHAR_LITERAL, literal, G_I);
 			reset_literal();
 		} break;
 		case '"':
@@ -378,7 +378,7 @@ static void tokenize(char chr)
 			{
 				ddString_push_char_back(&literal, chr);
 			} while ((chr = next()) >= '0' && chr <= '9');
-			set_token(TKN_LITERAL, literal, G_N);
+			set_token(TKN_NUMBER, literal, G_N);
 			reset_literal();
 			tokenize(chr);
 		} break;
@@ -396,7 +396,7 @@ static void tokenize(char chr)
 			if ((sym = get_keyword_symbol(literal)) != -1)
 				set_token(TKN_KEYWORD, literal, sym);
 			else
-				set_token(TKN_LITERAL, literal, G_I);
+				set_token(TKN_ID, literal, G_I);
 			reset_literal();
 			tokenize(chr);
 		} break;
