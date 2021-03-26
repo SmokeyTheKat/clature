@@ -6,6 +6,42 @@
 #include "./ddcLib/ddcPrint.h"
 #include "./args.h"
 
+#define BTC_PUSH	0x00
+#define BTC_POP		0x01
+#define BTC_MOV		0x02
+#define BTC_ADD		0x03
+#define BTC_SUB		0x04
+#define BTC_MUL		0x05
+#define BTC_DIV		0x06
+#define BTC_MOVZX	0x07
+#define BTC_CMP 	0x08
+#define BTC_SETE 	0x09
+#define BTC_SETNE 	0x0A
+#define BTC_SETG 	0x0B
+#define BTC_SETGE 	0x0C
+#define BTC_SETL 	0x0D
+#define BTC_SETLE	0x0E
+#define BTC_JE		0x0F
+#define BTC_JNE		0x10
+#define BTC_JG		0x11
+#define BTC_JGE		0x12
+#define BTC_JL		0x13
+#define BTC_JLE		0x14
+#define BTC_LABEL	0x15
+#define BTC_GLOBAL	0x16
+#define BTC_SYSCALL	0x17
+#define BTC_ILA		0x18
+#define BTC_RET		0x19
+#define BTC_CDQE	0x1A
+#define BTC_MOVSX	0x1B
+#define BTC_CALL	0x1C
+#define BTC_JMP		0x1D
+#define BTC_INC		0x1E
+#define BTC_DEC		0x1F
+#define BTC_TAG		0x20
+#define BTC_XOR		0x21
+#define BTC_EXTERN	0x22
+
 enum
 {
 	OPATR_DEREF=200,

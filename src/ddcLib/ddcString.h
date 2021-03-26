@@ -61,6 +61,7 @@ void ddString_delete_at(ddString* _d, unsigned long i);
 void ddString_pop_back(ddString* _d, unsigned long _n);
 int ddString_to_int(const ddString _ds);
 void ddString_close(ddString _d);
+char ddString_is_number(ddString _d);
 
 static int __floatTdsCount(int number, int count);
 void cstring_get_length(const char* _c, unsigned long* _l);
@@ -642,6 +643,12 @@ void ddString_close(ddString _d)
 {
 	_d.cstr[_d.length] = 0;
 }
-
+char ddString_is_number(ddString _d)
+{
+	for (int i = 0; i < _d.length; i++)
+		if (!(_d.cstr[i] >= '0' && _d.cstr[i] <= '9'))
+			return 0;
+	return 1;
+}
 
 #endif

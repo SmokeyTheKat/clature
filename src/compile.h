@@ -94,7 +94,6 @@ sizet bitcode_get_length(struct bitcode* code)
 
 void write_bitcode(struct bitcode* code, ddString* outp)
 {
-/*
 	ddString btcstrs[] = {
 		make_constant_ddString("PUSH"),
 		make_constant_ddString("POP"),
@@ -145,44 +144,43 @@ void write_bitcode(struct bitcode* code, ddString* outp)
 		switch (code->opc)
 		{
 			case BTC_LABEL:
-				ddString_push_back(outp, code->lhs);
+				ddString_push_back(outp, code->r1);
 				ddString_push_back(outp, cn);
 				ddString_push_back(outp, nl);
 				goto wcont;
 			case BTC_GLOBAL:
 				ddString_push_back(outp, gb);
-				ddString_push_back(outp, code->lhs);
+				ddString_push_back(outp, code->r1);
 				ddString_push_back(outp, nl);
 				goto wcont;
 			case BTC_ILA:
-				ddString_push_back(outp, code->lhs);
+				ddString_push_back(outp, code->r1);
 				ddString_push_back(outp, ed);
 				goto wcont;
 			case BTC_TAG:
 				ddString_push_back(outp, tb);
-				ddString_push_back(outp, code->lhs);
+				ddString_push_back(outp, code->r1);
 				ddString_push_back(outp, tb);
-				ddString_push_back(outp, code->rhs);
+				ddString_push_back(outp, code->r2);
 				ddString_push_back(outp, ed);
 				goto wcont;
 		}
 		ddString_push_back(outp, tb);
 		ddString_push_back(outp, btcstrs[code->opc]);
-		if (code->lhs.length != 0)
+		if (code->r1.length != 0)
 		{
 			ddString_push_back(outp, tb);
-			ddString_push_back(outp, code->lhs);
+			ddString_push_back(outp, code->r1);
 		}
-		if (code->rhs.length != 0)
+		if (code->r2.length != 0)
 		{
 			ddString_push_back(outp, cs);
-			ddString_push_back(outp, code->rhs);
+			ddString_push_back(outp, code->r2);
 		}
 		ddString_push_back(outp, ed);
 wcont:
 		code = code->next;
 	}
-*/
 }
 
 #endif
