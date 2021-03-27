@@ -31,8 +31,8 @@ if n
 @10 num;
 @8[?num] = n;
 
-.;c
 for @8 i = 0, i < 10, i = i + 1
 {
-	pnum(num);
+	;pnum(num);
 }
+@8 w = 0;

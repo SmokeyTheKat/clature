@@ -54,6 +54,28 @@ static void compare_not_equal_flag(void);
 int node_classify(struct tokenNode* node);
 void generate_tree(struct tokenNode* node);
 struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _treeCount);
+void gen_mod(struct tokenNode* node);
+void gen_tho(struct tokenNode* node);
+void gen_mod_equals(struct tokenNode* node);
+void gen_div_equals(struct tokenNode* node);
+void gen_mul_equals(struct tokenNode* node);
+void gen_sub_equals(struct tokenNode* node);
+void gen_add_equals(struct tokenNode* node);
+void gen_plus_plus(struct tokenNode* node);
+void gen_mod_operator(struct tokenNode* node);
+void gen_equals(struct tokenNode* node);
+void gen_rax_toh(struct tokenNode* node);
+void gen_if(struct tokenNode* node);
+void gen_while(struct tokenNode* node);
+void gen_return(struct tokenNode* node);
+void gen_sub_call(struct tokenNode* node);
+void gen_var_def(struct tokenNode* node);
+void gen_deref(struct tokenNode* node);
+void gen_value(struct tokenNode* node);
+void gen_asm(struct tokenNode* node);
+void gen_scope_down(struct tokenNode* node);
+void gen_scope_up(struct tokenNode* node);
+struct bitcode* generate_bitcode_main(struct tokenNode** parseTrees, sizet _treeCount);
 
 struct bitcode
 {
@@ -402,13 +424,16 @@ void gen_sub_call(struct tokenNode* node)
 {
 	addSize = true;
 	sizet paramCount = (node->nodes[0]->nodeCount)/2;
+	ddPrintf("init i: %d\n", paramCount);
 	for (sizet i = (paramCount*2)-1; i >= 0; i -= 2)
 	{
+		ddPrintf("--------------- i: %d\n", i-1);
 		generate_tree(node->nodes[0]->nodes[i-1]);
 	}
 	addSize = false;
 	btc_set(BTC_CALL, node->nodes[1]->value->value, REG_NONE);
 	btc_set(BTC_ADD, REG_RSP, make_ddString_from_int(addSizeVal));
+	ddPrintf("call: %s\n", node->nodes[1]->value->value.cstr);
 	addSizeVal = 0;
 	if (statementIsEquality)
 		gen_push(REG_R8);
@@ -591,16 +616,69 @@ void gen_mod_operator(struct tokenNode* node)
 	gen_push(REG_R8);
 }
 
-void gen_mod(struct tokenNode* node)
+void gen_plus_plus(struct tokenNode* node)
 {
-	switch (node->nodes[1]->value->type)
-	{
-		case TKN_QUEST:
-			gen_mod_operator(node);
-			break;
-	}
+	struct stVariable* var = stackt_get_var(node->nodes[1]->value->value);
+	btc_set(BTC_ADD, make_format_ddString("QWORD[RBP-%d]", var->spos), make_constant_ddString("1"));
+	if (statementIsEquality)
+		push_stack_var(*var);
 }
 
+void gen_add_equals(struct tokenNode* node)
+{
+	struct stVariable* var = stackt_get_var(node->nodes[2]->value->value);
+	gen_split(node, 0);
+	gen_split(node, 2);
+	gen_pop(REG_R8);
+	gen_pop(REG_R9);
+	btc_set(BTC_ADD, REG_R8, REG_R9);
+	gen_push(REG_R8);
+	pop_stack_var(*var);
+}
+void gen_sub_equals(struct tokenNode* node)
+{
+	struct stVariable* var = stackt_get_var(node->nodes[2]->value->value);
+	gen_split(node, 0);
+	gen_split(node, 2);
+	gen_pop(REG_R8);
+	gen_pop(REG_R9);
+	btc_set(BTC_SUB, REG_R8, REG_R9);
+	gen_push(REG_R8);
+	pop_stack_var(*var);
+}
+void gen_mul_equals(struct tokenNode* node)
+{
+	struct stVariable* var = stackt_get_var(node->nodes[2]->value->value);
+	gen_split(node, 0);
+	gen_split(node, 2);
+	gen_pop(REG_RAX);
+	gen_pop(REG_R8);
+	btc_set(BTC_SUB, REG_R8, REG_NONE);
+	gen_push(REG_RAX);
+	pop_stack_var(*var);
+}
+void gen_div_equals(struct tokenNode* node)
+{
+	struct stVariable* var = stackt_get_var(node->nodes[2]->value->value);
+	gen_split(node, 0);
+	gen_split(node, 2);
+	gen_pop(REG_RAX);
+	gen_pop(REG_R8);
+	btc_set(BTC_SUB, REG_R8, REG_NONE);
+	gen_push(REG_RAX);
+	pop_stack_var(*var);
+}
+void gen_mod_equals(struct tokenNode* node)
+{
+	struct stVariable* var = stackt_get_var(node->nodes[2]->value->value);
+	gen_split(node, 0);
+	gen_split(node, 2);
+	gen_pop(REG_RAX);
+	gen_pop(REG_R8);
+	btc_set(BTC_SUB, REG_R8, REG_NONE);
+	gen_push(REG_RDX);
+	pop_stack_var(*var);
+}
 
 void gen_tho(struct tokenNode* node)
 {
@@ -627,6 +705,24 @@ void gen_tho(struct tokenNode* node)
 		case TKN_GREATER_THAN:
 			gen_cmp(node, compare_greaterthan_flag);
 			break;
+		case TKN_ADD_EQUALS:
+			gen_add_equals(node);
+			break;
+		case TKN_SUB_EQUALS:
+			gen_sub_equals(node);
+			break;
+		case TKN_MUL_EQUALS:
+			gen_mul_equals(node);
+			break;
+		case TKN_DIV_EQUALS:
+			gen_div_equals(node);
+			break;
+		case TKN_MOD_EQUALS:
+			gen_mod_equals(node);
+			break;
+		case TKN_MOD:
+			gen_mod_operator(node);
+			break;
 		case TKN_MUL:
 		case TKN_DIV:
 			gen_rax_toh(node);
@@ -637,6 +733,23 @@ void gen_tho(struct tokenNode* node)
 	}
 }
 
-
+void gen_mod(struct tokenNode* node)
+{
+	switch (node->nodes[1]->value->type)
+	{
+		case TKN_ADD_ADD:
+			gen_plus_plus(node);
+			break;
+	}
+	switch (node->nodes[0]->value->type)
+	{
+		case TKN_ADD_ADD:
+			gen_plus_plus(node);
+			break;
+		case TKN_SUB_SUB:
+			//gen_minus_minus(node);
+			break;
+	}
+}
 
 #endif
