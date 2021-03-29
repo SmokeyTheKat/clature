@@ -1,5 +1,5 @@
 all:
-	gcc ./src/main.c -o ./clature -lm -Wall
+	gcc ./src/main.c -o ./clature -lm -Wall -g
 install: all
 	sudo cp ./clature /usr/bin/ccl
 check: all

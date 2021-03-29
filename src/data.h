@@ -36,10 +36,10 @@ struct stVariable* stackt_set_var(ddString name, sizet size);
 struct dtVariable datat_get_data(ddString name);
 struct dtVariable datat_add_data(ddString name, ddString value, sizet size);
 struct dtVariable datat_add_string(ddString value);
-void pop_stack_var(struct stVariable var);
-void pop_ref(ddString value, sizet size);
-void push_ref(ddString value, sizet size);
-void push_stack_var(struct stVariable var);
+ddString pop_stack_var(struct stVariable var);
+ddString pop_ref(ddString value, sizet size);
+ddString push_ref(ddString value, sizet size);
+ddString push_stack_var(struct stVariable var);
 void pop_nsize(ddString value, sizet size);
 void push_nsize(ddString value, sizet size);
 void push_param_nsize(struct stVariable var);
@@ -134,131 +134,200 @@ struct dtVariable datat_add_string(ddString value)
 
 
 
-void pop_stack_var(struct stVariable var)
+void mov_stack_var(struct stVariable var, ddString reg)
 {
 	switch (var.size)
 	{
 		case 1:
 		{
-			gen_pop(REG_RAX);
+			btc_set(BTC_MOV, REG_RAX, reg);
 			btc_set(BTC_MOV, make_format_ddString("BYTE[RBP-%d]", var.spos), REG_AL);
 			break;
 		}
 		case 2:
 		{
-			gen_pop(REG_RAX);
+			btc_set(BTC_MOV, REG_RAX, reg);
 			btc_set(BTC_MOV, make_format_ddString("WORD[RBP-%d]", var.spos), REG_AX);
 			break;
 		}
 		case 4:
 		{
-			gen_pop(REG_RAX);
+			btc_set(BTC_MOV, REG_RAX, reg);
 			btc_set(BTC_MOV, make_format_ddString("DWORD[RBP-%d]", var.spos), REG_EAX);
 			break;
 		}
 		case 8:
 		{
-			btc_set(BTC_POP, make_format_ddString("QWORD[RBP-%d]", var.spos), REG_NONE);
+			btc_set(BTC_MOV, make_format_ddString("QWORD[RBP-%d]", var.spos), reg);
+			break;
+		}
+		default:
+			compile_error("INVALID SIZE MATCH\n");
+	}
+}
+ddString pop_stack_var(struct stVariable var)
+{
+	ddString reg = *reg_stack[reg_stack_pos--];
+	switch (var.size)
+	{
+		case 1:
+		{
+			btc_set(BTC_MOV, REG_RAX, reg);
+			btc_set(BTC_MOV, make_format_ddString("BYTE[RBP-%d]", var.spos), REG_AL);
+			break;
+		}
+		case 2:
+		{
+			btc_set(BTC_MOV, REG_RAX, reg);
+			btc_set(BTC_MOV, make_format_ddString("WORD[RBP-%d]", var.spos), REG_AX);
+			break;
+		}
+		case 4:
+		{
+			btc_set(BTC_MOV, REG_RAX, reg);
+			btc_set(BTC_MOV, make_format_ddString("DWORD[RBP-%d]", var.spos), REG_EAX);
+			break;
+		}
+		case 8:
+		{
+			btc_set(BTC_MOV, make_format_ddString("QWORD[RBP-%d]", var.spos), reg);
 			break;
 		}
 		default:
 			pop_nsize(make_format_ddString("RBP-%d", var.spos), var.size);
 	}
+	return reg;
 }
-void pop_ref(ddString value, sizet size)
+ddString pop_ref(ddString value, sizet size)
 {
+	ddString reg = *reg_stack[reg_stack_pos--];
 	switch (size)
 	{
 		case 1:
 		{
-			gen_pop(REG_RAX);
+			btc_set(BTC_MOV, REG_RAX, reg);
 			btc_set(BTC_MOV, make_format_ddString("BYTE[%s]", value.cstr), REG_AL);
 			break;
 		}
 		case 2:
 		{
-			gen_pop(REG_RAX);
+			btc_set(BTC_MOV, REG_RAX, reg);
 			btc_set(BTC_MOV, make_format_ddString("WORD[%s]", value.cstr), REG_AX);
 			break;
 		}
 		case 4:
 		{
-			gen_pop(REG_RAX);
-			btc_set(BTC_MOV, make_format_ddString("DWORD[%s]", value.cstr), REG_EAX);
+			btc_set(BTC_MOV, REG_RAX, reg);
+			btc_set(BTC_MOV, make_format_ddString("DWORD[%d]", value.cstr), REG_EAX);
 			break;
 		}
 		case 8:
 		{
-			btc_set(BTC_POP, make_format_ddString("QWORD[%s]", value.cstr), REG_NONE);
+			btc_set(BTC_MOV, make_format_ddString("QWORD[%d]", value.cstr), reg);
 			break;
 		}
 		default:
 			pop_nsize(value, size);
 	}
+	return reg;
 }
-void push_ref(ddString value, sizet size)
+ddString push_value(ddString value, sizet size)
 {
 	if (addSize && size >= 0) addSizeVal += size;
+	ddString reg = *reg_stack[++reg_stack_pos];
 	switch (size)
 	{
 		case 1:
 		{
-			btc_set(BTC_MOVSX, REG_RAX, make_format_ddString("BYTE[%s]", value.cstr));
-			gen_push(REG_RAX);
+			btc_set(BTC_MOVSX, reg, value);
 			break;
 		}
 		case 2:
 		{
-			btc_set(BTC_MOVSX, REG_RAX, make_format_ddString("WORD[%s]", value.cstr));
+			btc_set(BTC_MOVSX, reg, value);
+			break;
+		}
+		case 4:
+		{
+			btc_set(BTC_MOV, REG_EAX, value);
+			btc_set(BTC_MOV, reg, REG_RAX);
+			break;
+		}
+		case 8:
+		{
+			btc_set(BTC_MOV, reg, value);
+			break;
+		}
+		default:
+			push_nsize(value, size);
+	}
+	return reg;
+}
+ddString push_ref(ddString value, sizet size)
+{
+	if (addSize && size >= 0) addSizeVal += size;
+	ddString reg = *reg_stack[++reg_stack_pos];
+	switch (size)
+	{
+		case 1:
+		{
+			btc_set(BTC_MOVSX, reg, make_format_ddString("BYTE[%s]", value.cstr));
+			break;
+		}
+		case 2:
+		{
+			btc_set(BTC_MOVSX, reg, make_format_ddString("WORD[%s]", value.cstr));
 			gen_push(REG_RAX);
 			break;
 		}
 		case 4:
 		{
 			btc_set(BTC_MOV, REG_EAX, make_format_ddString("DWORD[%s]", value.cstr));
-			gen_push(REG_RAX);
+			btc_set(BTC_MOV, reg, REG_RAX);
 			break;
 		}
 		case 8:
 		{
-			btc_set(BTC_PUSH, make_format_ddString("QWORD[%s]", value.cstr), REG_NONE);
+			btc_set(BTC_MOV, reg, make_format_ddString("QWORD[%s]", value.cstr));
 			break;
 		}
 		default:
 			push_nsize(value, size);
 	}
+	return reg;
 }
-void push_stack_var(struct stVariable var)
+ddString push_stack_var(struct stVariable var)
 {
 	if (addSize && var.size >= 0) addSizeVal += var.size;
+	ddString reg = *reg_stack[++reg_stack_pos];
 	switch (var.size)
 	{
 		case 1:
 		{
-			btc_set(BTC_MOVSX, REG_RAX, make_format_ddString("BYTE[RBP-%d]", var.spos));
+			btc_set(BTC_MOVSX, reg, make_format_ddString("BYTE[RBP-%d]", var.spos));
 			gen_push(REG_RAX);
 			break;
 		}
 		case 2:
 		{
-			btc_set(BTC_MOVSX, REG_RAX, make_format_ddString("WORD[RBP-%d]", var.spos));
-			gen_push(REG_RAX);
+			btc_set(BTC_MOVSX, reg, make_format_ddString("WORD[RBP-%d]", var.spos));
 			break;
 		}
 		case 4:
 		{
 			btc_set(BTC_MOV, REG_EAX, make_format_ddString("DWORD[RBP-%d]", var.spos));
-			gen_push(REG_RAX);
+			btc_set(BTC_MOV, reg, REG_RAX);
 			break;
 		}
 		case 8:
 		{
-			btc_set(BTC_PUSH, make_format_ddString("QWORD[RBP-%d]", var.spos), REG_NONE);
+			btc_set(BTC_MOV, reg, make_format_ddString("QWORD[RBP-%d]", var.spos));
 			break;
 		}
 		default:
 			push_nsize(make_format_ddString("RBP-%d", var.spos), var.size);
 	}
+	return reg;
 }
 void pop_nsize(ddString value, sizet size)
 {

@@ -1,10 +1,20 @@
 #ifndef __clature_generate_h__
 #define __clature_generate_h__
-
 sizet addSizeVal = 0;
 bool addSize = false;
 
 #include "./regs.h"
+
+const ddString* reg_stack[] = {
+	&REG_R8,
+	&REG_R9,
+	&REG_R10,
+	&REG_R11,
+	&REG_R12,
+};
+
+int reg_stack_pos = -1;
+
 #include "./utils.h"
 #include "./data.h"
 #include "./qalloc.h"
@@ -96,6 +106,26 @@ sizet scopeStack[MAX_SCOPES];
 sizet scopeStackPos = 0;
 sizet scope = 0;
 
+void gen_set_value(ddString reg, sizet size)
+{
+	ddString r = *reg_stack[reg_stack_pos--];
+	switch (size)
+	{
+		case 8:
+		{
+		} break;
+		case 4:
+		{
+		} break;
+		case 2:
+		{
+		} break;
+		case 1:
+		{
+		} break;
+	}
+}
+
 static inline void switch_stacks(void)
 {
 	struct stackTracker temp;
@@ -161,6 +191,7 @@ int toh_get_opc(struct tokenNode* node)
 
 void gen_push(ddString val)
 {
+	if (addSize) addSizeVal += 8;
 	btc_set(BTC_PUSH, val, REG_NONE);
 }
 void gen_pop(ddString val)
@@ -400,7 +431,9 @@ void gen_asm(struct tokenNode* node)
 void gen_value(struct tokenNode* node)
 {
 	if (ddString_is_number(node->value->value))
-		gen_push(node->value->value);
+	{
+		push_value(node->value->value, 8);
+	}
 	else
 	{
 		push_stack_var(*stackt_get_var(node->value->value));
@@ -565,23 +598,25 @@ void gen_if(struct tokenNode* node)
 
 void gen_toh(struct tokenNode* node)
 {
-	gen_split(node, 0);
-	gen_split(node, 2);
-	gen_pop(REG_R8);
-	gen_pop(REG_R9);
 	int opc = toh_get_opc(node->nodes[1]);
-	btc_set(opc, REG_R8, REG_R9);
-	gen_push(REG_R8);
+	gen_split(node, 0);
+	ddString* reg1 = reg_stack[reg_stack_pos];
+	gen_split(node, 2);
+	ddString* reg2 = reg_stack[reg_stack_pos];
+	btc_set(opc, *reg1, *reg2);
+	reg_stack_pos--;
 }
 void gen_rax_toh(struct tokenNode* node)
 {
-	gen_split(node, 0);
-	gen_split(node, 2);
-	gen_pop(REG_RAX);
-	gen_pop(REG_R8);
 	int opc = toh_get_opc(node->nodes[1]);
-	btc_set(opc, REG_R8, REG_NONE);
-	gen_push(REG_RAX);
+	gen_split(node, 0);
+	ddString* reg1 = reg_stack[reg_stack_pos];
+	gen_split(node, 2);
+	ddString* reg2 = reg_stack[reg_stack_pos];
+	btc_set(BTC_MOV, REG_RAX, *reg1);
+	btc_set(opc, *reg2, REG_NONE);
+	btc_set(BTC_MOV, *reg1, REG_RAX);
+	reg_stack_pos--;
 }
 void gen_equals(struct tokenNode* node)
 {
@@ -596,15 +631,19 @@ void gen_equals(struct tokenNode* node)
 	else if (n2class == NTYPE_DEREF)
 	{
 		gen_split(node, 0);
+		ddString reg1 = *reg_stack[reg_stack_pos];
 		gen_split(node->nodes[2], 1);
+		ddString reg2 = *reg_stack[reg_stack_pos];
 		gen_pop(REG_R8);
 		pop_ref(REG_R8, ddString_to_int(node->nodes[2]->nodes[3]->value->value));
+		mov_stack_var(*var, *reg_stack[reg_stack_pos--]);
+		reg_stack_pos -= 2;
 		return;
 	}
 	else var = stackt_get_var(node->nodes[2]->value->value);
 
 	gen_split(node, 0);
-	pop_stack_var(*var);
+	mov_stack_var(*var, *reg_stack[reg_stack_pos--]);
 	statementIsEquality = false;
 }
 
@@ -639,12 +678,12 @@ void gen_sub_equals(struct tokenNode* node)
 {
 	struct stVariable* var = stackt_get_var(node->nodes[2]->value->value);
 	gen_split(node, 0);
+	ddString* reg1 = reg_stack[reg_stack_pos];
 	gen_split(node, 2);
-	gen_pop(REG_R8);
-	gen_pop(REG_R9);
-	btc_set(BTC_SUB, REG_R8, REG_R9);
-	gen_push(REG_R8);
+	ddString* reg2 = reg_stack[reg_stack_pos];
+	btc_set(BTC_SUB, *reg2, *reg1);
 	pop_stack_var(*var);
+	reg_stack_pos--;
 }
 void gen_mul_equals(struct tokenNode* node)
 {
@@ -733,12 +772,20 @@ void gen_tho(struct tokenNode* node)
 	}
 }
 
+void gen_ref(struct tokenNode* node)
+{
+	struct stVariable* var = stackt_get_var(node->nodes[0]->value->value);
+	btc_set(BTC_MOV, REG_R8, REG_RBP);
+	btc_set(BTC_SUB, REG_R8, make_ddString_from_int(var->spos));
+	gen_push(REG_R8);
+}
+
 void gen_mod(struct tokenNode* node)
 {
 	switch (node->nodes[1]->value->type)
 	{
-		case TKN_ADD_ADD:
-			gen_plus_plus(node);
+		case TKN_QUEST:
+			gen_ref(node);
 			break;
 	}
 	switch (node->nodes[0]->value->type)
