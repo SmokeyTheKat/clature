@@ -11,6 +11,9 @@ const ddString* reg_stack[] = {
 	&REG_R10,
 	&REG_R11,
 	&REG_R12,
+	&REG_R13,
+	&REG_R14,
+	&REG_R15,
 };
 
 int reg_stack_pos = -1;
@@ -206,44 +209,52 @@ void gen_split(struct tokenNode* node, int idx)
 void gen_cmp(struct tokenNode* node, void(*cmpfun)(void))
 {
 	gen_split(node, 0);
+	ddString reg1 = *reg_stack[reg_stack_pos];
+	ddPrintf("lreg1: %s\n", reg1.cstr);
 	gen_split(node, 2);
-	gen_pop(REG_R8);
-	gen_pop(REG_R9);
-	btc_set(BTC_CMP, REG_R8, REG_R9);
+	ddString reg2 = *reg_stack[reg_stack_pos];
+	ddPrintf("lreg2: %s\n", reg2.cstr);
+	btc_set(BTC_CMP, reg1, reg2);
+	reg_stack_pos -= 2;
 	cmpfun();
-	gen_push(REG_R8);
 }
 
 
 static void compare_lessthan_equal_flag(void)
 {
 	btc_set(BTC_SETLE, REG_AL, REG_NONE);
-	btc_set(BTC_MOVZX, REG_R8, REG_AL);
+	ddString reg = *reg_stack[++reg_stack_pos];
+	btc_set(BTC_MOVZX, reg, REG_AL);
 }
 static void compare_lessthan_flag(void)
 {
 	btc_set(BTC_SETL, REG_AL, REG_NONE);
-	btc_set(BTC_MOVZX, REG_R8, REG_AL);
+	ddString reg = *reg_stack[++reg_stack_pos];
+	btc_set(BTC_MOVZX, reg, REG_AL);
 }
 static void compare_greaterthan_flag(void)
 {
 	btc_set(BTC_SETG, REG_AL, REG_NONE);
-	btc_set(BTC_MOVZX, REG_R8, REG_AL);
+	ddString reg = *reg_stack[++reg_stack_pos];
+	btc_set(BTC_MOVZX, reg, REG_AL);
 }
 static void compare_greaterthan_equal_flag(void)
 {
 	btc_set(BTC_SETGE, REG_AL, REG_NONE);
-	btc_set(BTC_MOVZX, REG_R8, REG_AL);
+	ddString reg = *reg_stack[++reg_stack_pos];
+	btc_set(BTC_MOVZX, reg, REG_AL);
 }
 static void compare_equal_flag(void)
 {
 	btc_set(BTC_SETE, REG_AL, REG_NONE);
-	btc_set(BTC_MOVZX, REG_R8, REG_AL);
+	ddString reg = *reg_stack[++reg_stack_pos];
+	btc_set(BTC_MOVZX, reg, REG_AL);
 }
 static void compare_not_equal_flag(void)
 {
 	btc_set(BTC_SETNE, REG_AL, REG_NONE);
-	btc_set(BTC_MOVZX, REG_R8, REG_AL);
+	ddString reg = *reg_stack[++reg_stack_pos];
+	btc_set(BTC_MOVZX, reg, REG_AL);
 }
 
 int node_classify(struct tokenNode* node)
@@ -603,7 +614,8 @@ void gen_toh(struct tokenNode* node)
 	ddString* reg1 = reg_stack[reg_stack_pos];
 	gen_split(node, 2);
 	ddString* reg2 = reg_stack[reg_stack_pos];
-	btc_set(opc, *reg1, *reg2);
+	btc_set(opc, *reg2, *reg1);
+	btc_set(BTC_MOV, *reg1, *reg2);
 	reg_stack_pos--;
 }
 void gen_rax_toh(struct tokenNode* node)
@@ -633,17 +645,16 @@ void gen_equals(struct tokenNode* node)
 		gen_split(node, 0);
 		ddString reg1 = *reg_stack[reg_stack_pos];
 		gen_split(node->nodes[2], 1);
-		ddString reg2 = *reg_stack[reg_stack_pos];
-		gen_pop(REG_R8);
-		pop_ref(REG_R8, ddString_to_int(node->nodes[2]->nodes[3]->value->value));
-		mov_stack_var(*var, *reg_stack[reg_stack_pos--]);
-		reg_stack_pos -= 2;
+		ddString reg2 = *reg_stack[reg_stack_pos--];
+		ddString reg3 = pop_ref(reg2, ddString_to_int(node->nodes[2]->nodes[3]->value->value));
+		reg_stack_pos -= 0;
+		statementIsEquality = false;
 		return;
 	}
 	else var = stackt_get_var(node->nodes[2]->value->value);
 
 	gen_split(node, 0);
-	mov_stack_var(*var, *reg_stack[reg_stack_pos--]);
+	pop_stack_var(*var);
 	statementIsEquality = false;
 }
 
@@ -775,9 +786,9 @@ void gen_tho(struct tokenNode* node)
 void gen_ref(struct tokenNode* node)
 {
 	struct stVariable* var = stackt_get_var(node->nodes[0]->value->value);
-	btc_set(BTC_MOV, REG_R8, REG_RBP);
-	btc_set(BTC_SUB, REG_R8, make_ddString_from_int(var->spos));
-	gen_push(REG_R8);
+	ddString reg1 = *reg_stack[++reg_stack_pos];
+	btc_set(BTC_MOV, reg1, REG_RBP);
+	btc_set(BTC_SUB, reg1, make_ddString_from_int(var->spos));
 }
 
 void gen_mod(struct tokenNode* node)

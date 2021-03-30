@@ -201,6 +201,7 @@ ddString pop_stack_var(struct stVariable var)
 ddString pop_ref(ddString value, sizet size)
 {
 	ddString reg = *reg_stack[reg_stack_pos--];
+	ddPrintf("NNNNN size: %d\n", size);
 	switch (size)
 	{
 		case 1:
@@ -218,12 +219,12 @@ ddString pop_ref(ddString value, sizet size)
 		case 4:
 		{
 			btc_set(BTC_MOV, REG_RAX, reg);
-			btc_set(BTC_MOV, make_format_ddString("DWORD[%d]", value.cstr), REG_EAX);
+			btc_set(BTC_MOV, make_format_ddString("DWORD[%s]", value.cstr), REG_EAX);
 			break;
 		}
 		case 8:
 		{
-			btc_set(BTC_MOV, make_format_ddString("QWORD[%d]", value.cstr), reg);
+			btc_set(BTC_MOV, make_format_ddString("QWORD[%s]", value.cstr), reg);
 			break;
 		}
 		default:
