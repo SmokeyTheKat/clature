@@ -109,6 +109,23 @@ sizet scopeStack[MAX_SCOPES];
 sizet scopeStackPos = 0;
 sizet scope = 0;
 
+bool node_is_value(struct tokenNode* node)
+{
+	return (node->value->type == TKN_NUMBER) || (node->value->type == TKN_ID);
+}
+
+ddString node_get_value_string(struct tokenNode* node)
+{
+	if (node->value->type == TKN_ID)
+	{
+		return push_stack_var(stackt_get_var(node->value->value));
+	}
+	else if (node->value->type == TKN_NUMBER)
+	{
+		//return node->value->value.cstr
+	}
+}
+
 void gen_set_value(ddString reg, sizet size)
 {
 	ddString r = *reg_stack[reg_stack_pos--];
@@ -454,8 +471,8 @@ void gen_value(struct tokenNode* node)
 void gen_deref(struct tokenNode* node)
 {
 	gen_split(node, 1);
-	gen_pop(REG_R8);
-	push_ref(REG_R8, ddString_to_int(node->nodes[3]->value->value));
+	//gen_pop(REG_R8);
+	push_ref(*reg_stack[reg_stack_pos], ddString_to_int(node->nodes[3]->value->value));
 }
 
 void gen_var_def(struct tokenNode* node)
@@ -610,24 +627,28 @@ void gen_if(struct tokenNode* node)
 void gen_toh(struct tokenNode* node)
 {
 	int opc = toh_get_opc(node->nodes[1]);
+	if (node_is_value(node->nodes[0]) && node_is_value(node->nodes[2]))
+	{
+		btc_set(opc, node->nodes, reg1);
+	}
 	gen_split(node, 0);
-	ddString* reg1 = reg_stack[reg_stack_pos];
+	ddString reg1 = *reg_stack[reg_stack_pos];
 	gen_split(node, 2);
-	ddString* reg2 = reg_stack[reg_stack_pos];
-	btc_set(opc, *reg2, *reg1);
-	btc_set(BTC_MOV, *reg1, *reg2);
+	ddString reg2 = *reg_stack[reg_stack_pos];
+	btc_set(opc, reg2, reg1);
+	btc_set(BTC_MOV, reg1, reg2);
 	reg_stack_pos--;
 }
 void gen_rax_toh(struct tokenNode* node)
 {
 	int opc = toh_get_opc(node->nodes[1]);
 	gen_split(node, 0);
-	ddString* reg1 = reg_stack[reg_stack_pos];
+	ddString reg1 = *reg_stack[reg_stack_pos];
 	gen_split(node, 2);
-	ddString* reg2 = reg_stack[reg_stack_pos];
-	btc_set(BTC_MOV, REG_RAX, *reg1);
-	btc_set(opc, *reg2, REG_NONE);
-	btc_set(BTC_MOV, *reg1, REG_RAX);
+	ddString reg2 = *reg_stack[reg_stack_pos];
+	btc_set(BTC_MOV, REG_RAX, reg1);
+	btc_set(opc, reg2, REG_NONE);
+	btc_set(BTC_MOV, reg1, REG_RAX);
 	reg_stack_pos--;
 }
 void gen_equals(struct tokenNode* node)
@@ -678,12 +699,12 @@ void gen_add_equals(struct tokenNode* node)
 {
 	struct stVariable* var = stackt_get_var(node->nodes[2]->value->value);
 	gen_split(node, 0);
+	ddString* reg1 = reg_stack[reg_stack_pos];
 	gen_split(node, 2);
-	gen_pop(REG_R8);
-	gen_pop(REG_R9);
-	btc_set(BTC_ADD, REG_R8, REG_R9);
-	gen_push(REG_R8);
+	ddString* reg2 = reg_stack[reg_stack_pos];
+	btc_set(BTC_ADD, *reg2, *reg1);
 	pop_stack_var(*var);
+	reg_stack_pos--;
 }
 void gen_sub_equals(struct tokenNode* node)
 {
